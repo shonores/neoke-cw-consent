@@ -398,7 +398,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented }: Pre
     const verifierName = preview.verifier.name ?? parseIssuerLabel(preview.verifier.clientId);
 
     return (
-      <div className="flex flex-col min-h-screen bg-[#F2F2F7]">
+      <div className="flex flex-col min-h-screen bg-[#F2F2F7] overflow-x-hidden">
         {/* iOS-style drag handle */}
         <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
           <div className="w-9 h-1 rounded-full bg-[#c7c7cc]" />
@@ -419,7 +419,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented }: Pre
 
         {/* Title */}
         <div className="px-5 pb-7 flex-shrink-0">
-          <h2 className="text-[28px] font-bold text-[#1c1c1e] leading-tight">
+          <h2 className="text-[28px] font-bold text-[#1c1c1e] leading-tight break-words min-w-0">
             {verifierName}<br />wants you to share the following info
           </h2>
         </div>
