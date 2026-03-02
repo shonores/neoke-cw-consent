@@ -379,12 +379,6 @@ export default function PresentScreen({ navigate, initialUri, onPresented }: Pre
             <p className="text-[#1c1c1e] font-bold text-[28px] leading-tight">Credential Shared</p>
             <p className="text-[#8e8e93] text-[15px] mt-1">The verifier has received your credential.</p>
           </div>
-          {successResult?.skippedX509 && (
-            <div className="bg-[#fff3cd] border border-[#ffc107]/40 rounded-2xl px-4 py-3 text-left">
-              <p className="text-[13px] font-semibold text-[#856404] mb-0.5">Certificate chain not verified</p>
-              <p className="text-[12px] text-[#856404]/80">The verifier's X.509 certificate chain could not be validated. The credential was shared without verifying the verifier's identity.</p>
-            </div>
-          )}
           {successResult?.redirectUri && (
             <div className="bg-white rounded-2xl p-4 text-left shadow-sm">
               <p className="text-[11px] text-[#8e8e93] uppercase tracking-wide mb-1">Redirect</p>
@@ -426,7 +420,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented }: Pre
         {/* Title */}
         <div className="px-5 pb-7 flex-shrink-0">
           <h2 className="text-[28px] font-bold text-[#1c1c1e] leading-tight">
-            {verifierName} wants you to share the following info
+            {verifierName}<br />wants you to share the following info
           </h2>
         </div>
 

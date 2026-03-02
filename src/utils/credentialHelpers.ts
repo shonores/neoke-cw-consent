@@ -275,6 +275,13 @@ export interface CredentialField {
   namespace?: string;
 }
 
+// JWT/SD-JWT technical fields that are not human-readable claims.
+// These are handled separately (issuer, expiration) or are internal (cnf, status list, _sd*).
+const INTERNAL_CREDENTIAL_FIELDS = new Set([
+  'iss', 'sub', 'iat', 'exp', 'nbf', 'jti',
+  'vct', 'cnf', 'status', '_sd', '_sd_alg',
+]);
+
 export function extractFields(credential: Credential): CredentialField[] {
   const fields: CredentialField[] = [];
 
@@ -291,7 +298,7 @@ export function extractFields(credential: Credential): CredentialField[] {
 
   if (credential.credentialSubject && typeof credential.credentialSubject === 'object') {
     for (const [key, value] of Object.entries(credential.credentialSubject)) {
-      if (key === 'id') continue;
+      if (key === 'id' || INTERNAL_CREDENTIAL_FIELDS.has(key)) continue;
       fields.push({ label: humanizeLabel(key), value });
     }
     if (fields.length > 0) return fields;

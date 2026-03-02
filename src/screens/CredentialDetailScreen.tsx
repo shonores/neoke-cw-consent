@@ -215,8 +215,19 @@ function PlainFieldRow({ label, value }: PlainFieldRowProps) {
     displayValue = value ? 'Yes' : 'No';
   } else if (typeof value === 'string' && ISO_DATE_REGEX.test(value)) {
     displayValue = formatDate(value);
-  } else if (typeof value === 'object') {
-    displayValue = JSON.stringify(value);
+  } else if (Array.isArray(value)) {
+    displayValue = (value as unknown[]).map(String).join(', ');
+  } else if (typeof value === 'object' && value !== null) {
+    const obj = value as Record<string, unknown>;
+    // Phone number: { countryCode, localNumber }
+    if ('countryCode' in obj && 'localNumber' in obj) {
+      displayValue = `${obj.countryCode} ${obj.localNumber}`;
+    } else {
+      // Generic object: key: value pairs on separate lines
+      displayValue = Object.entries(obj)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join('\n');
+    }
   } else {
     displayValue = String(value);
   }
@@ -224,7 +235,7 @@ function PlainFieldRow({ label, value }: PlainFieldRowProps) {
   return (
     <div className="py-3 border-b border-black/5 last:border-0">
       <p className="text-xs text-[#8e8e93] mb-0.5">{label}</p>
-      <p className="text-[17px] font-medium text-[#1c1c1e] break-all">{displayValue}</p>
+      <p className="text-[17px] font-medium text-[#1c1c1e] break-all whitespace-pre-line">{displayValue}</p>
     </div>
   );
 }
