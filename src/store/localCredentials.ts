@@ -59,6 +59,9 @@ export function mergeWithLocalCredentials(serverCreds: Credential[]): Credential
           (serverCred._availableClaims as string[] | undefined) ??
           (localMatch._availableClaims as string[] | undefined),
         namespaces: serverCred.namespaces ?? localMatch.namespaces,
+        // Server-parsed credentialSubject (e.g. SD-JWT claims) takes precedence
+        // over whatever the local copy has, which may be stale or empty.
+        credentialSubject: serverCred.credentialSubject ?? localMatch.credentialSubject,
         displayMetadata: serverCred.displayMetadata ?? localMatch.displayMetadata,
       };
     }
