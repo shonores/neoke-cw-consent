@@ -512,13 +512,30 @@ export async function receiveCredential(
   offerUri: string,
   keyId: string
 ): Promise<ReceiveCredentialResponse> {
-  const raw = await request<unknown>('/:/oid4vci/receive', {
-    method: 'POST',
-    token,
-    body: JSON.stringify({ offer_uri: offerUri, ...(keyId ? { keyId } : {}) }),
-  });
-  console.log('[neoke] receiveCredential raw →', JSON.stringify(raw));
-  return raw as ReceiveCredentialResponse;
+  const baseBody = { offer_uri: offerUri, ...(keyId ? { keyId } : {}) };
+
+  try {
+    const raw = await request<unknown>('/:/oid4vci/receive', {
+      method: 'POST',
+      token,
+      body: JSON.stringify(baseBody),
+    });
+    console.log('[neoke] receiveCredential raw →', JSON.stringify(raw));
+    return raw as ReceiveCredentialResponse;
+  } catch (err) {
+    // Don't retry on auth/forbidden errors — those won't be fixed by changing bindingMode.
+    if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+      throw err;
+    }
+    console.log('[neoke] receiveCredential first attempt failed, retrying with bindingMode=jwk');
+    const raw = await request<unknown>('/:/oid4vci/receive', {
+      method: 'POST',
+      token,
+      body: JSON.stringify({ ...baseBody, bindingMode: 'jwk' }),
+    });
+    console.log('[neoke] receiveCredential (jwk) raw →', JSON.stringify(raw));
+    return raw as ReceiveCredentialResponse;
+  }
 }
 
 // ============================================================
