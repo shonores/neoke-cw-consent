@@ -14,10 +14,10 @@ import { clearLocalCredentials } from '../store/localCredentials';
 // Storage keys
 // ============================================================
 const SK = {
-  TOKEN:    'neoke_s_token',    // sessionStorage — cleared on tab close
-  EXPIRES:  'neoke_s_expires',  // sessionStorage
-  NODE_ID:  'neoke_node_id',    // localStorage  — remembered across sessions
-  ACTIVITY: 'neoke_activity',   // localStorage  — inactivity timer
+  TOKEN:    'neoke_s_token',    // localStorage — persists across tab/browser restarts
+  EXPIRES:  'neoke_s_expires',  // localStorage
+  NODE_ID:  'neoke_node_id',    // localStorage — remembered across sessions
+  ACTIVITY: 'neoke_activity',   // localStorage — inactivity timer
 } as const;
 
 /** 7-day inactivity window in milliseconds */
@@ -110,8 +110,8 @@ function initState(): AuthState {
     const nodeId = localStorage.getItem(SK.NODE_ID);
     if (!nodeId) return empty;
 
-    const token    = sessionStorage.getItem(SK.TOKEN);
-    const expiresStr = sessionStorage.getItem(SK.EXPIRES);
+    const token    = localStorage.getItem(SK.TOKEN);
+    const expiresStr = localStorage.getItem(SK.EXPIRES);
     if (!token || !expiresStr) return empty;
 
     const expiresAt = parseInt(expiresStr, 10);
@@ -158,16 +158,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (state.token && state.expiresAt && state.nodeIdentifier) {
       try {
-        sessionStorage.setItem(SK.TOKEN,   state.token);
-        sessionStorage.setItem(SK.EXPIRES, state.expiresAt.toString());
-        localStorage.setItem(SK.NODE_ID,   state.nodeIdentifier);
-        localStorage.setItem(SK.ACTIVITY,  Date.now().toString());
+        localStorage.setItem(SK.TOKEN,    state.token);
+        localStorage.setItem(SK.EXPIRES,  state.expiresAt.toString());
+        localStorage.setItem(SK.NODE_ID,  state.nodeIdentifier);
+        localStorage.setItem(SK.ACTIVITY, Date.now().toString());
       } catch { /* storage unavailable */ }
     } else if (!state.token && state.sessionExpired) {
-      // Token expired — clear sessionStorage but keep node in localStorage
+      // Token expired — clear stored token but keep node identifier
       try {
-        sessionStorage.removeItem(SK.TOKEN);
-        sessionStorage.removeItem(SK.EXPIRES);
+        localStorage.removeItem(SK.TOKEN);
+        localStorage.removeItem(SK.EXPIRES);
       } catch { /* */ }
     }
   }, [state.token, state.expiresAt, state.nodeIdentifier, state.sessionExpired]);
@@ -208,8 +208,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     try {
-      sessionStorage.removeItem(SK.TOKEN);
-      sessionStorage.removeItem(SK.EXPIRES);
+      localStorage.removeItem(SK.TOKEN);
+      localStorage.removeItem(SK.EXPIRES);
       localStorage.removeItem(SK.ACTIVITY);
       // Intentionally keep SK.NODE_ID so the identifier is pre-filled on next login
     } catch { /* */ }

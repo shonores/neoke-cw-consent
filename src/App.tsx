@@ -116,10 +116,38 @@ function AppInner() {
   // Read once on mount from the URL query string. Accepts:
   //   ?uri=openid-credential-offer://...   (issuance)
   //   ?uri=openid4vp://...                 (verification)
-  //   ?offer_uri=...  / ?request_uri=...   (alternative param names)
+  //   ?offer_uri=...                       (alternative param name)
+  //
+  // Two encoding forms are handled:
+  //   Encoded:   ?uri=openid4vp%3A%2F%2F%3Fclient_id%3DX%26request_uri%3DY
+  //   Unencoded: ?uri=openid4vp://?client_id=X&request_uri=Y&request_uri_method=Z
+  //              ↑ URLSearchParams splits on &, truncating the URI. We detect
+  //                this and re-extract from the raw search string instead.
   const [deepLinkUri] = useState<string | null>(() => {
-    const p = new URLSearchParams(window.location.search);
-    return p.get('uri') ?? p.get('offer_uri') ?? p.get('request_uri') ?? null;
+    const search = window.location.search;
+    if (!search) return null;
+
+    // Try the properly-encoded form first
+    const p = new URLSearchParams(search);
+    for (const key of ['uri', 'offer_uri']) {
+      const val = p.get(key);
+      if (val && detectUriType(val) !== 'unknown') return val;
+    }
+
+    // Fallback: inner URI was not encoded — its params leaked into the outer
+    // query string as separate &key=value pairs. Re-extract by taking the raw
+    // substring starting at 'uri=' so we get the full untruncated URI.
+    const raw = search.startsWith('?') ? search.slice(1) : search;
+    for (const key of ['uri', 'offer_uri']) {
+      const prefix = `${key}=`;
+      const idx = raw.indexOf(prefix);
+      if (idx !== -1) {
+        const candidate = raw.slice(idx + prefix.length);
+        if (detectUriType(candidate) !== 'unknown') return candidate;
+      }
+    }
+
+    return null;
   });
   const deepLinkType = deepLinkUri ? detectUriType(deepLinkUri) : null;
   const deepLinkConsumed = useRef(false);
