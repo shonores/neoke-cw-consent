@@ -127,16 +127,9 @@ function AppInner() {
     const search = window.location.search;
     if (!search) return null;
 
-    // Try the properly-encoded form first
-    const p = new URLSearchParams(search);
-    for (const key of ['uri', 'offer_uri']) {
-      const val = p.get(key);
-      if (val && detectUriType(val) !== 'unknown') return val;
-    }
-
-    // Fallback: inner URI was not encoded — its params leaked into the outer
-    // query string as separate &key=value pairs. Re-extract by taking the raw
-    // substring starting at 'uri=' so we get the full untruncated URI.
+    // Raw extraction FIRST — when the inner URI is not encoded, URLSearchParams
+    // splits on its & chars and truncates it. Taking the raw substring after
+    // 'uri=' gives the complete, unmodified URI (e.g. the full openid4vp://...).
     const raw = search.startsWith('?') ? search.slice(1) : search;
     for (const key of ['uri', 'offer_uri']) {
       const prefix = `${key}=`;
@@ -145,6 +138,14 @@ function AppInner() {
         const candidate = raw.slice(idx + prefix.length);
         if (detectUriType(candidate) !== 'unknown') return candidate;
       }
+    }
+
+    // Fallback: properly-encoded form (?uri=openid4vp%3A%2F%2F...).
+    // URLSearchParams decodes the percent-encoding so detectUriType can match.
+    const p = new URLSearchParams(search);
+    for (const key of ['uri', 'offer_uri']) {
+      const val = p.get(key);
+      if (val && detectUriType(val) !== 'unknown') return val;
     }
 
     return null;
