@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { receiveCredential, fetchKeys, extractNamespacesFromDoc, extractDisplayMetadataFromDoc, lookupDisplayMetadataForDocType, ApiError } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { useConsentEngine } from '../context/ConsentEngineContext';
+import { isCeConfigured } from '../api/consentEngineClient';
 import { detectUriType } from '../utils/uriRouter';
 import {
   getCredentialLabel,
@@ -21,6 +23,7 @@ interface ReceiveScreenProps {
   navigate: (view: ViewName, extra?: { selectedCredential?: Credential; pendingUri?: string }) => void;
   onCredentialReceived: () => void;
   initialUri?: string;
+  onRouteToCe?: (uri: string) => void;
 }
 
 // ── Shared scan-toggle icons (single-colour line style) ──────────────────────
@@ -71,9 +74,11 @@ function IconCheckCircle() {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default function ReceiveScreen({ navigate, onCredentialReceived, initialUri }: ReceiveScreenProps) {
+export default function ReceiveScreen({ navigate, onCredentialReceived, initialUri, onRouteToCe }: ReceiveScreenProps) {
   const { state, markExpired } = useAuth();
+  const { state: ceState } = useConsentEngine();
   const [stage, setStage] = useState<Stage>(initialUri ? 'loading' : 'scan');
+  const [ceBypassed, setCeBypassed] = useState(false);
   const [manualUri, setManualUri] = useState(initialUri ?? '');
   const [showManual, setShowManual] = useState(!!initialUri);
   const [receivedCredential, setReceivedCredential] = useState<Credential | null>(null);
@@ -83,6 +88,15 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
   const processOfferUri = useCallback(async (uri: string) => {
     if (!state.token) return;
     const trimmed = uri.trim();
+
+    // Route to CE if configured and available
+    if (onRouteToCe && isCeConfigured() && ceState.ceEnabled && ceState.ceApiKey) {
+      onRouteToCe(trimmed);
+      return;
+    }
+    if (isCeConfigured() && ceState.ceEnabled) {
+      setCeBypassed(true);
+    }
 
     const uriType = detectUriType(trimmed);
     if (uriType === 'present') {
@@ -327,6 +341,19 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
           <p className="text-[13px] text-[#8e8e93]">Receive or present a credential</p>
         </div>
       </header>
+
+      {/* CE bypass notice */}
+      {ceBypassed && (
+        <div className="px-5 pb-2">
+          <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-2xl px-4 py-2.5">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-blue-600 flex-shrink-0">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.7" />
+              <path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+            <p className="text-[13px] text-blue-700">Consent Engine bypassed for this request.</p>
+          </div>
+        </div>
+      )}
 
       {/* Scrollable content — pb-28 only needed when manual strip is visible */}
       <div className={`flex-1 overflow-y-auto px-5 space-y-4 ${showManual ? 'pb-28' : 'pb-6'}`}>

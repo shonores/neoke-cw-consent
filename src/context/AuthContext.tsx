@@ -211,6 +211,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem(SK.TOKEN);
       localStorage.removeItem(SK.EXPIRES);
       localStorage.removeItem(SK.ACTIVITY);
+      localStorage.removeItem('neoke_ce_url');
+      localStorage.removeItem('neoke_ce_enabled');
+      localStorage.removeItem('neoke_ce_apikey');
+      localStorage.removeItem('neoke_ce_dismissed');
       // Intentionally keep SK.NODE_ID so the identifier is pre-filled on next login
     } catch { /* */ }
     clearLocalCredentials();

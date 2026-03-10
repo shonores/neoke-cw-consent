@@ -102,7 +102,18 @@ export interface WalletKey {
 // ============================================================
 // Navigation
 // ============================================================
-export type ViewName = 'login' | 'dashboard' | 'detail' | 'receive' | 'present' | 'account';
+export type ViewName =
+  | 'login'
+  | 'dashboard'
+  | 'detail'
+  | 'receive'
+  | 'present'
+  | 'account'
+  | 'consent_rules'
+  | 'consent_rule_editor'
+  | 'consent_queue'
+  | 'consent_queue_detail'
+  | 'audit_log';
 
 export interface NavState {
   view: ViewName;

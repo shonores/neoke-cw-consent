@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { previewPresentationWithRetry, respondPresentationWithRetry, ApiError } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { useConsentEngine } from '../context/ConsentEngineContext';
+import { isCeConfigured } from '../api/consentEngineClient';
 import { detectUriType } from '../utils/uriRouter';
 import {
   getCandidateLabel,
@@ -23,6 +25,7 @@ interface PresentScreenProps {
   navigate: (view: ViewName, extra?: { selectedCredential?: Credential; pendingUri?: string }) => void;
   initialUri?: string;
   onPresented?: () => void;
+  onRouteToCe?: (uri: string) => void;
 }
 
 // ── Shared scan-toggle icons ─────────────────────────────────────────────────
@@ -73,9 +76,11 @@ function IconCheckCircle() {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default function PresentScreen({ navigate, initialUri, onPresented }: PresentScreenProps) {
+export default function PresentScreen({ navigate, initialUri, onPresented, onRouteToCe }: PresentScreenProps) {
   const { state, markExpired } = useAuth();
+  const { state: ceState } = useConsentEngine();
   const [stage, setStage] = useState<Stage>(initialUri ? 'loading' : 'scan');
+  const [ceBypassed, setCeBypassed] = useState(false);
   const [manualUri, setManualUri] = useState(initialUri ?? '');
   const [showManual, setShowManual] = useState(!!initialUri);
   const [currentRequestUri, setCurrentRequestUri] = useState(initialUri ?? '');
@@ -101,6 +106,15 @@ export default function PresentScreen({ navigate, initialUri, onPresented }: Pre
     if (!state.token) { console.log('[neoke:present] no token, aborting'); return; }
     const trimmed = uri.trim();
     console.log('[neoke:present] trimmed uri:', trimmed);
+
+    // Route to CE if configured and available
+    if (onRouteToCe && isCeConfigured() && ceState.ceEnabled && ceState.ceApiKey) {
+      onRouteToCe(trimmed);
+      return;
+    }
+    if (isCeConfigured() && ceState.ceEnabled) {
+      setCeBypassed(true);
+    }
 
     const uriType = detectUriType(trimmed);
     console.log('[neoke:present] uriType:', uriType);
@@ -480,6 +494,19 @@ export default function PresentScreen({ navigate, initialUri, onPresented }: Pre
           <p className="text-[13px] text-[#8e8e93]">Scan or paste a presentation request URI</p>
         </div>
       </header>
+
+      {/* CE bypass notice */}
+      {ceBypassed && (
+        <div className="px-5 pb-2">
+          <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-2xl px-4 py-2.5">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-blue-600 flex-shrink-0">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.7" />
+              <path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+            <p className="text-[13px] text-blue-700">Consent Engine bypassed for this request.</p>
+          </div>
+        </div>
+      )}
 
       {/* Scrollable content — pb-28 only needed when manual strip is visible */}
       <div className={`flex-1 overflow-y-auto px-5 space-y-4 ${showManual ? 'pb-28' : 'pb-6'}`}>

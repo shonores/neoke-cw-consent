@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { discoverWalletCredentials, ApiError } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { useConsentEngine } from '../context/ConsentEngineContext';
 import { getLocalCredentials, mergeWithLocalCredentials, clearLocalCredentials } from '../store/localCredentials';
 import CredentialStack from '../components/CredentialStack';
+import CeStatusBanner from '../components/CeStatusBanner';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import type { Credential } from '../types';
@@ -18,6 +20,7 @@ const STALE_THRESHOLD_MS = 5 * 60 * 1000;
 
 export default function DashboardScreen({ navigate, refreshSignal }: DashboardScreenProps) {
   const { state, markExpired } = useAuth();
+  const { refreshHealth } = useConsentEngine();
   const [credentials, setCredentials] = useState<Credential[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -125,6 +128,14 @@ export default function DashboardScreen({ navigate, refreshSignal }: DashboardSc
 
       {/* Content — no overflow-y-auto here; let viewport scroll so no scrollbar width is stolen from card container */}
       <main className="flex-1 pb-28">
+
+        {/* CE Status Banner */}
+        <div className="px-5 mb-2">
+          <CeStatusBanner
+            onNavigateToQueue={() => navigate('consent_queue')}
+            onRetry={() => refreshHealth()}
+          />
+        </div>
 
         {loading ? (
           <div className="px-5 flex items-center justify-center pt-16">

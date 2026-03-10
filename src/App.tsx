@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ConsentEngineProvider, useConsentEngine } from './context/ConsentEngineContext';
 import DashboardScreen from './screens/DashboardScreen';
 import CredentialDetailScreen from './screens/CredentialDetailScreen';
 import ReceiveScreen from './screens/ReceiveScreen';
@@ -8,7 +9,14 @@ import PresentScreen from './screens/PresentScreen';
 import AccountScreen from './screens/AccountScreen';
 import OnboardingStep1Screen from './screens/OnboardingStep1Screen';
 import OnboardingStep2Screen from './screens/OnboardingStep2Screen';
+import OnboardingStep3Screen from './screens/OnboardingStep3Screen';
+import ConsentRulesScreen from './screens/ConsentRulesScreen';
+import ConsentRuleEditorScreen from './screens/ConsentRuleEditorScreen';
+import ConsentQueueScreen from './screens/ConsentQueueScreen';
+import ConsentQueueDetailScreen from './screens/ConsentQueueDetailScreen';
+import AuditLogScreen from './screens/AuditLogScreen';
 import ReAuthModal from './components/ReAuthModal';
+import CeIntakeOverlay from './components/CeIntakeOverlay';
 import { detectUriType } from './utils/uriRouter';
 import type { ViewName, Credential } from './types';
 
@@ -18,13 +26,18 @@ import type { ViewName, Credential } from './types';
 function TabBar({
   currentView,
   onNavigate,
+  ceEnabled,
+  pendingCount,
 }: {
   currentView: ViewName;
   onNavigate: (view: ViewName) => void;
+  ceEnabled: boolean;
+  pendingCount: number;
 }) {
   const homeActive    = currentView === 'dashboard';
   const scanActive    = currentView === 'receive' || currentView === 'present';
   const accountActive = currentView === 'account';
+  const consentActive = ['consent_rules', 'consent_queue', 'consent_queue_detail', 'audit_log', 'consent_rule_editor'].includes(currentView);
 
   return (
     <div
@@ -69,6 +82,34 @@ function TabBar({
         <span className="text-[10px] font-medium">Scan QR Code</span>
       </button>
 
+      {/* Consent (conditional) */}
+      {ceEnabled && (
+        <button
+          className={`flex-1 flex flex-col items-center gap-1 pt-3 pb-3 transition-colors relative ${consentActive ? 'text-[#5B4FE9]' : 'text-[#8e8e93]'}`}
+          onClick={() => onNavigate('consent_queue')}
+          aria-label="Consent"
+        >
+          <div className="relative">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 2L4 6v6c0 5.25 3.5 9.74 8 11 4.5-1.26 8-5.75 8-11V6l-8-4z"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinejoin="round"
+                fill={consentActive ? 'currentColor' : 'none'}
+                fillOpacity={consentActive ? 0.12 : 0}
+              />
+            </svg>
+            {pendingCount > 0 && (
+              <span className="absolute -top-1 -right-2 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                {pendingCount > 9 ? '9+' : pendingCount}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] font-medium">Consent</span>
+        </button>
+      )}
+
       {/* Account */}
       <button
         className={`flex-1 flex flex-col items-center gap-1 pt-3 pb-3 transition-colors ${accountActive ? 'text-[#5B4FE9]' : 'text-[#8e8e93]'}`}
@@ -101,11 +142,14 @@ function TabBar({
 // ============================================================
 function AppInner() {
   const { state, setNode, setToken } = useAuth();
+  const { state: ceState, refreshPendingCount } = useConsentEngine();
+  const { ceEnabled, ceApiKey } = ceState;
 
   // Onboarding step (used when not authenticated)
-  const [onboardingStep, setOnboardingStep] = useState<1 | 2>(1);
+  const [onboardingStep, setOnboardingStep] = useState<1 | 2 | 3>(1);
   const [pendingNodeId,  setPendingNodeId]  = useState('');
   const [pendingBaseUrl, setPendingBaseUrl] = useState('');
+  const [justCompletedStep2, setJustCompletedStep2] = useState(false);
 
   // Read saved node from localStorage to pre-fill step 1
   const [savedNodeId] = useState<string>(() => {
@@ -113,25 +157,12 @@ function AppInner() {
   });
 
   // ── Deep-link detection ──────────────────────────────────────────────────
-  // Read once on mount from the URL query string. Accepts:
-  //   ?uri=openid-credential-offer://...   (issuance)
-  //   ?uri=openid4vp://...                 (verification)
-  //   ?offer_uri=...                       (alternative param name)
-  //
-  // Two encoding forms are handled:
-  //   Encoded:   ?uri=openid4vp%3A%2F%2F%3Fclient_id%3DX%26request_uri%3DY
-  //   Unencoded: ?uri=openid4vp://?client_id=X&request_uri=Y&request_uri_method=Z
-  //              ↑ URLSearchParams splits on &, truncating the URI. We detect
-  //                this and re-extract from the raw search string instead.
   const [deepLinkUri] = useState<string | null>(() => {
     const search = window.location.search;
     console.log('[neoke:deeplink] window.location.href:', window.location.href);
     console.log('[neoke:deeplink] window.location.search:', search);
     if (!search) { console.log('[neoke:deeplink] no search string, skipping'); return null; }
 
-    // Raw extraction FIRST — when the inner URI is not encoded, URLSearchParams
-    // splits on its & chars and truncates it. Taking the raw substring after
-    // 'uri=' gives the complete, unmodified URI (e.g. the full openid4vp://...).
     const raw = search.startsWith('?') ? search.slice(1) : search;
     console.log('[neoke:deeplink] raw query string:', raw);
     for (const key of ['uri', 'offer_uri']) {
@@ -145,8 +176,6 @@ function AppInner() {
       }
     }
 
-    // Fallback: properly-encoded form (?uri=openid4vp%3A%2F%2F...).
-    // URLSearchParams decodes the percent-encoding so detectUriType can match.
     const p = new URLSearchParams(search);
     for (const key of ['uri', 'offer_uri']) {
       const val = p.get(key);
@@ -167,26 +196,42 @@ function AppInner() {
   const [selectedCredential, setSelectedCredential] = useState<Credential | null>(null);
   const [pendingUri,         setPendingUri]          = useState<string | undefined>();
   const [refreshSignal,      setRefreshSignal]       = useState(0);
+  const [editingRuleId,      setEditingRuleId]       = useState<string | null>(null);
+  const [selectedQueueItemId, setSelectedQueueItemId] = useState<string | null>(null);
+  const [ceProcessingUri,    setCeProcessingUri]     = useState<string | null>(null);
 
   const navigate = (
     view: ViewName,
-    extra?: { selectedCredential?: Credential; pendingUri?: string }
+    extra?: {
+      selectedCredential?: Credential;
+      pendingUri?: string;
+      editingRuleId?: string | null;
+      selectedQueueItemId?: string | null;
+    }
   ) => {
     setSelectedCredential(extra?.selectedCredential ?? null);
     setPendingUri(extra?.pendingUri);
+    if (extra && 'editingRuleId' in extra) setEditingRuleId(extra.editingRuleId ?? null);
+    if (extra && 'selectedQueueItemId' in extra) setSelectedQueueItemId(extra.selectedQueueItemId ?? null);
     setCurrentView(view);
   };
 
   // Reset state on login/logout; consume deep-link if present
   useEffect(() => {
     if (state.token) {
-      // Log here so deepLinkUri is visible in the console after the user logs in
       console.log('[neoke:deeplink] *** token set, deepLinkUri:', deepLinkUri, '| type:', deepLinkType);
       console.log('[neoke:deeplink] *** window.location.href at this point:', window.location.href);
+
       if (deepLinkUri && !deepLinkConsumed.current && deepLinkType !== 'unknown') {
         deepLinkConsumed.current = true;
-        // Clean up the URL so a refresh doesn't re-trigger the flow
         window.history.replaceState({}, '', window.location.pathname);
+
+        if (ceEnabled && ceApiKey) {
+          navigate('dashboard');
+          setCeProcessingUri(deepLinkUri);
+          return;
+        }
+
         if (deepLinkType === 'receive') {
           navigate('receive', { pendingUri: deepLinkUri });
         } else {
@@ -194,11 +239,30 @@ function AppInner() {
         }
         return;
       }
+
+      // Step 3 onboarding check (CE setup)
+      if (justCompletedStep2) {
+        setJustCompletedStep2(false);
+        const ceDismissed = localStorage.getItem('neoke_ce_dismissed') === 'true';
+        const existingCeUrl = localStorage.getItem('neoke_ce_url');
+        if (!ceDismissed && !existingCeUrl) {
+          setOnboardingStep(3 as 1 | 2 | 3);
+          return;
+        }
+      }
+
       setCurrentView('dashboard');
     } else {
       setOnboardingStep(1);
     }
   }, [state.token]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Refresh pending count when returning to consent views
+  useEffect(() => {
+    if (['consent_queue', 'consent_rules', 'audit_log'].includes(currentView)) {
+      refreshPendingCount();
+    }
+  }, [currentView, refreshPendingCount]);
 
   // ── Session expired → re-auth sheet ─────────────────────────────────────
   if (state.sessionExpired) {
@@ -209,8 +273,18 @@ function AppInner() {
     );
   }
 
-  // ── Not authenticated → two-step onboarding ──────────────────────────────
+  // ── Not authenticated → onboarding ───────────────────────────────────────
   if (!state.token) {
+    if (onboardingStep === 3) {
+      return (
+        <div className="w-full max-w-lg mx-auto">
+          <OnboardingStep3Screen
+            onComplete={() => setCurrentView('dashboard')}
+            onSkip={() => setCurrentView('dashboard')}
+          />
+        </div>
+      );
+    }
     if (onboardingStep === 2) {
       return (
         <div className="w-full max-w-lg mx-auto">
@@ -219,6 +293,7 @@ function AppInner() {
             nodeBaseUrl={pendingBaseUrl}
             onBack={() => setOnboardingStep(1)}
             onSuccess={(token, expiresAt) => {
+              setJustCompletedStep2(true);
               setNode(pendingNodeId, pendingBaseUrl);
               setToken(token, expiresAt);
             }}
@@ -246,7 +321,7 @@ function AppInner() {
   }
 
   // ── Authenticated — main wallet ──────────────────────────────────────────
-  const showTabBar = currentView === 'dashboard' || currentView === 'account';
+  const showTabBar = ['dashboard', 'account', 'consent_rules', 'consent_queue', 'audit_log'].includes(currentView);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F2F2F7] w-full max-w-lg mx-auto">
@@ -277,6 +352,7 @@ function AppInner() {
             navigate={navigate}
             onCredentialReceived={() => setRefreshSignal((s) => s + 1)}
             initialUri={pendingUri}
+            onRouteToCe={ceEnabled && ceApiKey ? (uri) => { setCeProcessingUri(uri); navigate('dashboard'); } : undefined}
           />
         )}
 
@@ -286,6 +362,7 @@ function AppInner() {
             navigate={navigate}
             initialUri={pendingUri}
             onPresented={() => setRefreshSignal((s) => s + 1)}
+            onRouteToCe={ceEnabled && ceApiKey ? (uri) => { setCeProcessingUri(uri); navigate('dashboard'); } : undefined}
           />
         )}
 
@@ -295,22 +372,72 @@ function AppInner() {
             navigate={navigate}
           />
         )}
+
+        {currentView === 'consent_rules' && (
+          <ConsentRulesScreen key="consent_rules" navigate={navigate} />
+        )}
+
+        {currentView === 'consent_rule_editor' && (
+          <ConsentRuleEditorScreen key="consent_rule_editor" navigate={navigate} editingRuleId={editingRuleId} />
+        )}
+
+        {currentView === 'consent_queue' && (
+          <ConsentQueueScreen key="consent_queue" navigate={navigate} />
+        )}
+
+        {currentView === 'consent_queue_detail' && selectedQueueItemId && (
+          <ConsentQueueDetailScreen key="consent_queue_detail" navigate={navigate} queueItemId={selectedQueueItemId} />
+        )}
+
+        {currentView === 'audit_log' && (
+          <AuditLogScreen key="audit_log" navigate={navigate} />
+        )}
+      </AnimatePresence>
+
+      {/* CE Intake Overlay */}
+      <AnimatePresence>
+        {ceProcessingUri && (
+          <CeIntakeOverlay
+            rawLink={ceProcessingUri}
+            apiKey={ceApiKey ?? ''}
+            onDismiss={() => setCeProcessingUri(null)}
+            onFallback={(uri, type) => {
+              setCeProcessingUri(null);
+              navigate(type === 'receive' ? 'receive' : 'present', { pendingUri: uri });
+            }}
+            onReviewQueue={(itemId) => {
+              setCeProcessingUri(null);
+              navigate('consent_queue_detail', { selectedQueueItemId: itemId });
+            }}
+            onViewAudit={() => {
+              setCeProcessingUri(null);
+              navigate('audit_log');
+            }}
+          />
+        )}
       </AnimatePresence>
 
       {showTabBar && (
-        <TabBar currentView={currentView} onNavigate={navigate} />
+        <TabBar
+          currentView={currentView}
+          onNavigate={navigate}
+          ceEnabled={ceEnabled}
+          pendingCount={ceState.pendingCount}
+        />
       )}
     </div>
   );
 }
 
 // ============================================================
-// Root app with provider
+// Root app with providers
 // ============================================================
 export default function App() {
   return (
     <AuthProvider>
-      <AppInner />
+      <ConsentEngineProvider>
+        <AppInner />
+      </ConsentEngineProvider>
     </AuthProvider>
   );
 }
