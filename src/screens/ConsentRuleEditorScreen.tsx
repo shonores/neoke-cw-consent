@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
+import { useAuth } from '../context/AuthContext';
 import {
   listRules,
   createRule,
@@ -47,14 +48,12 @@ function OptionCard({ selected, onClick, title, description }: OptionCardProps) 
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left bg-white rounded-2xl px-4 py-4 border-2 transition-colors ${
-        selected ? 'border-[#5B4FE9] bg-[#5B4FE9]/3' : 'border-transparent shadow-sm'
-      }`}
+      className={`w-full text-left bg-white rounded-2xl px-4 py-4 border-2 transition-colors ${selected ? 'border-[#5B4FE9] bg-[#5B4FE9]/3' : 'border-transparent shadow-sm'
+        }`}
     >
       <div className="flex items-center gap-3">
-        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-          selected ? 'border-[#5B4FE9] bg-[#5B4FE9]' : 'border-[#c7c7cc]'
-        }`}>
+        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selected ? 'border-[#5B4FE9] bg-[#5B4FE9]' : 'border-[#c7c7cc]'
+          }`}>
           {selected && (
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
               <path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -72,6 +71,7 @@ function OptionCard({ selected, onClick, title, description }: OptionCardProps) 
 
 export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Props) {
   const { state } = useConsentEngine();
+  const { state: authState } = useAuth();
   const apiKey = state.ceApiKey ?? '';
 
   // Wizard state
@@ -106,7 +106,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
 
   // Load credential types from CE
   useEffect(() => {
-    listNodeCredentialTypes(apiKey).then(setCredentialTypes).catch(() => {});
+    listNodeCredentialTypes(apiKey).then(setCredentialTypes).catch(() => { });
   }, [apiKey]);
 
   // Load existing rule if editing
@@ -186,10 +186,10 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
     setSaveError('');
     try {
       const payload: CreateRulePayload = {
-        nodeId: '',
+        nodeId: authState.nodeIdentifier || '',
         ruleType,
         enabled: true,
-        label: label || undefined,
+        label: label || '',
         party: {
           matchType: partyMatchType,
           value: partyMatchType !== 'any' ? partyValue : undefined,
@@ -388,8 +388,8 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
                 onChange={e => setPartyValue(e.target.value)}
                 placeholder={
                   partyMatchType === 'did' ? 'did:web:example.com'
-                  : partyMatchType === 'domain' ? 'verifier.example.com'
-                  : 'example.com'
+                    : partyMatchType === 'domain' ? 'verifier.example.com'
+                      : 'example.com'
                 }
                 className="w-full bg-white border border-black/8 rounded-2xl px-4 py-4 text-[15px] text-[#1c1c1e] placeholder-[#c7c7cc] focus:outline-none focus:border-[#5B4FE9] shadow-sm"
               />
@@ -574,11 +574,10 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
                       <button
                         key={idx}
                         onClick={() => toggleDay(idx)}
-                        className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-                          condAllowedDays.includes(idx)
-                            ? 'bg-[#5B4FE9] text-white'
-                            : 'bg-[#F2F2F7] text-[#8e8e93]'
-                        }`}
+                        className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${condAllowedDays.includes(idx)
+                          ? 'bg-[#5B4FE9] text-white'
+                          : 'bg-[#F2F2F7] text-[#8e8e93]'
+                          }`}
                       >
                         {name}
                       </button>

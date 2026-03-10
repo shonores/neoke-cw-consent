@@ -50,13 +50,25 @@ export class CeApiError extends Error {
 
 function ceFriendlyError(status: number, body: unknown): string {
   const b = typeof body === 'object' && body !== null ? body as Record<string, unknown> : null;
-  const code = b ? String(b['code'] ?? '') : '';
-  if (code && CE_ERROR_MESSAGES[code]) return CE_ERROR_MESSAGES[code];
+  if (!b) return `Consent Engine error (${status}). Please try again.`;
 
-  const detail =
-    b
-      ? String(b['message'] ?? b['error'] ?? b['detail'] ?? b['description'] ?? '')
-      : '';
+  let detail = '';
+  let code = String(b['code'] ?? '');
+
+  if (b['error'] && typeof b['error'] === 'object') {
+    const errObj = b['error'] as Record<string, unknown>;
+    code = String(errObj['code'] ?? code);
+    if (code && CE_ERROR_MESSAGES[code]) return CE_ERROR_MESSAGES[code];
+
+    detail = String(errObj['message'] ?? '');
+    if (Array.isArray(errObj['details'])) {
+      const msgs = errObj['details'].map((d: any) => `${d.path?.join('.')}: ${d.message}`).join(', ');
+      if (msgs) detail += ` (${msgs})`;
+    }
+  } else {
+    if (code && CE_ERROR_MESSAGES[code]) return CE_ERROR_MESSAGES[code];
+    detail = String(b['message'] ?? b['error'] ?? b['detail'] ?? b['description'] ?? '');
+  }
 
   switch (status) {
     case 401:
