@@ -111,8 +111,11 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
         if (nodeId) {
           const nodeUrl = nodeIdentifierToUrl(nodeId);
           await connectNode(ceApiKey, nodeId, nodeUrl);
+          console.log('[ce:refreshHealth] connectNode completed');
         }
-      } catch { /* non-fatal — health check will reflect updated status */ }
+      } catch (err) {
+        console.warn('[ce:refreshHealth] connectNode failed:', err instanceof Error ? err.message : err);
+      }
     }
     try {
       const health = await checkCeHealth();

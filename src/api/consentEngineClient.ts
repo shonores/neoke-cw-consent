@@ -131,10 +131,24 @@ export async function connectNode(
   nodeId: string,
   nodeUrl: string,
 ): Promise<void> {
-  await ceRequest<void>('/nodes', apiKey, {
+  console.log('[ce:connectNode] attempting node registration', { nodeId, nodeUrl });
+  try {
+    // First try PATCH to refresh an existing node's API key
+    const result = await ceRequest<unknown>(`/nodes/${nodeId}`, apiKey, {
+      method: 'PATCH',
+      body: JSON.stringify({ nodeUrl, apiKey }),
+    });
+    console.log('[ce:connectNode] PATCH /nodes succeeded', result);
+    return;
+  } catch (patchErr) {
+    console.log('[ce:connectNode] PATCH failed, trying POST', patchErr instanceof Error ? patchErr.message : patchErr);
+  }
+  // Fallback: create new node entry
+  const result = await ceRequest<unknown>('/nodes', apiKey, {
     method: 'POST',
     body: JSON.stringify({ nodeId, nodeUrl, apiKey }),
   });
+  console.log('[ce:connectNode] POST /nodes succeeded', result);
 }
 
 // ============================================================
