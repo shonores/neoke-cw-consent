@@ -157,36 +157,27 @@ function AppInner() {
   // ── Deep-link detection ──────────────────────────────────────────────────
   const [deepLinkUri] = useState<string | null>(() => {
     const search = window.location.search;
-    console.log('[neoke:deeplink] window.location.href:', window.location.href);
-    console.log('[neoke:deeplink] window.location.search:', search);
-    if (!search) { console.log('[neoke:deeplink] no search string, skipping'); return null; }
+    if (!search) return null;
 
     const raw = search.startsWith('?') ? search.slice(1) : search;
-    console.log('[neoke:deeplink] raw query string:', raw);
     for (const key of ['uri', 'offer_uri']) {
       const prefix = `${key}=`;
       const idx = raw.indexOf(prefix);
       if (idx !== -1) {
         const candidate = raw.slice(idx + prefix.length);
-        const t = detectUriType(candidate);
-        console.log(`[neoke:deeplink] raw candidate for "${key}":`, candidate, '→ type:', t);
-        if (t !== 'unknown') return candidate;
+        if (detectUriType(candidate) !== 'unknown') return candidate;
       }
     }
 
     const p = new URLSearchParams(search);
     for (const key of ['uri', 'offer_uri']) {
       const val = p.get(key);
-      const t = val ? detectUriType(val) : 'null';
-      console.log(`[neoke:deeplink] URLSearchParams candidate for "${key}":`, val, '→ type:', t);
       if (val && detectUriType(val) !== 'unknown') return val;
     }
 
-    console.log('[neoke:deeplink] no valid URI found');
     return null;
   });
   const deepLinkType = deepLinkUri ? detectUriType(deepLinkUri) : null;
-  console.log('[neoke:deeplink] final deepLinkUri:', deepLinkUri, '| type:', deepLinkType);
   const deepLinkConsumed = useRef(false);
 
   // Authenticated navigation state
@@ -218,17 +209,12 @@ function AppInner() {
   useEffect(() => {
     if (!state.token || ceState.ceUrl) return;
     const apiKey = localStorage.getItem('neoke_ce_apikey') ?? '';
-    const nodeId = state.nodeIdentifier ?? '';
-    const nodeUrl = state.baseUrl ?? '';
-    if (apiKey && nodeId && nodeUrl) autoConfigureCe(apiKey, nodeId, nodeUrl);
-  }, [state.token, ceState.ceUrl, state.nodeIdentifier, state.baseUrl, autoConfigureCe]);
+    if (apiKey) autoConfigureCe(apiKey);
+  }, [state.token, ceState.ceUrl, autoConfigureCe]);
 
   // Reset state on login/logout; consume deep-link if present
   useEffect(() => {
     if (state.token) {
-      console.log('[neoke:deeplink] *** token set, deepLinkUri:', deepLinkUri, '| type:', deepLinkType);
-      console.log('[neoke:deeplink] *** window.location.href at this point:', window.location.href);
-
       if (deepLinkUri && !deepLinkConsumed.current && deepLinkType !== 'unknown') {
         deepLinkConsumed.current = true;
         window.history.replaceState({}, '', window.location.pathname);
