@@ -218,8 +218,10 @@ function AppInner() {
   useEffect(() => {
     if (!state.token || ceState.ceUrl) return;
     const apiKey = localStorage.getItem('neoke_ce_apikey') ?? '';
-    if (apiKey) autoConfigureCe(apiKey);
-  }, [state.token, ceState.ceUrl, autoConfigureCe]);
+    const nodeId = state.nodeIdentifier ?? '';
+    const nodeUrl = state.baseUrl ?? '';
+    if (apiKey && nodeId && nodeUrl) autoConfigureCe(apiKey, nodeId, nodeUrl);
+  }, [state.token, ceState.ceUrl, state.nodeIdentifier, state.baseUrl, autoConfigureCe]);
 
   // Reset state on login/logout; consume deep-link if present
   useEffect(() => {

@@ -8,7 +8,8 @@ import {
   type ReactNode,
 } from 'react';
 import { useAuth } from './AuthContext';
-import { setCeBaseUrl, checkCeHealth, isCeConfigured } from '../api/consentEngineClient';
+import { setCeBaseUrl, checkCeHealth, isCeConfigured, connectNode } from '../api/consentEngineClient';
+import { nodeIdentifierToUrl } from '../api/client';
 
 export const CE_SK = {
   CE_URL:      'neoke_ce_url',
@@ -32,7 +33,7 @@ interface ConsentEngineContextValue {
   state: ConsentEngineState;
   configureCe: (ceUrl: string, apiKey: string) => Promise<void>;
   /** Silently configure CE with the default URL + given key — never throws. */
-  autoConfigureCe: (apiKey: string) => Promise<void>;
+  autoConfigureCe: (apiKey: string, nodeId: string, nodeUrl: string) => Promise<void>;
   removeCe: () => void;
   toggleCe: (enabled: boolean) => void;
   refreshHealth: () => Promise<void>;
@@ -102,6 +103,17 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
 
   const refreshHealth = useCallback(async () => {
     if (!isCeConfigured()) return;
+    const { ceApiKey } = stateRef.current;
+    if (!stateRef.current.isConnected && ceApiKey) {
+      // CE is reachable but node token expired — ask CE to reconnect
+      try {
+        const nodeId = localStorage.getItem('neoke_node_id') ?? '';
+        if (nodeId) {
+          const nodeUrl = nodeIdentifierToUrl(nodeId);
+          await connectNode(ceApiKey, nodeId, nodeUrl);
+        }
+      } catch { /* non-fatal — health check will reflect updated status */ }
+    }
     try {
       const health = await checkCeHealth();
       dispatch({ type: 'SET_HEALTH', isConnected: health.status === 'healthy', pendingCount: health.pendingCount });
@@ -178,7 +190,7 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
     } catch { /* */ }
   }, []);
 
-  const autoConfigureCe = useCallback(async (apiKey: string) => {
+  const autoConfigureCe = useCallback(async (apiKey: string, nodeId: string, nodeUrl: string) => {
     if (!apiKey) return;
     const ceUrl = DEFAULT_CE_URL;
     setCeBaseUrl(ceUrl);
@@ -188,7 +200,11 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(CE_SK.CE_ENABLED, 'true');
       localStorage.setItem(CE_SK.CE_APIKEY, apiKey);
     } catch { /* */ }
-    // Silent health check — CE may be sleeping on cold start
+    // Register node with CE so it can connect
+    try {
+      await connectNode(apiKey, nodeId, nodeUrl);
+    } catch { /* non-fatal */ }
+    // Health check after node registration
     try {
       const health = await checkCeHealth();
       dispatch({ type: 'SET_HEALTH', isConnected: health.status === 'healthy', pendingCount: health.pendingCount });

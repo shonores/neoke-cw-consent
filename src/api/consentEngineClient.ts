@@ -124,6 +124,20 @@ async function ceRequest<T>(
 }
 
 // ============================================================
+// Node registration / reconnect
+// ============================================================
+export async function connectNode(
+  apiKey: string,
+  nodeId: string,
+  nodeUrl: string,
+): Promise<void> {
+  await ceRequest<void>('/nodes', apiKey, {
+    method: 'POST',
+    body: JSON.stringify({ nodeId, nodeUrl, apiKey }),
+  });
+}
+
+// ============================================================
 // Health
 // ============================================================
 export async function checkCeHealth(): Promise<{ status: 'healthy' | 'degraded'; isConnected: boolean; pendingCount: number }> {
