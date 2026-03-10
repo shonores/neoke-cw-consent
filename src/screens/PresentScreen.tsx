@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { previewPresentationWithRetry, respondPresentationWithRetry, ApiError } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useConsentEngine } from '../context/ConsentEngineContext';
@@ -13,10 +14,12 @@ import {
 } from '../utils/credentialHelpers';
 import { getLocalCredentials } from '../store/localCredentials';
 import QRScanner from '../components/QRScanner';
+import Header from '../components/Header';
 import PrimaryButton from '../components/PrimaryButton';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import CredentialThumbnail from '../components/CredentialThumbnail';
+import OptionCard from '../components/OptionCard';
 import type { Credential, VPPreviewResponse, ViewName } from '../types';
 
 type Stage = 'scan' | 'loading' | 'select' | 'consent' | 'presenting' | 'success' | 'error';
@@ -172,7 +175,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
 
   useEffect(() => {
     if (initialUri) processPresentUri(initialUri);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleShare = async () => {
@@ -200,10 +203,10 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
   // ── Loading / Presenting ──
   if (stage === 'loading' || stage === 'presenting') {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 min-h-screen bg-[#F2F2F7]">
+      <div className="flex-1 flex flex-col items-center justify-center p-6 min-h-screen bg-[var(--bg-ios)]">
         <div className="text-center space-y-4">
           <LoadingSpinner size="lg" className="mx-auto" />
-          <p className="text-[#8e8e93] text-[15px]">
+          <p className="text-[var(--text-muted)] text-[15px] font-medium">
             {stage === 'loading' ? 'Processing request…' : 'Sharing credential…'}
           </p>
         </div>
@@ -220,28 +223,15 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
     const multipleGroups = ambiguousQueries.length > 1;
 
     return (
-      <div className="flex flex-col min-h-screen bg-[#F2F2F7]">
-        {/* iOS-style drag handle */}
-        <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div className="w-9 h-1 rounded-full bg-[#c7c7cc]" />
-        </div>
+      <div className="flex flex-col min-h-screen bg-[var(--bg-ios)]">
+        <Header
+          title={multipleGroups ? 'Multiple Credentials' : 'Select Credential'}
+          onBack={() => navigate('dashboard')}
+        />
 
-        {/* Close button */}
-        <div className="px-5 pt-2 pb-4 flex-shrink-0">
-          <button
-            onClick={() => navigate('dashboard')}
-            className="w-9 h-9 rounded-full bg-black/8 flex items-center justify-center text-[#1c1c1e] hover:bg-black/12 transition-colors"
-            aria-label="Close"
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Title */}
-        <div className="px-5 pb-7 flex-shrink-0">
-          <h2 className="text-[28px] font-bold text-[#1c1c1e] leading-tight">
+        {/* Title / Instruction */}
+        <div className="px-5 pb-6 flex-shrink-0">
+          <h2 className="text-[24px] font-bold text-[var(--text-main)] leading-tight">
             {multipleGroups ? 'Choose credentials to share' : 'Choose a credential to share'}
           </h2>
         </div>
@@ -281,9 +271,8 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
                         onClick={() =>
                           setSelections((prev) => ({ ...prev, [query.queryId]: cand.index }))
                         }
-                        className={`w-full bg-white rounded-2xl flex items-center px-4 py-3 shadow-sm text-left transition-all ${
-                          isSelected ? 'ring-2 ring-[#5B4FE9]' : ''
-                        }`}
+                        className={`w-full bg-[var(--bg-white)] rounded-[var(--radius-2xl)] flex items-center px-4 py-4 shadow-[var(--shadow-sm)] text-left transition-all border-2 ${isSelected ? 'border-[var(--primary)]' : 'border-transparent'
+                          }`}
                       >
                         <CredentialThumbnail
                           backgroundColor={backgroundColor}
@@ -293,24 +282,24 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
                         />
                         {/* Label + issuer */}
                         <div className="flex-1 min-w-0">
-                          <p className="text-[15px] font-semibold text-[#1c1c1e] truncate">{label}</p>
-                          <p className="text-[13px] text-[#8e8e93] truncate">{issuerLabel}</p>
+                          <p className="text-[15px] font-bold text-[var(--text-main)] truncate italic">{label}</p>
+                          <p className="text-[13px] text-[var(--text-muted)] truncate">{issuerLabel}</p>
                         </div>
                         {/* Selection indicator */}
                         {isSelected ? (
-                          <div className="w-6 h-6 rounded-full bg-[#5B4FE9] flex items-center justify-center flex-shrink-0 ml-3">
+                          <div className="w-6 h-6 rounded-full bg-[var(--primary)] flex items-center justify-center flex-shrink-0 ml-3">
                             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                               <path
                                 d="M2.5 6l2.5 2.5 4.5-5"
                                 stroke="#fff"
-                                strokeWidth="1.8"
+                                strokeWidth="2.5"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                               />
                             </svg>
                           </div>
                         ) : (
-                          <div className="w-6 h-6 rounded-full border-2 border-[#c7c7cc] flex-shrink-0 ml-3" />
+                          <div className="w-6 h-6 rounded-full border-2 border-[var(--border-subtle)] flex-shrink-0 ml-3" />
                         )}
                       </button>
                     );
@@ -322,7 +311,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
         </div>
 
         {/* Pinned Continue button */}
-        <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto px-5 pt-4 pb-10 bg-[#F2F2F7] z-40">
+        <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-5 pt-4 pb-10 bg-[var(--bg-ios)] z-40 border-t border-black/5">
           <PrimaryButton onClick={() => setStage('consent')}>
             Continue
           </PrimaryButton>
@@ -334,21 +323,22 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
   // ── Error ──
   if (stage === 'error') {
     return (
-      <div className="flex-1 flex flex-col p-6 min-h-screen bg-[#F2F2F7]">
-        <button
-          onClick={() => navigate('dashboard')}
-          className="self-start text-[#8e8e93] hover:text-[#1c1c1e] text-[15px] flex items-center gap-1.5 min-h-[44px]"
-        >
-          ← Back
-        </button>
-        <div className="flex-1 flex flex-col items-center justify-center space-y-4">
+      <div className="flex-1 flex flex-col min-h-screen bg-[var(--bg-ios)]">
+        <Header title="Error" onBack={() => navigate('dashboard')} />
+        <div className="flex-1 flex flex-col items-center justify-center px-6 space-y-6">
+          <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+              <path d="M12 8v4M12 16h.01" stroke="var(--text-error)" strokeWidth="2.5" strokeLinecap="round" />
+              <circle cx="12" cy="12" r="10" stroke="var(--text-error)" strokeWidth="2" />
+            </svg>
+          </div>
           <ErrorMessage message={error} />
-          <button
+          <PrimaryButton
             onClick={() => { setStage('scan'); setError(''); setManualUri(''); }}
-            className="bg-white hover:bg-[#e5e5ea] text-[#1c1c1e] text-[15px] py-3 px-6 rounded-2xl transition-colors min-h-[44px] shadow-sm border border-black/5"
+            className="w-full max-w-xs"
           >
             Try again
-          </button>
+          </PrimaryButton>
         </div>
       </div>
     );
@@ -357,23 +347,27 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
   // ── Success ──
   if (stage === 'success') {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 min-h-screen bg-[#F2F2F7]">
-        <div className="text-center space-y-5 w-full max-w-sm">
-          <div className="w-20 h-20 bg-[#5B4FE9]/10 rounded-full flex items-center justify-center mx-auto">
+      <div className="flex-1 flex flex-col items-center justify-center p-6 min-h-screen bg-[var(--bg-ios)]">
+        <div className="text-center space-y-6 w-full max-w-sm">
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="w-24 h-24 bg-[var(--primary-bg)] rounded-full flex items-center justify-center mx-auto"
+          >
             <IconCheckCircle />
-          </div>
+          </motion.div>
           <div>
-            <p className="text-[#1c1c1e] font-bold text-[28px] leading-tight">Credential Shared</p>
-            <p className="text-[#8e8e93] text-[15px] mt-1">The verifier has received your credential.</p>
+            <h2 className="text-[var(--text-main)] font-bold text-[28px] leading-tight">Shared!</h2>
+            <p className="text-[var(--text-muted)] text-[16px] mt-2 font-medium">The verifier has received your information.</p>
           </div>
           {successResult?.redirectUri && (
-            <div className="bg-white rounded-2xl p-4 text-left shadow-sm">
-              <p className="text-[11px] text-[#8e8e93] uppercase tracking-wide mb-1">Redirect</p>
-              <p className="text-[12px] font-mono text-[#1c1c1e] break-all">{successResult.redirectUri}</p>
+            <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] p-4 text-left shadow-[var(--shadow-sm)] border border-[var(--border-subtle)]">
+              <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-wider mb-2">Redirecting to</p>
+              <p className="text-[13px] font-mono text-[var(--text-main)] break-all">{successResult.redirectUri}</p>
             </div>
           )}
           <PrimaryButton onClick={() => { onPresented?.(); navigate('dashboard'); }}>
-            Back to Wallet
+            Done
           </PrimaryButton>
         </div>
       </div>
@@ -385,47 +379,35 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
     const verifierName = preview.verifier.name ?? parseIssuerLabel(preview.verifier.clientId);
 
     return (
-      <div className="flex flex-col min-h-screen bg-[#F2F2F7] overflow-x-hidden">
-        {/* iOS-style drag handle */}
-        <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div className="w-9 h-1 rounded-full bg-[#c7c7cc]" />
-        </div>
-
-        {/* Close button */}
-        <div className="px-5 pt-2 pb-4 flex-shrink-0">
-          <button
-            onClick={() => navigate('dashboard')}
-            className="w-9 h-9 rounded-full bg-black/8 flex items-center justify-center text-[#1c1c1e] hover:bg-black/12 transition-colors"
-            aria-label="Close"
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
+      <div className="flex flex-col min-h-screen bg-[var(--bg-ios)] overflow-x-hidden">
+        <Header
+          title="Sharing Request"
+          onBack={() => setStage(preview.queries.some(q => q.candidates.length > 1) ? 'select' : 'scan')}
+        />
 
         {/* Title */}
-        <div className="px-5 pb-7 flex-shrink-0">
-          <h2 className="text-[28px] font-bold text-[#1c1c1e] leading-tight break-words min-w-0">
-            {verifierName}<br />wants you to share the following info
+        <div className="px-5 pb-6 flex-shrink-0">
+          <h2 className="text-[24px] font-bold text-[var(--text-main)] leading-tight break-words">
+            <span className="text-[var(--primary)] font-black italic">{verifierName}</span><br />
+            requests some info
           </h2>
         </div>
 
         {/* Scrollable content */}
-        <div className="px-5 flex-1 overflow-y-auto pb-28 space-y-6">
+        <div className="px-5 flex-1 overflow-y-auto pb-40 space-y-6">
           {/* Reason */}
           {preview.verifier.purpose && (
             <div>
-              <p className="text-[16px] font-bold text-[#1c1c1e] mb-3">Reason</p>
-              <div className="bg-white rounded-2xl px-4 py-3 shadow-sm">
-                <p className="text-[14px] text-[#1c1c1e]">{preview.verifier.purpose}</p>
+              <p className="text-[12px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Purpose</p>
+              <div className="bg-[var(--bg-white)] rounded-[var(--radius-xl)] px-4 py-4 shadow-[var(--shadow-sm)] border border-[var(--border-subtle)]">
+                <p className="text-[15px] font-medium text-[var(--text-main)] leading-relaxed italic">"{preview.verifier.purpose}"</p>
               </div>
             </div>
           )}
 
           {/* Info to share */}
           <div>
-            <p className="text-[16px] font-bold text-[#1c1c1e] mb-3">Info to share</p>
+            <p className="text-[12px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Info to share</p>
             <div className="space-y-3">
               {preview.queries.map((query) => {
                 const cand =
@@ -444,7 +426,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
                 return (
                   <div
                     key={query.queryId}
-                    className="bg-white rounded-2xl flex items-center px-4 py-3 shadow-sm"
+                    className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] flex items-center px-4 py-4 shadow-[var(--shadow-sm)] border border-[var(--border-subtle)]"
                   >
                     <CredentialThumbnail
                       backgroundColor={backgroundColor}
@@ -453,12 +435,9 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
                       className="mr-4"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[15px] font-semibold text-[#1c1c1e] truncate">{label}</p>
-                      <p className="text-[13px] text-[#8e8e93] truncate">{issuerLabel}</p>
+                      <p className="text-[15px] font-bold text-[var(--text-main)] truncate italic">{label}</p>
+                      <p className="text-[13px] text-[var(--text-muted)] truncate">{issuerLabel}</p>
                     </div>
-                    <svg width="8" height="14" viewBox="0 0 8 14" fill="none" className="flex-shrink-0 ml-3">
-                      <path d="M1 1l6 6-6 6" stroke="#c7c7cc" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
                   </div>
                 );
               })}
@@ -467,9 +446,9 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
         </div>
 
         {/* Pinned Continue button */}
-        <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto px-5 pt-4 pb-10 bg-[#F2F2F7] z-40">
+        <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-5 pt-4 pb-10 bg-[var(--bg-ios)] z-40 border-t border-[var(--border-subtle)]">
           <PrimaryButton onClick={handleShare}>
-            Continue
+            Confirm & Share
           </PrimaryButton>
         </div>
       </div>
@@ -478,88 +457,78 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
 
   // ── Scan ──
   return (
-    <div className="flex flex-col min-h-screen bg-[#F2F2F7]">
-      <header className="flex items-center gap-4 px-5 pt-12 pb-4 flex-shrink-0">
-        <button
-          onClick={() => navigate('dashboard')}
-          className="w-9 h-9 rounded-full bg-black/6 hover:bg-black/10 flex items-center justify-center text-[#1c1c1e] transition-colors"
-          aria-label="Go back"
-        >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M9 2L4 7l5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
-        <div>
-          <h2 className="text-[20px] font-bold text-[#1c1c1e]">Present Credential</h2>
-          <p className="text-[13px] text-[#8e8e93]">Scan or paste a presentation request URI</p>
-        </div>
-      </header>
+    <div className="flex flex-col min-h-screen bg-[var(--bg-ios)]">
+      <Header
+        title="Present"
+        onBack={() => navigate('dashboard')}
+      />
 
       {/* CE bypass notice */}
       {ceBypassed && (
         <div className="px-5 pb-2">
-          <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-2xl px-4 py-2.5">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-blue-600 flex-shrink-0">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.7" />
-              <path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-[var(--radius-xl)] px-4 py-3">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-blue-600 flex-shrink-0">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
+              <path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
             </svg>
-            <p className="text-[13px] text-blue-700">Consent Engine bypassed for this request.</p>
+            <p className="text-[13px] font-medium text-blue-700">Policy active: Request routed directly.</p>
           </div>
         </div>
       )}
 
       {/* Scrollable content — pb-28 only needed when manual strip is visible */}
-      <div className={`flex-1 overflow-y-auto px-5 space-y-4 ${showManual ? 'pb-28' : 'pb-6'}`}>
+      <div className={`flex-1 overflow-y-auto px-5 space-y-5 ${showManual ? 'pb-28' : 'pb-6'}`}>
         {/* Camera / Paste toggle */}
-        <div className="flex bg-black/5 rounded-xl p-1">
+        <div className="flex bg-black/5 rounded-[var(--radius-xl)] p-1 gap-1">
           <button
-            className={`flex-1 flex items-center justify-center gap-2 py-2 text-[14px] rounded-lg transition-colors ${!showManual ? 'bg-white text-[#1c1c1e] font-medium shadow-sm' : 'text-[#8e8e93]'}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[14px] rounded-lg transition-all ${!showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[var(--text-muted)] font-medium'}`}
             onClick={() => setShowManual(false)}
           >
             <IconCamera />
             Camera
           </button>
           <button
-            className={`flex-1 flex items-center justify-center gap-2 py-2 text-[14px] rounded-lg transition-colors ${showManual ? 'bg-white text-[#1c1c1e] font-medium shadow-sm' : 'text-[#8e8e93]'}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[14px] rounded-lg transition-all ${showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[var(--text-muted)] font-medium'}`}
             onClick={() => setShowManual(true)}
           >
             <IconPaste />
-            Paste URI
+            Manual
           </button>
         </div>
 
         {showManual ? (
-          <div className="space-y-3">
+          <div className="space-y-4">
             <textarea
               value={manualUri}
               onChange={(e) => { setManualUri(e.target.value); setError(''); }}
               placeholder="openid4vp://..."
               rows={5}
-              className="w-full bg-white border border-black/8 rounded-2xl px-4 py-3 text-[#1c1c1e] placeholder-[#aeaeb2] text-[14px] font-mono focus:outline-none focus:border-[#5B4FE9] resize-none shadow-sm"
+              className="w-full bg-[var(--bg-white)] border border-[var(--border-subtle)] rounded-[var(--radius-2xl)] px-4 py-4 text-[var(--text-main)] placeholder-[#aeaeb2] text-[14px] font-mono focus:outline-none focus:ring-2 focus:ring-[var(--primary)] resize-none shadow-[var(--shadow-sm)]"
               aria-label="Paste presentation request URI"
             />
             {error && <ErrorMessage message={error} />}
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             <QRScanner onScan={(r) => processPresentUri(r)} />
             {error && <ErrorMessage message={error} />}
-            <p className="text-center text-[13px] text-[#aeaeb2]">
-              Supports{' '}
-              <span className="font-mono">openid4vp://</span> presentation requests
-            </p>
+            <div className="bg-[var(--bg-white)]/50 rounded-[var(--radius-xl)] p-4 border border-dashed border-[var(--border-subtle)] text-center">
+              <p className="text-[12px] text-[var(--text-muted)] font-medium">
+                Scan any <span className="text-[var(--text-main)] font-bold">OpenID4VP</span> QR code to start the sharing process.
+              </p>
+            </div>
           </div>
         )}
       </div>
 
       {/* Fixed bottom button — only shown in manual (paste URI) mode */}
       {showManual && (
-        <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto px-5 pt-3 pb-10 bg-[#F2F2F7] z-40">
+        <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-5 pt-3 pb-10 bg-[var(--bg-ios)] z-40 border-t border-[var(--border-subtle)]">
           <PrimaryButton
             onClick={() => { if (manualUri.trim()) processPresentUri(manualUri.trim()); }}
             disabled={!manualUri.trim()}
           >
-            Process URI
+            Connect to Verifier
           </PrimaryButton>
         </div>
       )}

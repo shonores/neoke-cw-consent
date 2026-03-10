@@ -36,24 +36,24 @@ export default function OnboardingStep1Screen({ savedNodeId, pendingAction, onCo
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#F2F2F7]">
+    <div className="flex flex-col min-h-screen bg-[var(--bg-ios)]">
       {/* Title */}
       <div className="px-6 pt-14 pb-8">
-        <h1 className="text-[32px] font-bold text-[#1c1c1e] leading-tight mb-2">
+        <h1 className="text-[32px] font-bold text-[var(--text-main)] leading-tight mb-2">
           Let's get started
         </h1>
-        <p className="text-[16px] text-[#8e8e93] leading-snug">
+        <p className="text-[16px] text-[var(--text-muted)] leading-snug">
           Enter your wallet node identifier to connect.
         </p>
       </div>
 
       {/* Deep-link context banner */}
       {pendingAction && (
-        <div className="mx-6 mb-4 bg-[#5B4FE9]/10 border border-[#5B4FE9]/20 rounded-2xl px-4 py-3">
-          <p className="text-[13px] font-semibold text-[#5B4FE9]">
+        <div className="mx-6 mb-4 bg-[var(--primary-bg)] border border-[var(--primary)]/20 rounded-[var(--radius-2xl)] px-4 py-3">
+          <p className="text-[13px] font-semibold text-[var(--primary)]">
             {pendingAction === 'receive' ? 'Credential offer waiting' : 'Verification request waiting'}
           </p>
-          <p className="text-[12px] text-[#5B4FE9]/80 mt-0.5">
+          <p className="text-[12px] text-[var(--primary)]/80 mt-0.5">
             {pendingAction === 'receive'
               ? 'Log in to receive your credential.'
               : 'Log in to respond to this verification request.'}
@@ -82,12 +82,12 @@ export default function OnboardingStep1Screen({ savedNodeId, pendingAction, onCo
       </div>
 
       {/* Pinned bottom area */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto px-6 pb-10 pt-4 space-y-4 bg-[#F2F2F7]">
-        <p className="text-center text-[13px] text-[#8e8e93] leading-relaxed">
+      <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-6 pb-10 pt-4 space-y-4 bg-[var(--bg-ios)]">
+        <p className="text-center text-[13px] text-[var(--text-muted)] leading-relaxed">
           By continuing, you agree to Neoke's{' '}
-          <span className="text-[#5B4FE9] font-medium">Terms and Conditions</span>
+          <span className="text-[var(--primary)] font-medium">Terms and Conditions</span>
           {' '}and{' '}
-          <span className="text-[#5B4FE9] font-medium">Privacy Policy.</span>
+          <span className="text-[var(--primary)] font-medium">Privacy Policy.</span>
         </p>
 
         <PrimaryButton

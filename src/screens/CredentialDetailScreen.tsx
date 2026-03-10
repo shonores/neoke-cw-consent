@@ -14,6 +14,8 @@ import { deleteCredential } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import StatusBadge from '../components/StatusBadge';
 import CredentialCardFace from '../components/CredentialCardFace';
+import Header from '../components/Header';
+import IconButton from '../components/IconButton';
 import type { Credential } from '../types';
 
 interface CredentialDetailScreenProps {
@@ -54,58 +56,40 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
       animate={{ x: 0 }}
       exit={{ x: '100%' }}
       transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-      className="fixed inset-0 bg-[#F2F2F7] z-40 flex justify-center overflow-y-auto overflow-x-hidden"
+      className="fixed inset-0 bg-[var(--bg-ios)] z-40 flex justify-center overflow-y-auto overflow-x-hidden"
     >
-      {/* Inner column — same max-w-lg as AppInner so card is identical width to home */}
-      <div className="w-full max-w-lg flex flex-col">
+      {/* Inner column */}
+      <div className="w-full max-w-[var(--max-width)] flex flex-col bg-[var(--bg-white)]">
+        <Header
+          title={label}
+          onBack={onBack}
+          rightAction={
+            <IconButton
+              onClick={handleDelete}
+              disabled={deleting}
+              className="hover:bg-red-50 group disabled:opacity-50"
+              aria-label="Delete credential"
+            >
+              {deleting ? (
+                <div className="w-4 h-4 border-2 border-[var(--text-muted)]/30 border-t-[var(--text-error)] rounded-full animate-spin" />
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="group-hover:text-[var(--text-error)] transition-colors"
+                  />
+                </svg>
+              )}
+            </IconButton>
+          }
+        />
 
-        {/* Navigation row: back left, delete right */}
-        <div className="flex items-center justify-between px-5 pt-12 pb-2 flex-shrink-0">
-          <button
-            onClick={onBack}
-            className="w-10 h-10 rounded-full bg-black/6 hover:bg-black/10 flex items-center justify-center transition-colors"
-            aria-label="Go back"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path
-                d="M10 3L5 8l5 5"
-                stroke="#1c1c1e"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-          <button
-            onClick={handleDelete}
-            disabled={deleting}
-            className="w-10 h-10 rounded-full bg-black/6 hover:bg-red-50 flex items-center justify-center transition-colors group disabled:opacity-50"
-            aria-label="Delete credential"
-          >
-            {deleting ? (
-              <div className="w-4 h-4 border-2 border-[#8e8e93]/30 border-t-red-500 rounded-full animate-spin" />
-            ) : (
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path
-                  d="M2 4h12M5.5 4V2.5A1 1 0 016.5 1.5h3a1 1 0 011 1V4M6.5 7v5M9.5 7v5M3.5 4l.5 9a1 1 0 001 1h6a1 1 0 001-1l.5-9"
-                  stroke="#8e8e93"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="group-hover:stroke-red-500 transition-colors"
-                />
-              </svg>
-            )}
-          </button>
-        </div>
-
-        {/* Page title */}
-        <h1 className="text-[28px] font-bold text-[#1c1c1e] px-5 pb-4 flex-shrink-0 leading-tight">
-          {label}
-        </h1>
-
-        {/* Card — px-4 matches home stack card inset (16px each side) */}
-        <div className="px-4 flex-shrink-0">
+        {/* Card */}
+        <div className="px-4 flex-shrink-0 mt-2">
           <CredentialCardFace
             label={label}
             description={description}
@@ -119,7 +103,7 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
         <div className="flex items-center gap-2 px-5 pt-5 pb-1 flex-shrink-0">
           <StatusBadge status={status} />
           {credential.expirationDate && (
-            <span className="text-xs text-[#8e8e93]">
+            <span className="text-xs text-[var(--text-muted)]">
               Expires {formatDate(credential.expirationDate)}
             </span>
           )}
@@ -131,17 +115,17 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
             <div className="space-y-0">
               {namespaceGroups.length > 0
                 ? namespaceGroups.flatMap((group, gi) =>
-                    group.fields.map((field, fi) => (
-                      <PlainFieldRow
-                        key={`${gi}-${fi}`}
-                        label={field.label}
-                        value={field.value}
-                      />
-                    ))
-                  )
+                  group.fields.map((field, fi) => (
+                    <PlainFieldRow
+                      key={`${gi}-${fi}`}
+                      label={field.label}
+                      value={field.value}
+                    />
+                  ))
+                )
                 : genericFields.map((field, i) => (
-                    <PlainFieldRow key={i} label={field.label} value={field.value} />
-                  ))}
+                  <PlainFieldRow key={i} label={field.label} value={field.value} />
+                ))}
             </div>
           )}
 
@@ -233,9 +217,9 @@ function PlainFieldRow({ label, value }: PlainFieldRowProps) {
   }
 
   return (
-    <div className="py-3 border-b border-black/5 last:border-0">
-      <p className="text-xs text-[#8e8e93] mb-0.5">{label}</p>
-      <p className="text-[17px] font-medium text-[#1c1c1e] break-all whitespace-pre-line">{displayValue}</p>
+    <div className="py-3 border-b border-[var(--border-subtle)] last:border-0">
+      <p className="text-xs text-[var(--text-muted)] mb-0.5">{label}</p>
+      <p className="text-[17px] font-medium text-[var(--text-main)] break-all whitespace-pre-line">{displayValue}</p>
     </div>
   );
 }

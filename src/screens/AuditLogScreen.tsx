@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
 import { listAuditEvents } from '../api/consentEngineClient';
+import Header from '../components/Header';
+import PrimaryButton from '../components/PrimaryButton';
 import type { AuditEvent, AuditAction } from '../types/consentEngine';
 import type { ViewName } from '../types';
 
@@ -175,24 +177,11 @@ export default function AuditLogScreen({ navigate }: Props) {
   const grouped = groupByDate(filtered);
 
   return (
-    <motion.div variants={variants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col bg-[#F2F2F7] min-h-screen">
-      {/* Header */}
-      <header className="px-5 pt-12 pb-4 flex items-center gap-3">
-        <button
-          onClick={() => navigate('account')}
-          className="flex items-center gap-1.5 text-[#5B4FE9] text-[15px] font-medium min-h-[44px] -ml-1"
-        >
-          <svg width="8" height="14" viewBox="0 0 8 14" fill="none">
-            <path d="M7 1L2 7l5 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Back
-        </button>
-        <h1 className="text-[17px] font-semibold text-[#1c1c1e] flex-1 text-center">Activity Log</h1>
-        <div className="w-16" />
-      </header>
+    <motion.div variants={variants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col bg-[var(--bg-ios)] min-h-screen">
+      <Header title="Activity Log" onBack={() => navigate('account')} />
 
       {/* Filter chips */}
-      <div className="px-5 mb-4 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+      <div className="px-5 mb-6 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
         {([
           ['all', 'All'],
           ['automated', 'Automated'],
@@ -202,11 +191,10 @@ export default function AuditLogScreen({ navigate }: Props) {
           <button
             key={tab}
             onClick={() => setFilter(tab)}
-            className={`flex-shrink-0 px-4 py-2 rounded-full text-[13px] font-medium transition-colors ${
-              filter === tab
-                ? 'bg-[#5B4FE9] text-white'
-                : 'bg-white text-[#8e8e93] shadow-sm border border-black/5'
-            }`}
+            className={`flex-shrink-0 px-4 py-2.5 rounded-full text-[13px] font-bold transition-all shadow-[var(--shadow-sm)] border ${filter === tab
+              ? 'bg-[var(--primary)] text-white border-transparent'
+              : 'bg-[var(--bg-white)] text-[var(--text-muted)] border-[var(--border-subtle)]'
+              }`}
           >
             {label}
           </button>
@@ -221,9 +209,9 @@ export default function AuditLogScreen({ navigate }: Props) {
             ))}
           </div>
         ) : error ? (
-          <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-4">
-            <p className="text-[14px] text-red-600 mb-3">{error}</p>
-            <button onClick={() => loadEvents(true)} className="text-[14px] font-medium text-[#5B4FE9]">Try again</button>
+          <div className="bg-red-50 border border-red-200 rounded-[var(--radius-xl)] px-4 py-4">
+            <p className="text-[14px] text-[var(--text-error)] mb-4 font-medium">{error}</p>
+            <PrimaryButton onClick={() => loadEvents(true)}>Try again</PrimaryButton>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center pt-16 text-center px-4">
@@ -241,19 +229,20 @@ export default function AuditLogScreen({ navigate }: Props) {
           <>
             {grouped.map(group => (
               <div key={group.date}>
-                <p className="text-[13px] font-semibold text-[#8e8e93] uppercase tracking-wide mb-3">{group.date}</p>
-                <div className="bg-white rounded-2xl shadow-sm overflow-hidden divide-y divide-black/5">
+                <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-3 leading-none">{group.date}</p>
+                <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] overflow-hidden divide-y divide-[var(--border-subtle)] border border-[var(--border-subtle)]">
+
                   {group.events.map(event => {
                     const meta = actionMeta(event.action);
                     return (
-                      <div key={event.id} className="flex items-center gap-3 px-4 py-3.5">
+                      <div key={event.id} className="flex items-center gap-4 px-4 py-4 active:bg-[var(--bg-ios)] transition-colors">
                         <EventIcon action={event.action} />
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2 mb-0.5">
-                            <p className="text-[14px] font-semibold text-[#1c1c1e] truncate" style={{ color: meta.color }}>
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <p className="text-[14px] font-bold text-[var(--text-main)] truncate" style={{ color: meta.color }}>
                               {meta.label}
                             </p>
-                            <span className="text-[12px] text-[#8e8e93] flex-shrink-0">{formatTime(event.timestamp)}</span>
+                            <span className="text-[12px] font-medium text-[var(--text-muted)] flex-shrink-0">{formatTime(event.timestamp)}</span>
                           </div>
                           {(event.verifierDid || event.issuerDid || event.credentialType) && (
                             <p className="text-[12px] text-[#8e8e93] truncate">

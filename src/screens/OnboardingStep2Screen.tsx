@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { apiKeyAuth } from '../api/client';
 import PrimaryButton from '../components/PrimaryButton';
 import NodeStatusChip from '../components/NodeStatusChip';
+import IconButton from '../components/IconButton';
 
 interface OnboardingStep2Props {
   nodeIdentifier: string;
@@ -45,34 +46,34 @@ export default function OnboardingStep2Screen({
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#F2F2F7]">
-      {/* Back arrow */}
+    <div className="flex flex-col min-h-screen bg-[var(--bg-ios)]">
+      {/* Header-like back button area */}
       <div className="px-6 pt-14 pb-0">
-        <button
+        <IconButton
           onClick={onBack}
-          className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full hover:bg-black/5 transition-colors"
           aria-label="Go back"
+          className="-ml-2"
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <path
               d="M12.5 4L7 10l5.5 6"
-              stroke="#1c1c1e"
+              stroke="currentColor"
               strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
           </svg>
-        </button>
+        </IconButton>
       </div>
 
       {/* Title */}
       <div className="px-6 pt-4 pb-8">
-        <h1 className="text-[32px] font-bold text-[#1c1c1e] leading-tight mb-2">
+        <h1 className="text-[32px] font-bold text-[var(--text-main)] leading-tight mb-2">
           Enter your API Key
         </h1>
-        <p className="text-[16px] text-[#8e8e93] leading-snug">
+        <p className="text-[16px] text-[var(--text-muted)] leading-snug">
           Connect to your wallet on{' '}
-          <span className="font-semibold text-[#1c1c1e]">{nodeHost}</span>
+          <span className="font-semibold text-[var(--text-main)] italic">{nodeHost}</span>
         </p>
       </div>
 
@@ -101,12 +102,12 @@ export default function OnboardingStep2Screen({
       </div>
 
       {/* Pinned bottom area */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto px-6 pb-10 pt-4 space-y-4 bg-[#F2F2F7]">
-        <p className="text-center text-[13px] text-[#8e8e93] leading-relaxed">
+      <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-6 pb-10 pt-4 space-y-4 bg-[var(--bg-ios)]">
+        <p className="text-center text-[13px] text-[var(--text-muted)] leading-relaxed">
           By continuing, you agree to Neoke's{' '}
-          <span className="text-[#5B4FE9] font-medium">Terms and Conditions</span>
+          <span className="text-[var(--primary)] font-medium">Terms and Conditions</span>
           {' '}and{' '}
-          <span className="text-[#5B4FE9] font-medium">Privacy Policy.</span>
+          <span className="text-[var(--primary)] font-medium">Privacy Policy.</span>
         </p>
 
         <PrimaryButton

@@ -29,8 +29,17 @@ export default function PrimaryButton({
       type={type}
       onClick={onClick}
       disabled={disabled || loading}
-      className={`${fullWidth ? 'w-full' : ''} flex items-center justify-center gap-2 py-4 rounded-full text-white font-semibold text-[17px] transition-opacity active:opacity-80 disabled:opacity-50 ${className}`}
-      style={{ backgroundColor: '#5B4FE9' }}
+      className={`
+        ${fullWidth ? 'w-full' : ''} 
+        flex items-center justify-center gap-2 
+        py-4 rounded-full 
+        text-white font-semibold text-[17px] 
+        transition-all duration-150
+        active:scale-[0.98] active:opacity-90 
+        disabled:opacity-50 disabled:cursor-not-allowed
+        bg-[var(--primary)]
+        ${className}
+      `}
     >
       {loading ? <LoadingSpinner size="sm" /> : children}
     </button>

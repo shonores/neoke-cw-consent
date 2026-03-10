@@ -2,6 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
 import { listRules, enableRule, disableRule, deleteRule } from '../api/consentEngineClient';
+import Header from '../components/Header';
+import IconButton from '../components/IconButton';
+import PrimaryButton from '../components/PrimaryButton';
+import SecondaryButton from '../components/SecondaryButton';
 import type { ConsentRule, RuleType } from '../types/consentEngine';
 import type { ViewName } from '../types';
 
@@ -58,11 +62,10 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
       role="switch"
       aria-checked={checked}
       onClick={(e) => { e.stopPropagation(); onChange(!checked); }}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? 'bg-[#5B4FE9]' : 'bg-[#e5e5ea]'}`}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? 'bg-[var(--primary)]' : 'bg-[#e5e5ea]'}`}
     >
       <span
-        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform ${checked ? 'translate-x-5.5' : 'translate-x-0.5'}`}
-        style={{ transform: checked ? 'translateX(21px)' : 'translateX(2px)' }}
+        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform ${checked ? 'translate-x-[20px]' : 'translate-x-[2px]'}`}
       />
     </button>
   );
@@ -84,24 +87,23 @@ function DeleteSheet({ rule, onConfirm, onCancel, loading }: DeleteSheetProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-10 h-1 bg-[#c7c7cc] rounded-full mx-auto mb-5" />
-        <h3 className="text-[18px] font-bold text-[#1c1c1e] mb-2">Delete Rule</h3>
-        <p className="text-[14px] text-[#8e8e93] mb-6">
+        <h3 className="text-[18px] font-bold text-[var(--text-main)] mb-2">Delete Rule</h3>
+        <p className="text-[14px] text-[var(--text-muted)] mb-6">
           Delete "{rule.label ?? 'Unnamed rule'}"? This cannot be undone.
         </p>
         <div className="space-y-3">
-          <button
+          <PrimaryButton
             onClick={onConfirm}
-            disabled={loading}
-            className="w-full py-4 rounded-2xl bg-red-500 text-white text-[16px] font-semibold transition-opacity active:opacity-80 disabled:opacity-50"
+            loading={loading}
+            className="bg-[var(--text-error)]"
           >
-            {loading ? 'Deleting…' : 'Delete Rule'}
-          </button>
-          <button
+            Delete Rule
+          </PrimaryButton>
+          <SecondaryButton
             onClick={onCancel}
-            className="w-full py-4 rounded-2xl bg-[#F2F2F7] text-[#1c1c1e] text-[16px] font-medium"
           >
             Cancel
-          </button>
+          </SecondaryButton>
         </div>
       </div>
     </div>
@@ -167,29 +169,18 @@ export default function ConsentRulesScreen({ navigate }: Props) {
   };
 
   return (
-    <motion.div variants={variants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col bg-[#F2F2F7] min-h-screen">
-      {/* Header */}
-      <header className="px-5 pt-12 pb-4 flex items-center justify-between">
-        <button
-          onClick={() => navigate('account')}
-          className="flex items-center gap-1.5 text-[#5B4FE9] text-[15px] font-medium min-h-[44px] -ml-1"
-        >
-          <svg width="8" height="14" viewBox="0 0 8 14" fill="none">
-            <path d="M7 1L2 7l5 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Back
-        </button>
-        <h1 className="text-[17px] font-semibold text-[#1c1c1e]">Consent Rules</h1>
-        <button
-          onClick={() => navigate('consent_rule_editor', { editingRuleId: null })}
-          className="flex items-center gap-1 text-[#5B4FE9] text-[15px] font-medium min-h-[44px]"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-          New
-        </button>
-      </header>
+    <motion.div variants={variants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col bg-[var(--bg-ios)] min-h-screen">
+      <Header
+        title="Consent Rules"
+        onBack={() => navigate('account')}
+        rightAction={
+          <IconButton onClick={() => navigate('consent_rule_editor', { editingRuleId: null })} aria-label="New Rule">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </IconButton>
+        }
+      />
 
       {/* Filter tabs */}
       <div className="px-5 mb-4">
@@ -292,16 +283,16 @@ export default function ConsentRulesScreen({ navigate }: Props) {
                 </div>
 
                 {/* Action buttons */}
-                <div className="flex border-t border-black/5">
+                <div className="flex border-t border-[var(--border-subtle)]">
                   <button
                     onClick={() => navigate('consent_rule_editor', { editingRuleId: rule.id })}
-                    className="flex-1 py-3 text-[14px] font-medium text-[#5B4FE9] border-r border-black/5 active:bg-[#5B4FE9]/5 transition-colors"
+                    className="flex-1 py-3 text-[14px] font-medium text-[var(--primary)] border-r border-[var(--border-subtle)] active:bg-[var(--primary-bg)] transition-colors"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => setDeletingRule(rule)}
-                    className="flex-1 py-3 text-[14px] font-medium text-red-500 active:bg-red-50 transition-colors"
+                    className="flex-1 py-3 text-[14px] font-medium text-[var(--text-error)] active:bg-red-50 transition-colors"
                   >
                     Delete
                   </button>

@@ -19,6 +19,8 @@ import type {
 } from '../types/consentEngine';
 import type { ViewName } from '../types';
 import PrimaryButton from '../components/PrimaryButton';
+import Header from '../components/Header';
+import OptionCard from '../components/OptionCard';
 
 const variants = {
   initial: { opacity: 0, y: 16 },
@@ -37,37 +39,7 @@ const TOTAL_STEPS = 7;
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-interface OptionCardProps {
-  selected: boolean;
-  onClick: () => void;
-  title: string;
-  description?: string;
-}
 
-function OptionCard({ selected, onClick, title, description }: OptionCardProps) {
-  return (
-    <button
-      onClick={onClick}
-      className={`w-full text-left bg-white rounded-2xl px-4 py-4 border-2 transition-colors ${selected ? 'border-[#5B4FE9] bg-[#5B4FE9]/3' : 'border-transparent shadow-sm'
-        }`}
-    >
-      <div className="flex items-center gap-3">
-        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selected ? 'border-[#5B4FE9] bg-[#5B4FE9]' : 'border-[#c7c7cc]'
-          }`}>
-          {selected && (
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-              <path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          )}
-        </div>
-        <div className="flex-1">
-          <p className="text-[15px] font-semibold text-[#1c1c1e]">{title}</p>
-          {description && <p className="text-[13px] text-[#8e8e93] mt-0.5">{description}</p>}
-        </div>
-      </div>
-    </button>
-  );
-}
 
 export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Props) {
   const { state } = useConsentEngine();
@@ -243,41 +215,29 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
 
   if (loadingExisting) {
     return (
-      <motion.div variants={variants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col bg-[#F2F2F7] min-h-screen items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#5B4FE9] border-t-transparent rounded-full animate-spin" />
-        <p className="text-[14px] text-[#8e8e93] mt-4">Loading rule…</p>
+      <motion.div variants={variants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col bg-[var(--bg-ios)] min-h-screen items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
+        <p className="text-[14px] text-[var(--text-muted)] mt-4">Loading rule…</p>
       </motion.div>
     );
   }
 
   return (
-    <motion.div variants={variants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col bg-[#F2F2F7] min-h-screen">
-      {/* Header */}
-      <header className="px-5 pt-12 pb-4 flex items-center gap-3">
-        <button
-          onClick={goBack}
-          className="flex items-center gap-1.5 text-[#5B4FE9] text-[15px] font-medium min-h-[44px] -ml-1"
-        >
-          <svg width="8" height="14" viewBox="0 0 8 14" fill="none">
-            <path d="M7 1L2 7l5 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          {step === 1 ? 'Cancel' : 'Back'}
-        </button>
-        <div className="flex-1 text-center">
-          <p className="text-[17px] font-semibold text-[#1c1c1e]">{editingRuleId ? 'Edit Rule' : 'New Rule'}</p>
-        </div>
-        <div className="w-16" />
-      </header>
+    <motion.div variants={variants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col bg-[var(--bg-ios)] min-h-screen">
+      <Header
+        title={editingRuleId ? 'Edit Rule' : 'New Rule'}
+        onBack={goBack}
+      />
 
       {/* Progress bar */}
       <div className="px-5 mb-6">
-        <div className="h-1.5 bg-black/8 rounded-full overflow-hidden">
+        <div className="h-1.5 bg-black/5 rounded-full overflow-hidden border border-black/5">
           <div
-            className="h-full bg-[#5B4FE9] rounded-full transition-all"
+            className="h-full bg-[var(--primary)] rounded-full transition-all duration-300"
             style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
           />
         </div>
-        <p className="text-[12px] text-[#8e8e93] mt-1.5">Step {step} of {TOTAL_STEPS}</p>
+        <p className="text-[12px] text-[var(--text-muted)] mt-1.5 font-medium tracking-tight">Step {step} of {TOTAL_STEPS}</p>
       </div>
 
       <div className="flex-1 px-5 pb-36 space-y-4 overflow-y-auto">
@@ -285,8 +245,8 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
         {step === 1 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-[22px] font-bold text-[#1c1c1e] mb-1">Rule Type</h2>
-              <p className="text-[14px] text-[#8e8e93]">What kind of requests should this rule handle?</p>
+              <h2 className="text-[22px] font-bold text-[var(--text-main)] mb-1">Rule Type</h2>
+              <p className="text-[14px] text-[var(--text-muted)]">What kind of requests should this rule handle?</p>
             </div>
             <OptionCard
               selected={ruleType === 'verification'}
@@ -447,19 +407,19 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
               description="Restrict sharing to a list of approved fields"
             />
             {fieldsMode === 'explicit' && (
-              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] overflow-hidden border border-[var(--border-subtle)]">
                 {availableClaims.length > 0 ? (
                   availableClaims.map(claim => (
                     <button
                       key={claim}
                       onClick={() => toggleField(claim)}
-                      className="w-full flex items-center justify-between px-4 py-3.5 border-b border-black/5 last:border-0 active:bg-black/3 text-left"
+                      className="w-full flex items-center justify-between px-4 py-3.5 border-b border-[var(--border-subtle)] last:border-0 active:bg-black/3 text-left"
                     >
-                      <span className="text-[14px] text-[#1c1c1e]">{claim}</span>
-                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${explicitFields.includes(claim) ? 'bg-[#5B4FE9] border-[#5B4FE9]' : 'border-[#c7c7cc]'}`}>
+                      <span className="text-[14px] text-[var(--text-main)]">{claim}</span>
+                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${explicitFields.includes(claim) ? 'bg-[var(--primary)] border-[var(--primary)]' : 'border-[#c7c7cc]'}`}>
                         {explicitFields.includes(claim) && (
                           <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                            <path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M2 5l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         )}
                       </div>
@@ -467,13 +427,13 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
                   ))
                 ) : (
                   <div className="px-4 py-4 space-y-2">
-                    <p className="text-[13px] text-[#8e8e93] mb-3">Enter field names separated by commas:</p>
+                    <p className="text-[13px] text-[var(--text-muted)] mb-3">Enter field names separated by commas:</p>
                     <textarea
                       value={explicitFields.join(', ')}
                       onChange={e => setExplicitFields(e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
                       placeholder="given_name, family_name, birth_date"
                       rows={3}
-                      className="w-full text-[14px] text-[#1c1c1e] placeholder-[#c7c7cc] focus:outline-none resize-none"
+                      className="w-full text-[14px] text-[var(--text-main)] placeholder-[#c7c7cc] focus:outline-none resize-none"
                     />
                   </div>
                 )}
@@ -512,37 +472,37 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
             </div>
 
             {/* Time of day */}
-            <div className={`bg-white rounded-2xl shadow-sm overflow-hidden border-2 transition-colors ${conditions.has('time_of_day') ? 'border-[#5B4FE9]' : 'border-transparent'}`}>
+            <div className={`bg-[var(--bg-white)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] overflow-hidden border-2 transition-all duration-200 ${conditions.has('time_of_day') ? 'border-[var(--primary)]' : 'border-transparent'}`}>
               <button
                 onClick={() => toggleCondition('time_of_day')}
                 className="w-full flex items-center justify-between px-4 py-4"
               >
                 <div className="text-left">
-                  <p className="text-[15px] font-semibold text-[#1c1c1e]">Time of day</p>
-                  <p className="text-[13px] text-[#8e8e93]">Only apply during specific hours</p>
+                  <p className="text-[15px] font-semibold text-[var(--text-main)]">Time of day</p>
+                  <p className="text-[13px] text-[var(--text-muted)]">Only apply during specific hours</p>
                 </div>
-                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${conditions.has('time_of_day') ? 'bg-[#5B4FE9] border-[#5B4FE9]' : 'border-[#c7c7cc]'}`}>
+                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${conditions.has('time_of_day') ? 'bg-[var(--primary)] border-[var(--primary)]' : 'border-[#c7c7cc]'}`}>
                   {conditions.has('time_of_day') && (
                     <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                      <path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M2 5l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   )}
                 </div>
               </button>
               {conditions.has('time_of_day') && (
-                <div className="px-4 pb-4 flex gap-4 border-t border-black/5 pt-4">
+                <div className="px-4 pb-4 flex gap-4 border-t border-[var(--border-subtle)] pt-4">
                   <div className="flex-1">
-                    <label className="text-[11px] text-[#8e8e93] uppercase tracking-wide font-semibold mb-1 block">From (hour)</label>
+                    <label className="text-[11px] text-[var(--text-muted)] uppercase tracking-wide font-semibold mb-1 block">From (hour)</label>
                     <input type="number" min={0} max={23} value={condStartHour}
                       onChange={e => setCondStartHour(Number(e.target.value))}
-                      className="w-full bg-[#F2F2F7] rounded-xl px-3 py-2 text-[15px] text-[#1c1c1e] focus:outline-none"
+                      className="w-full bg-[var(--bg-ios)] rounded-xl px-3 py-2 text-[15px] text-[var(--text-main)] focus:outline-none"
                     />
                   </div>
                   <div className="flex-1">
-                    <label className="text-[11px] text-[#8e8e93] uppercase tracking-wide font-semibold mb-1 block">To (hour)</label>
+                    <label className="text-[11px] text-[var(--text-muted)] uppercase tracking-wide font-semibold mb-1 block">To (hour)</label>
                     <input type="number" min={0} max={23} value={condEndHour}
                       onChange={e => setCondEndHour(Number(e.target.value))}
-                      className="w-full bg-[#F2F2F7] rounded-xl px-3 py-2 text-[15px] text-[#1c1c1e] focus:outline-none"
+                      className="w-full bg-[var(--bg-ios)] rounded-xl px-3 py-2 text-[15px] text-[var(--text-main)] focus:outline-none"
                     />
                   </div>
                 </div>
@@ -550,33 +510,33 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
             </div>
 
             {/* Day of week */}
-            <div className={`bg-white rounded-2xl shadow-sm overflow-hidden border-2 transition-colors ${conditions.has('day_of_week') ? 'border-[#5B4FE9]' : 'border-transparent'}`}>
+            <div className={`bg-[var(--bg-white)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] overflow-hidden border-2 transition-all duration-200 ${conditions.has('day_of_week') ? 'border-[var(--primary)]' : 'border-transparent'}`}>
               <button
                 onClick={() => toggleCondition('day_of_week')}
                 className="w-full flex items-center justify-between px-4 py-4"
               >
                 <div className="text-left">
-                  <p className="text-[15px] font-semibold text-[#1c1c1e]">Day of week</p>
-                  <p className="text-[13px] text-[#8e8e93]">Only apply on certain days</p>
+                  <p className="text-[15px] font-semibold text-[var(--text-main)]">Day of week</p>
+                  <p className="text-[13px] text-[var(--text-muted)]">Only apply on certain days</p>
                 </div>
-                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${conditions.has('day_of_week') ? 'bg-[#5B4FE9] border-[#5B4FE9]' : 'border-[#c7c7cc]'}`}>
+                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${conditions.has('day_of_week') ? 'bg-[var(--primary)] border-[var(--primary)]' : 'border-[#c7c7cc]'}`}>
                   {conditions.has('day_of_week') && (
                     <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                      <path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M2 5l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   )}
                 </div>
               </button>
               {conditions.has('day_of_week') && (
-                <div className="px-4 pb-4 border-t border-black/5 pt-4">
+                <div className="px-4 pb-4 border-t border-[var(--border-subtle)] pt-4">
                   <div className="flex gap-2 flex-wrap">
                     {DAY_NAMES.map((name, idx) => (
                       <button
                         key={idx}
                         onClick={() => toggleDay(idx)}
-                        className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${condAllowedDays.includes(idx)
-                          ? 'bg-[#5B4FE9] text-white'
-                          : 'bg-[#F2F2F7] text-[#8e8e93]'
+                        className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-all ${condAllowedDays.includes(idx)
+                          ? 'bg-[var(--primary)] text-white'
+                          : 'bg-[var(--bg-ios)] text-[var(--text-muted)]'
                           }`}
                       >
                         {name}
@@ -588,55 +548,55 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
             </div>
 
             {/* Max per day */}
-            <div className={`bg-white rounded-2xl shadow-sm overflow-hidden border-2 transition-colors ${conditions.has('max_per_day') ? 'border-[#5B4FE9]' : 'border-transparent'}`}>
+            <div className={`bg-[var(--bg-white)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] overflow-hidden border-2 transition-all duration-200 ${conditions.has('max_per_day') ? 'border-[var(--primary)]' : 'border-transparent'}`}>
               <button
                 onClick={() => toggleCondition('max_per_day')}
                 className="w-full flex items-center justify-between px-4 py-4"
               >
                 <div className="text-left">
-                  <p className="text-[15px] font-semibold text-[#1c1c1e]">Daily limit</p>
-                  <p className="text-[13px] text-[#8e8e93]">Cap the number of auto-approvals per day</p>
+                  <p className="text-[15px] font-semibold text-[var(--text-main)]">Daily limit</p>
+                  <p className="text-[13px] text-[var(--text-muted)]">Cap the number of auto-approvals per day</p>
                 </div>
-                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${conditions.has('max_per_day') ? 'bg-[#5B4FE9] border-[#5B4FE9]' : 'border-[#c7c7cc]'}`}>
+                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${conditions.has('max_per_day') ? 'bg-[var(--primary)] border-[var(--primary)]' : 'border-[#c7c7cc]'}`}>
                   {conditions.has('max_per_day') && (
                     <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                      <path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M2 5l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   )}
                 </div>
               </button>
               {conditions.has('max_per_day') && (
-                <div className="px-4 pb-4 border-t border-black/5 pt-4">
-                  <label className="text-[11px] text-[#8e8e93] uppercase tracking-wide font-semibold mb-2 block">Max per day</label>
+                <div className="px-4 pb-4 border-t border-[var(--border-subtle)] pt-4">
+                  <label className="text-[11px] text-[var(--text-muted)] uppercase tracking-wide font-semibold mb-2 block">Max per day</label>
                   <input type="number" min={1} value={condMaxPerDay}
                     onChange={e => setCondMaxPerDay(Number(e.target.value))}
-                    className="w-full bg-[#F2F2F7] rounded-xl px-3 py-2 text-[15px] text-[#1c1c1e] focus:outline-none"
+                    className="w-full bg-[var(--bg-ios)] rounded-xl px-3 py-2 text-[15px] text-[var(--text-main)] focus:outline-none"
                   />
                 </div>
               )}
             </div>
 
             {/* Require linked domain */}
-            <div className={`bg-white rounded-2xl shadow-sm overflow-hidden border-2 transition-colors ${conditions.has('require_linked_domain') ? 'border-[#5B4FE9]' : 'border-transparent'}`}>
+            <div className={`bg-[var(--bg-white)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] overflow-hidden border-2 transition-all duration-200 ${conditions.has('require_linked_domain') ? 'border-[var(--primary)]' : 'border-transparent'}`}>
               <button
                 onClick={() => toggleCondition('require_linked_domain')}
                 className="w-full flex items-center justify-between px-4 py-4"
               >
                 <div className="text-left">
-                  <p className="text-[15px] font-semibold text-[#1c1c1e]">Require linked domain</p>
-                  <p className="text-[13px] text-[#8e8e93]">Only apply if verifier has a verified linked domain</p>
+                  <p className="text-[15px] font-semibold text-[var(--text-main)]">Require linked domain</p>
+                  <p className="text-[13px] text-[var(--text-muted)]">Only apply if verifier has a verified linked domain</p>
                 </div>
-                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${conditions.has('require_linked_domain') ? 'bg-[#5B4FE9] border-[#5B4FE9]' : 'border-[#c7c7cc]'}`}>
+                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${conditions.has('require_linked_domain') ? 'bg-[var(--primary)] border-[var(--primary)]' : 'border-[#c7c7cc]'}`}>
                   {conditions.has('require_linked_domain') && (
                     <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                      <path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M2 5l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   )}
                 </div>
               </button>
             </div>
 
-            <p className="text-[13px] text-[#8e8e93] text-center">All conditions are optional. Leave all unchecked for no conditions.</p>
+            <p className="text-[13px] text-[var(--text-muted)] text-center">All conditions are optional. Leave all unchecked for no conditions.</p>
           </div>
         )}
 
@@ -709,9 +669,9 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
             </div>
 
             {/* Summary */}
-            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-black/5">
-                <p className="text-[11px] text-[#8e8e93] font-semibold uppercase tracking-wide">Summary</p>
+            <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] overflow-hidden border border-[var(--border-subtle)]">
+              <div className="px-4 py-2.5 border-b border-[var(--border-subtle)]">
+                <p className="text-[11px] text-[var(--text-muted)] font-semibold uppercase tracking-wide">Summary</p>
               </div>
               {[
                 ['Type', ruleType === 'verification' ? 'Verification' : 'Issuance'],
@@ -721,9 +681,9 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
                 ['Expiry', expiryType === 'never' ? 'Never' : expiryType === 'date' ? `On ${expiresAt.slice(0, 10)}` : `After ${maxUses} uses`],
                 ['Conditions', conditions.size === 0 ? 'None' : Array.from(conditions).join(', ')],
               ].map(([k, v]) => (
-                <div key={k} className="flex items-center px-4 py-3 border-b border-black/5 last:border-0">
-                  <p className="text-[13px] text-[#8e8e93] w-24 flex-shrink-0">{k}</p>
-                  <p className="text-[14px] text-[#1c1c1e] font-medium">{v}</p>
+                <div key={k} className="flex items-center px-4 py-3 border-b border-[var(--border-subtle)] last:border-0">
+                  <p className="text-[13px] text-[var(--text-muted)] w-24 flex-shrink-0">{k}</p>
+                  <p className="text-[14px] text-[var(--text-main)] font-medium italic">{v}</p>
                 </div>
               ))}
             </div>
@@ -738,7 +698,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
       </div>
 
       {/* Fixed bottom nav */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto px-5 pt-4 pb-10 bg-[#F2F2F7] z-40 space-y-3">
+      <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-5 pt-4 pb-10 bg-[var(--bg-ios)] z-40 space-y-3 shadow-[0_-1px_0_rgba(0,0,0,0.05)]">
         <PrimaryButton onClick={goNext} loading={saving && step === TOTAL_STEPS}>
           {step === TOTAL_STEPS
             ? (editingRuleId ? 'Save Changes' : 'Create Rule')
@@ -746,6 +706,6 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
           }
         </PrimaryButton>
       </div>
-    </motion.div>
+    </motion.div >
   );
 }

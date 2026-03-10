@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { clearLocalCredentials } from '../store/localCredentials';
 import { useAuth } from '../context/AuthContext';
 import { useConsentEngine } from '../context/ConsentEngineContext';
+import Header from '../components/Header';
+import PrimaryButton from '../components/PrimaryButton';
+import SecondaryButton from '../components/SecondaryButton';
 import type { ViewName } from '../types';
 
 interface AccountScreenProps {
@@ -31,32 +34,30 @@ export default function AccountScreen({ navigate }: AccountScreenProps) {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-[#F2F2F7] min-h-screen">
-      <header className="px-5 pt-12 pb-4">
-        <h1 className="text-[28px] font-bold text-[#1c1c1e]">Account</h1>
-      </header>
+    <div className="flex-1 flex flex-col bg-[var(--bg-ios)] min-h-screen">
+      <Header title="Account" />
 
       <main className="flex-1 px-5 pb-28 space-y-4">
         {/* Node info */}
-        <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
-          <div className="px-4 py-2.5 border-b border-black/5">
-            <p className="text-[11px] text-[#8e8e93] font-semibold uppercase tracking-wide">Connected Node</p>
+        <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] overflow-hidden shadow-[var(--shadow-sm)] border border-[var(--border-subtle)]">
+          <div className="px-4 py-2.5 border-b border-[var(--border-subtle)]">
+            <p className="text-[11px] text-[var(--text-muted)] font-semibold uppercase tracking-wide">Connected Node</p>
           </div>
           <div className="px-4 py-3.5 flex items-center gap-2">
-            <span className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0" />
+            <span className="w-2 h-2 bg-[var(--text-success)] rounded-full flex-shrink-0" />
             <div>
-              <p className="text-[15px] font-mono text-[#1c1c1e]">{nodeHost}</p>
-              <p className="text-[13px] text-[#8e8e93] mt-0.5">HTTPS · Secure connection</p>
+              <p className="text-[15px] font-mono text-[var(--text-main)] italic">{nodeHost}</p>
+              <p className="text-[13px] text-[var(--text-muted)] mt-0.5">HTTPS · Secure connection</p>
             </div>
           </div>
         </div>
 
         {/* Consent Engine section */}
-        <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
-          <div className="px-4 py-2.5 border-b border-black/5 flex items-center justify-between">
-            <p className="text-[11px] text-[#8e8e93] font-semibold uppercase tracking-wide">Consent Engine</p>
-            <div className={`flex items-center gap-1.5 ${ceState.isConnected ? 'text-green-600' : 'text-orange-500'}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${ceState.isConnected ? 'bg-green-500' : 'bg-orange-500'}`} />
+        <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] overflow-hidden shadow-[var(--shadow-sm)] border border-[var(--border-subtle)]">
+          <div className="px-4 py-2.5 border-b border-[var(--border-subtle)] flex items-center justify-between">
+            <p className="text-[11px] text-[var(--text-muted)] font-semibold uppercase tracking-wide">Consent Engine</p>
+            <div className={`flex items-center gap-1.5 ${ceState.isConnected ? 'text-[var(--text-success)]' : 'text-orange-500'}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${ceState.isConnected ? 'bg-[var(--text-success)]' : 'bg-orange-500'}`} />
               <span className="text-[12px] font-medium">{ceState.isConnected ? 'Connected' : 'Connecting…'}</span>
             </div>
           </div>
@@ -64,10 +65,10 @@ export default function AccountScreen({ navigate }: AccountScreenProps) {
           {!ceState.isConnected && (
             <button
               onClick={() => refreshHealth()}
-              className="w-full flex items-center gap-2 px-4 py-3 border-b border-black/5 active:bg-orange-50 transition-colors"
+              className="w-full flex items-center gap-2 px-4 py-3 border-b border-[var(--border-subtle)] active:bg-orange-50 transition-colors"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-orange-500">
-                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.82 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
                 <line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
                 <line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
@@ -78,24 +79,24 @@ export default function AccountScreen({ navigate }: AccountScreenProps) {
           <div className="flex">
             <button
               onClick={() => navigate('consent_rules')}
-              className="flex-1 py-3.5 text-[14px] font-medium text-[#5B4FE9] border-r border-black/5 active:bg-[#5B4FE9]/5 transition-colors"
+              className="flex-1 py-3.5 text-[14px] font-medium text-[var(--primary)] border-r border-[var(--border-subtle)] active:bg-[var(--primary-bg)] transition-colors"
             >
               Manage Rules
             </button>
             <button
               onClick={() => navigate('consent_queue')}
-              className="flex-1 py-3.5 text-[14px] font-medium text-[#5B4FE9] border-r border-black/5 active:bg-[#5B4FE9]/5 transition-colors"
+              className="flex-1 py-3.5 text-[14px] font-medium text-[var(--primary)] border-r border-[var(--border-subtle)] active:bg-[var(--primary-bg)] transition-colors"
             >
               View Queue
               {ceState.pendingCount > 0 && (
-                <span className="ml-1.5 inline-flex items-center justify-center w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full">
+                <span className="ml-1.5 inline-flex items-center justify-center w-5 h-5 bg-[var(--text-error)] text-white text-[10px] font-bold rounded-full">
                   {ceState.pendingCount > 9 ? '9+' : ceState.pendingCount}
                 </span>
               )}
             </button>
             <button
               onClick={() => setShowDisconnectSheet(true)}
-              className="flex-1 py-3.5 text-[14px] font-medium text-red-500 active:bg-red-50 transition-colors"
+              className="flex-1 py-3.5 text-[14px] font-medium text-[var(--text-error)] active:bg-red-50 transition-colors"
             >
               Disconnect
             </button>
@@ -115,12 +116,12 @@ export default function AccountScreen({ navigate }: AccountScreenProps) {
         </div>
 
         {/* Actions */}
-        <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
+        <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] overflow-hidden shadow-[var(--shadow-sm)] border border-[var(--border-subtle)]">
           <button
             onClick={handleClearCredentials}
-            className="w-full flex items-center justify-between px-4 py-4 text-left border-b border-black/5 active:bg-black/3 transition-colors"
+            className="w-full flex items-center justify-between px-4 py-4 text-left border-b border-[var(--border-subtle)] active:bg-black/3 transition-colors"
           >
-            <span className="text-[15px] text-red-500 font-medium">Clear all local credentials</span>
+            <span className="text-[15px] text-[var(--text-error)] font-medium">Clear all local credentials</span>
             <svg width="7" height="12" viewBox="0 0 7 12" fill="none" aria-hidden>
               <path d="M1 1l5 5-5 5" stroke="#c7c7cc" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -129,7 +130,7 @@ export default function AccountScreen({ navigate }: AccountScreenProps) {
             onClick={handleSignOut}
             className="w-full flex items-center justify-between px-4 py-4 text-left active:bg-black/3 transition-colors"
           >
-            <span className="text-[15px] text-red-600 font-semibold">Sign out</span>
+            <span className="text-[15px] text-[var(--text-error)] font-semibold">Sign out</span>
             <svg width="7" height="12" viewBox="0 0 7 12" fill="none" aria-hidden>
               <path d="M1 1l5 5-5 5" stroke="#c7c7cc" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -165,18 +166,17 @@ export default function AccountScreen({ navigate }: AccountScreenProps) {
               All consent rules and queue history will remain on the Consent Engine. You can reconnect at any time.
             </p>
             <div className="space-y-3">
-              <button
+              <PrimaryButton
                 onClick={() => { removeCe(); setShowDisconnectSheet(false); }}
-                className="w-full py-4 rounded-2xl bg-red-500 text-white text-[16px] font-semibold active:opacity-80"
+                className="bg-[var(--text-error)]"
               >
                 Disconnect
-              </button>
-              <button
+              </PrimaryButton>
+              <SecondaryButton
                 onClick={() => setShowDisconnectSheet(false)}
-                className="w-full py-4 rounded-2xl bg-[#F2F2F7] text-[#1c1c1e] text-[16px] font-medium"
               >
                 Cancel
-              </button>
+              </SecondaryButton>
             </div>
           </div>
         </div>

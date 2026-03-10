@@ -7,6 +7,7 @@ import CredentialStack from '../components/CredentialStack';
 import CeStatusBanner from '../components/CeStatusBanner';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
+import Header from '../components/Header';
 import type { Credential } from '../types';
 import type { ViewName } from '../types';
 
@@ -112,21 +113,18 @@ export default function DashboardScreen({ navigate, refreshSignal }: DashboardSc
   }, [fetchCredentials]);
 
   return (
-    <div className="flex-1 flex flex-col bg-[#F2F2F7] min-h-screen">
+    <div className="flex-1 flex flex-col bg-[var(--bg-ios)] min-h-screen">
+      <Header
+        title="Neoke wallet"
+        rightAction={
+          usingLocalFallback ? (
+            <span className="text-[10px] font-medium bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">
+              offline
+            </span>
+          ) : null
+        }
+      />
 
-      {/* Header */}
-      <header className="px-5 pt-12 pb-4 flex items-start justify-between">
-        <h1 className="text-[28px] font-bold text-[#1c1c1e] leading-tight">
-          Neoke wallet
-        </h1>
-        {usingLocalFallback && (
-          <span className="text-[10px] font-medium bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full mt-2">
-            offline
-          </span>
-        )}
-      </header>
-
-      {/* Content — no overflow-y-auto here; let viewport scroll so no scrollbar width is stolen from card container */}
       <main className="flex-1 pb-28">
 
         {/* CE Status Banner */}
