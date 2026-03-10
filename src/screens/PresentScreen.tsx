@@ -105,10 +105,8 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
   };
 
   const processPresentUri = useCallback(async (uri: string) => {
-    console.log('[neoke:present] processPresentUri called, uri:', uri);
-    if (!state.token) { console.log('[neoke:present] no token, aborting'); return; }
+    if (!state.token) return;
     const trimmed = uri.trim();
-    console.log('[neoke:present] trimmed uri:', trimmed);
 
     // Route to CE if configured and available
     if (onRouteToCe && isCeConfigured() && ceState.ceEnabled && ceState.ceApiKey) {
@@ -120,7 +118,6 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
     }
 
     const uriType = detectUriType(trimmed);
-    console.log('[neoke:present] uriType:', uriType);
     if (uriType === 'receive') {
       navigate('receive', { pendingUri: trimmed });
       return;
@@ -136,7 +133,6 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
     setSkippedX509(false);
     setSelections({});
     setCurrentRequestUri(trimmed);
-    console.log('[neoke:present] calling previewPresentationWithRetry...');
 
     try {
       const { data, skippedX509: usedSkip } = await previewPresentationWithRetry(state.token, trimmed);
@@ -171,7 +167,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
       );
       setStage('error');
     }
-  }, [state.token, navigate, markExpired]);
+  }, [state.token, navigate, markExpired, ceState.ceEnabled, ceState.ceApiKey, onRouteToCe]);
 
   useEffect(() => {
     if (initialUri) processPresentUri(initialUri);
@@ -216,9 +212,6 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
 
   // ── Select (multiple candidates for one or more queries) ──
   if (stage === 'select' && preview) {
-
-    // Only show queries that have more than one candidate — single-candidate queries
-    // are auto-selected and will appear on the consent screen.
     const ambiguousQueries = preview.queries.filter((q) => (q.candidates?.length ?? 0) > 1);
     const multipleGroups = ambiguousQueries.length > 1;
 
@@ -229,31 +222,24 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
           onBack={() => navigate('dashboard')}
         />
 
-        {/* Title / Instruction */}
         <div className="px-5 pb-6 flex-shrink-0">
           <h2 className="text-[24px] font-bold text-[var(--text-main)] leading-tight">
             {multipleGroups ? 'Choose credentials to share' : 'Choose a credential to share'}
           </h2>
         </div>
 
-        {/* Scrollable candidate list */}
         <div className="flex-1 overflow-y-auto px-5 pb-28 space-y-6">
           {ambiguousQueries.map((query) => {
             const selectedIndex = selections[query.queryId] ?? query.candidates[0]?.index;
             return (
               <div key={query.queryId}>
-                {multipleGroups && (
-                  <p className="text-[16px] font-bold text-[#1c1c1e] mb-3">
-                    {(() => {
-                      const first = query.candidates[0];
-                      const lc = first ? findLocalCred(first.type, first.issuer) : undefined;
-                      return lc ? getCredentialLabel(lc) : getCandidateLabel(first?.type ?? []);
-                    })()}
-                  </p>
-                )}
-                {!multipleGroups && (
-                  <p className="text-[16px] font-bold text-[#1c1c1e] mb-3">Select one</p>
-                )}
+                <p className="text-[16px] font-bold text-[#1c1c1e] mb-3">
+                  {multipleGroups ? (() => {
+                    const first = query.candidates[0];
+                    const lc = first ? findLocalCred(first.type, first.issuer) : undefined;
+                    return lc ? getCredentialLabel(lc) : getCandidateLabel(first?.type ?? []);
+                  })() : 'Select one'}
+                </p>
                 <div className="space-y-3">
                   {query.candidates.map((cand) => {
                     const isSelected = selectedIndex === cand.index;
@@ -266,42 +252,20 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
                     const issuerLabel = parseIssuerLabel(cand.issuer);
 
                     return (
-                      <button
+                      <OptionCard
                         key={cand.index}
-                        onClick={() =>
-                          setSelections((prev) => ({ ...prev, [query.queryId]: cand.index }))
+                        selected={isSelected}
+                        onClick={() => setSelections((prev) => ({ ...prev, [query.queryId]: cand.index }))}
+                        title={label}
+                        description={issuerLabel}
+                        icon={
+                          <CredentialThumbnail
+                            backgroundColor={backgroundColor}
+                            textColor={textColor}
+                            logoUrl={logoUrl}
+                          />
                         }
-                        className={`w-full bg-[var(--bg-white)] rounded-[var(--radius-2xl)] flex items-center px-4 py-4 shadow-[var(--shadow-sm)] text-left transition-all border-2 ${isSelected ? 'border-[var(--primary)]' : 'border-transparent'
-                          }`}
-                      >
-                        <CredentialThumbnail
-                          backgroundColor={backgroundColor}
-                          textColor={textColor}
-                          logoUrl={logoUrl}
-                          className="mr-4"
-                        />
-                        {/* Label + issuer */}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[15px] font-bold text-[var(--text-main)] truncate italic">{label}</p>
-                          <p className="text-[13px] text-[var(--text-muted)] truncate">{issuerLabel}</p>
-                        </div>
-                        {/* Selection indicator */}
-                        {isSelected ? (
-                          <div className="w-6 h-6 rounded-full bg-[var(--primary)] flex items-center justify-center flex-shrink-0 ml-3">
-                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                              <path
-                                d="M2.5 6l2.5 2.5 4.5-5"
-                                stroke="#fff"
-                                strokeWidth="2.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                          </div>
-                        ) : (
-                          <div className="w-6 h-6 rounded-full border-2 border-[var(--border-subtle)] flex-shrink-0 ml-3" />
-                        )}
-                      </button>
+                      />
                     );
                   })}
                 </div>
@@ -310,7 +274,6 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
           })}
         </div>
 
-        {/* Pinned Continue button */}
         <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-5 pt-4 pb-10 bg-[var(--bg-ios)] z-40 border-t border-black/5">
           <PrimaryButton onClick={() => setStage('consent')}>
             Continue
@@ -385,7 +348,6 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
           onBack={() => setStage(preview.queries.some(q => q.candidates.length > 1) ? 'select' : 'scan')}
         />
 
-        {/* Title */}
         <div className="px-5 pb-6 flex-shrink-0">
           <h2 className="text-[24px] font-bold text-[var(--text-main)] leading-tight break-words">
             <span className="text-[var(--primary)] font-black italic">{verifierName}</span><br />
@@ -393,9 +355,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
           </h2>
         </div>
 
-        {/* Scrollable content */}
         <div className="px-5 flex-1 overflow-y-auto pb-40 space-y-6">
-          {/* Reason */}
           {preview.verifier.purpose && (
             <div>
               <p className="text-[12px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Purpose</p>
@@ -405,14 +365,11 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
             </div>
           )}
 
-          {/* Info to share */}
           <div>
             <p className="text-[12px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Info to share</p>
             <div className="space-y-3">
               {preview.queries.map((query) => {
-                const cand =
-                  query.candidates.find((c) => c.index === selections[query.queryId]) ??
-                  query.candidates[0];
+                const cand = query.candidates.find((c) => c.index === selections[query.queryId]) ?? query.candidates[0];
                 if (!cand) return null;
 
                 const localCred = findLocalCred(cand.type, cand.issuer);
@@ -445,7 +402,6 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
           </div>
         </div>
 
-        {/* Pinned Continue button */}
         <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-5 pt-4 pb-10 bg-[var(--bg-ios)] z-40 border-t border-[var(--border-subtle)]">
           <PrimaryButton onClick={handleShare}>
             Confirm & Share
@@ -463,7 +419,6 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
         onBack={() => navigate('dashboard')}
       />
 
-      {/* CE bypass notice */}
       {ceBypassed && (
         <div className="px-5 pb-2">
           <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-[var(--radius-xl)] px-4 py-3">
@@ -476,9 +431,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
         </div>
       )}
 
-      {/* Scrollable content — pb-28 only needed when manual strip is visible */}
       <div className={`flex-1 overflow-y-auto px-5 space-y-5 ${showManual ? 'pb-28' : 'pb-6'}`}>
-        {/* Camera / Paste toggle */}
         <div className="flex bg-black/5 rounded-[var(--radius-xl)] p-1 gap-1">
           <button
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[14px] rounded-lg transition-all ${!showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[var(--text-muted)] font-medium'}`}
@@ -512,23 +465,17 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
           <div className="space-y-4">
             <QRScanner onScan={(r) => processPresentUri(r)} />
             {error && <ErrorMessage message={error} />}
-            <div className="bg-[var(--bg-white)]/50 rounded-[var(--radius-xl)] p-4 border border-dashed border-[var(--border-subtle)] text-center">
-              <p className="text-[12px] text-[var(--text-muted)] font-medium">
-                Scan any <span className="text-[var(--text-main)] font-bold">OpenID4VP</span> QR code to start the sharing process.
-              </p>
-            </div>
           </div>
         )}
       </div>
 
-      {/* Fixed bottom button — only shown in manual (paste URI) mode */}
       {showManual && (
         <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-5 pt-3 pb-10 bg-[var(--bg-ios)] z-40 border-t border-[var(--border-subtle)]">
           <PrimaryButton
             onClick={() => { if (manualUri.trim()) processPresentUri(manualUri.trim()); }}
             disabled={!manualUri.trim()}
           >
-            Connect to Verifier
+            Connect
           </PrimaryButton>
         </div>
       )}
