@@ -83,7 +83,7 @@ async function ceRequest<T>(
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'ApiKey': apiKey,
+    'Authorization': `ApiKey ${apiKey}`,
     ...(options.headers as Record<string, string> | undefined),
   };
 
