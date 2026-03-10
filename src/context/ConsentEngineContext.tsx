@@ -8,13 +8,13 @@ import {
   type ReactNode,
 } from 'react';
 import { useAuth } from './AuthContext';
-import { setCeBaseUrl, checkCeHealth, isCeConfigured } from '../api/consentEngineClient';
+import { setCeBaseUrl, checkCeHealth, isCeConfigured, connectNode } from '../api/consentEngineClient';
 
 export const CE_SK = {
-  CE_URL:      'neoke_ce_url',
-  CE_ENABLED:  'neoke_ce_enabled',
-  CE_APIKEY:   'neoke_ce_apikey',
-  CE_DISMISSED:'neoke_ce_dismissed',
+  CE_URL: 'neoke_ce_url',
+  CE_ENABLED: 'neoke_ce_enabled',
+  CE_APIKEY: 'neoke_ce_apikey',
+  CE_DISMISSED: 'neoke_ce_dismissed',
 } as const;
 
 export const DEFAULT_CE_URL = 'https://neoke-consent-engine.fly.dev';
@@ -125,6 +125,15 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
       refreshHealth();
     }
   }, [state.ceUrl, state.ceEnabled, state.ceApiKey, refreshHealth]);
+
+  // Ensure node is registered with CE whenever we have both CE and Auth configured
+  useEffect(() => {
+    if (state.ceUrl && state.ceEnabled && state.ceApiKey && authState.nodeIdentifier && authState.baseUrl) {
+      connectNode(state.ceApiKey, authState.nodeIdentifier, authState.baseUrl)
+        .then(() => refreshHealth())
+        .catch((err) => console.error('[ConsentEngineProvider] Failed to register node with CE:', err));
+    }
+  }, [state.ceUrl, state.ceEnabled, state.ceApiKey, authState.nodeIdentifier, authState.baseUrl, refreshHealth]);
 
   // Reset connected state on auth token loss (but keep config)
   useEffect(() => {
