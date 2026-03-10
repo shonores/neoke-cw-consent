@@ -82,7 +82,7 @@ function friendlyError(status: number, body: unknown): string {
 
   switch (status) {
     case 401:
-      return 'Your session has expired. Please enter your API key to continue.';
+      return 'Unauthorized. Please check your credentials or sign in again.';
     case 403:
       return 'Access denied. Please check your credentials.';
     case 404:
@@ -169,6 +169,11 @@ export async function apiKeyAuth(apiKey: string, nodeBaseUrl?: string): Promise<
   if (nodeBaseUrl) _baseUrl = nodeBaseUrl.replace(/\/$/, '');
   try {
     return await request<AuthResponse>('/:/auth/authn', { method: 'POST', apiKey });
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 401) {
+      throw new ApiError('Invalid API key. Please check your credentials and try again.', 401, err.body);
+    }
+    throw err;
   } finally {
     if (nodeBaseUrl) _baseUrl = prev;
   }
