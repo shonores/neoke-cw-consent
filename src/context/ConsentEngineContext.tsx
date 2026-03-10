@@ -17,6 +17,8 @@ export const CE_SK = {
   CE_DISMISSED:'neoke_ce_dismissed',
 } as const;
 
+export const DEFAULT_CE_URL = 'https://neoke-consent-engine.fly.dev';
+
 interface ConsentEngineState {
   ceUrl: string | null;
   ceEnabled: boolean;
@@ -29,6 +31,8 @@ interface ConsentEngineState {
 interface ConsentEngineContextValue {
   state: ConsentEngineState;
   configureCe: (ceUrl: string, apiKey: string) => Promise<void>;
+  /** Silently configure CE with the default URL + given key — never throws. */
+  autoConfigureCe: (apiKey: string) => Promise<void>;
   removeCe: () => void;
   toggleCe: (enabled: boolean) => void;
   refreshHealth: () => Promise<void>;
@@ -174,6 +178,23 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
     } catch { /* */ }
   }, []);
 
+  const autoConfigureCe = useCallback(async (apiKey: string) => {
+    if (!apiKey) return;
+    const ceUrl = DEFAULT_CE_URL;
+    setCeBaseUrl(ceUrl);
+    dispatch({ type: 'CONFIGURE', ceUrl, apiKey });
+    try {
+      localStorage.setItem(CE_SK.CE_URL, ceUrl);
+      localStorage.setItem(CE_SK.CE_ENABLED, 'true');
+      localStorage.setItem(CE_SK.CE_APIKEY, apiKey);
+    } catch { /* */ }
+    // Silent health check — CE may be sleeping on cold start
+    try {
+      const health = await checkCeHealth();
+      dispatch({ type: 'SET_HEALTH', isConnected: health.status === 'healthy', pendingCount: health.pendingCount });
+    } catch { /* background polling will retry */ }
+  }, []);
+
   const toggleCe = useCallback((enabled: boolean) => {
     dispatch({ type: 'TOGGLE', enabled });
     try { localStorage.setItem(CE_SK.CE_ENABLED, String(enabled)); } catch { /* */ }
@@ -184,7 +205,7 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
   }, [refreshHealth]);
 
   return (
-    <ConsentEngineContext.Provider value={{ state, configureCe, removeCe, toggleCe, refreshHealth, refreshPendingCount }}>
+    <ConsentEngineContext.Provider value={{ state, configureCe, autoConfigureCe, removeCe, toggleCe, refreshHealth, refreshPendingCount }}>
       {children}
     </ConsentEngineContext.Provider>
   );

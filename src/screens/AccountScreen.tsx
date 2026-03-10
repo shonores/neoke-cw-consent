@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { clearLocalCredentials } from '../store/localCredentials';
 import { useAuth } from '../context/AuthContext';
 import { useConsentEngine } from '../context/ConsentEngineContext';
@@ -10,16 +10,8 @@ interface AccountScreenProps {
 
 export default function AccountScreen({ navigate }: AccountScreenProps) {
   const { state, logout } = useAuth();
-  const { state: ceState, configureCe, removeCe, refreshHealth } = useConsentEngine();
-
-  // CE setup inline expansion
-  const [ceExpanded, setCeExpanded] = useState(false);
-  const [ceUrlInput, setCeUrlInput] = useState('');
-  const [ceApiKeyInput, setCeApiKeyInput] = useState(() => {
-    try { return localStorage.getItem('neoke_ce_apikey') ?? ''; } catch { return ''; }
-  });
-  const [ceConnecting, setCeConnecting] = useState(false);
-  const [ceConnectError, setCeConnectError] = useState('');
+  const { state: ceState, removeCe, refreshHealth } = useConsentEngine();
+  // clearLocalCredentials is used via handleClearCredentials below
   const [showDisconnectSheet, setShowDisconnectSheet] = useState(false);
 
   const nodeHost = (() => {
@@ -37,32 +29,6 @@ export default function AccountScreen({ navigate }: AccountScreenProps) {
   const handleSignOut = () => {
     logout();
   };
-
-  const handleCeConnect = useCallback(async () => {
-    const url = ceUrlInput.trim();
-    const key = ceApiKeyInput.trim();
-    if (!url || !key) {
-      setCeConnectError('Please enter both the CE URL and API Key.');
-      return;
-    }
-    setCeConnecting(true);
-    setCeConnectError('');
-    try {
-      await configureCe(url, key);
-      setCeExpanded(false);
-      setCeUrlInput('');
-    } catch (err) {
-      setCeConnectError(err instanceof Error ? err.message : 'Could not connect.');
-    } finally {
-      setCeConnecting(false);
-    }
-  }, [ceUrlInput, ceApiKeyInput, configureCe]);
-
-  const handleCeRetry = async () => {
-    await refreshHealth();
-  };
-
-  const isConfigured = !!ceState.ceUrl;
 
   return (
     <div className="flex-1 flex flex-col bg-[#F2F2F7] min-h-screen">
@@ -89,123 +55,51 @@ export default function AccountScreen({ navigate }: AccountScreenProps) {
         <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
           <div className="px-4 py-2.5 border-b border-black/5 flex items-center justify-between">
             <p className="text-[11px] text-[#8e8e93] font-semibold uppercase tracking-wide">Consent Engine</p>
-            {isConfigured && (
-              <div className={`flex items-center gap-1.5 ${ceState.isConnected ? 'text-green-600' : 'text-orange-500'}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${ceState.isConnected ? 'bg-green-500' : 'bg-orange-500'}`} />
-                <span className="text-[12px] font-medium">{ceState.isConnected ? 'Connected' : 'Disconnected'}</span>
-              </div>
-            )}
+            <div className={`flex items-center gap-1.5 ${ceState.isConnected ? 'text-green-600' : 'text-orange-500'}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${ceState.isConnected ? 'bg-green-500' : 'bg-orange-500'}`} />
+              <span className="text-[12px] font-medium">{ceState.isConnected ? 'Connected' : 'Connecting…'}</span>
+            </div>
           </div>
 
-          {!isConfigured ? (
-            <div>
-              <button
-                onClick={() => setCeExpanded(prev => !prev)}
-                className="w-full flex items-center justify-between px-4 py-4 text-left active:bg-black/3 transition-colors"
-              >
-                <div>
-                  <p className="text-[15px] font-medium text-[#1c1c1e]">Not configured</p>
-                  <p className="text-[13px] text-[#8e8e93]">Tap to set up Consent Engine</p>
-                </div>
-                <svg
-                  width="7" height="12" viewBox="0 0 7 12" fill="none"
-                  className={`text-[#c7c7cc] transition-transform ${ceExpanded ? 'rotate-90' : ''}`}
-                >
-                  <path d="M1 1l5 5-5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-              {ceExpanded && (
-                <div className="px-4 pb-4 border-t border-black/5 space-y-3">
-                  <div className="pt-3">
-                    <label className="text-[12px] font-semibold text-[#8e8e93] uppercase tracking-wide mb-1.5 block">
-                      Consent Engine URL
-                    </label>
-                    <input
-                      type="url"
-                      value={ceUrlInput}
-                      onChange={e => { setCeUrlInput(e.target.value); setCeConnectError(''); }}
-                      placeholder="https://consent.example.com"
-                      className="w-full bg-[#F2F2F7] rounded-xl px-3 py-3 text-[15px] text-[#1c1c1e] placeholder-[#c7c7cc] focus:outline-none focus:ring-2 focus:ring-[#5B4FE9]/30"
-                      disabled={ceConnecting}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[12px] font-semibold text-[#8e8e93] uppercase tracking-wide mb-1.5 block">
-                      API Key
-                    </label>
-                    <input
-                      type="password"
-                      value={ceApiKeyInput}
-                      onChange={e => { setCeApiKeyInput(e.target.value); setCeConnectError(''); }}
-                      placeholder="Your API key"
-                      className="w-full bg-[#F2F2F7] rounded-xl px-3 py-3 text-[15px] text-[#1c1c1e] placeholder-[#c7c7cc] focus:outline-none focus:ring-2 focus:ring-[#5B4FE9]/30"
-                      disabled={ceConnecting}
-                    />
-                  </div>
-                  {ceConnectError && (
-                    <p className="text-[13px] text-red-500">{ceConnectError}</p>
-                  )}
-                  <button
-                    onClick={handleCeConnect}
-                    disabled={ceConnecting || !ceUrlInput.trim() || !ceApiKeyInput.trim()}
-                    className="w-full py-3.5 rounded-2xl bg-[#5B4FE9] text-white text-[15px] font-semibold transition-opacity active:opacity-80 disabled:opacity-50"
-                  >
-                    {ceConnecting ? 'Connecting…' : 'Connect →'}
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div>
-              {/* CE URL */}
-              <div className="px-4 py-3 border-b border-black/5">
-                <p className="text-[12px] text-[#8e8e93] mb-0.5">URL</p>
-                <p className="text-[14px] font-mono text-[#1c1c1e] truncate">{ceState.ceUrl}</p>
-              </div>
-
-              {/* Status / action */}
-              {!ceState.isConnected && (
-                <button
-                  onClick={handleCeRetry}
-                  className="w-full flex items-center gap-2 px-4 py-3 border-b border-black/5 active:bg-orange-50 transition-colors"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-orange-500">
-                    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
-                    <line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-                    <line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  </svg>
-                  <span className="text-[14px] font-medium text-orange-700 flex-1">Disconnected · Tap to retry</span>
-                </button>
-              )}
-
-              {/* Action buttons */}
-              <div className="flex">
-                <button
-                  onClick={() => navigate('consent_rules')}
-                  className="flex-1 py-3.5 text-[14px] font-medium text-[#5B4FE9] border-r border-black/5 active:bg-[#5B4FE9]/5 transition-colors"
-                >
-                  Manage Rules
-                </button>
-                <button
-                  onClick={() => navigate('consent_queue')}
-                  className="flex-1 py-3.5 text-[14px] font-medium text-[#5B4FE9] border-r border-black/5 active:bg-[#5B4FE9]/5 transition-colors"
-                >
-                  View Queue
-                  {ceState.pendingCount > 0 && (
-                    <span className="ml-1.5 inline-flex items-center justify-center w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full">
-                      {ceState.pendingCount > 9 ? '9+' : ceState.pendingCount}
-                    </span>
-                  )}
-                </button>
-                <button
-                  onClick={() => setShowDisconnectSheet(true)}
-                  className="flex-1 py-3.5 text-[14px] font-medium text-red-500 active:bg-red-50 transition-colors"
-                >
-                  Disconnect
-                </button>
-              </div>
-            </div>
+          {!ceState.isConnected && (
+            <button
+              onClick={() => refreshHealth()}
+              className="w-full flex items-center gap-2 px-4 py-3 border-b border-black/5 active:bg-orange-50 transition-colors"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-orange-500">
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+                <line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                <line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+              <span className="text-[14px] font-medium text-orange-700 flex-1">Tap to retry connection</span>
+            </button>
           )}
+
+          <div className="flex">
+            <button
+              onClick={() => navigate('consent_rules')}
+              className="flex-1 py-3.5 text-[14px] font-medium text-[#5B4FE9] border-r border-black/5 active:bg-[#5B4FE9]/5 transition-colors"
+            >
+              Manage Rules
+            </button>
+            <button
+              onClick={() => navigate('consent_queue')}
+              className="flex-1 py-3.5 text-[14px] font-medium text-[#5B4FE9] border-r border-black/5 active:bg-[#5B4FE9]/5 transition-colors"
+            >
+              View Queue
+              {ceState.pendingCount > 0 && (
+                <span className="ml-1.5 inline-flex items-center justify-center w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full">
+                  {ceState.pendingCount > 9 ? '9+' : ceState.pendingCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setShowDisconnectSheet(true)}
+              className="flex-1 py-3.5 text-[14px] font-medium text-red-500 active:bg-red-50 transition-colors"
+            >
+              Disconnect
+            </button>
+          </div>
         </div>
 
         {/* Session info */}

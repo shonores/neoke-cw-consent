@@ -9,7 +9,6 @@ import PresentScreen from './screens/PresentScreen';
 import AccountScreen from './screens/AccountScreen';
 import OnboardingStep1Screen from './screens/OnboardingStep1Screen';
 import OnboardingStep2Screen from './screens/OnboardingStep2Screen';
-import OnboardingStep3Screen from './screens/OnboardingStep3Screen';
 import ConsentRulesScreen from './screens/ConsentRulesScreen';
 import ConsentRuleEditorScreen from './screens/ConsentRuleEditorScreen';
 import ConsentQueueScreen from './screens/ConsentQueueScreen';
@@ -142,14 +141,13 @@ function TabBar({
 // ============================================================
 function AppInner() {
   const { state, setNode, setToken } = useAuth();
-  const { state: ceState, refreshPendingCount } = useConsentEngine();
+  const { state: ceState, autoConfigureCe, refreshPendingCount } = useConsentEngine();
   const { ceEnabled, ceApiKey } = ceState;
 
   // Onboarding step (used when not authenticated)
-  const [onboardingStep, setOnboardingStep] = useState<1 | 2 | 3>(1);
+  const [onboardingStep, setOnboardingStep] = useState<1 | 2>(1);
   const [pendingNodeId,  setPendingNodeId]  = useState('');
   const [pendingBaseUrl, setPendingBaseUrl] = useState('');
-  const [justCompletedStep2, setJustCompletedStep2] = useState(false);
 
   // Read saved node from localStorage to pre-fill step 1
   const [savedNodeId] = useState<string>(() => {
@@ -216,6 +214,13 @@ function AppInner() {
     setCurrentView(view);
   };
 
+  // Auto-configure CE silently whenever a token is set and CE isn't yet configured
+  useEffect(() => {
+    if (!state.token || ceState.ceUrl) return;
+    const apiKey = localStorage.getItem('neoke_ce_apikey') ?? '';
+    if (apiKey) autoConfigureCe(apiKey);
+  }, [state.token, ceState.ceUrl, autoConfigureCe]);
+
   // Reset state on login/logout; consume deep-link if present
   useEffect(() => {
     if (state.token) {
@@ -238,17 +243,6 @@ function AppInner() {
           navigate('present', { pendingUri: deepLinkUri });
         }
         return;
-      }
-
-      // Step 3 onboarding check (CE setup)
-      if (justCompletedStep2) {
-        setJustCompletedStep2(false);
-        const ceDismissed = localStorage.getItem('neoke_ce_dismissed') === 'true';
-        const existingCeUrl = localStorage.getItem('neoke_ce_url');
-        if (!ceDismissed && !existingCeUrl) {
-          setOnboardingStep(3 as 1 | 2 | 3);
-          return;
-        }
       }
 
       setCurrentView('dashboard');
@@ -275,16 +269,6 @@ function AppInner() {
 
   // ── Not authenticated → onboarding ───────────────────────────────────────
   if (!state.token) {
-    if (onboardingStep === 3) {
-      return (
-        <div className="w-full max-w-lg mx-auto">
-          <OnboardingStep3Screen
-            onComplete={() => setCurrentView('dashboard')}
-            onSkip={() => setCurrentView('dashboard')}
-          />
-        </div>
-      );
-    }
     if (onboardingStep === 2) {
       return (
         <div className="w-full max-w-lg mx-auto">
@@ -293,7 +277,6 @@ function AppInner() {
             nodeBaseUrl={pendingBaseUrl}
             onBack={() => setOnboardingStep(1)}
             onSuccess={(token, expiresAt) => {
-              setJustCompletedStep2(true);
               setNode(pendingNodeId, pendingBaseUrl);
               setToken(token, expiresAt);
             }}
