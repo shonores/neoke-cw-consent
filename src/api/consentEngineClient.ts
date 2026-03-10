@@ -154,7 +154,7 @@ export async function connectNode(
 // ============================================================
 // Health
 // ============================================================
-export async function checkCeHealth(): Promise<{ status: 'healthy' | 'degraded'; isConnected: boolean; pendingCount: number }> {
+export async function checkCeHealth(): Promise<{ status: 'ok' | 'healthy' | 'degraded'; isConnected: boolean; pendingCount: number }> {
   if (!_ceBaseUrl) {
     throw new CeApiError('Consent Engine URL is not configured.');
   }
@@ -176,7 +176,7 @@ export async function checkCeHealth(): Promise<{ status: 'healthy' | 'degraded';
   }
   const data = await response.json() as Record<string, unknown>;
   return {
-    status: (data['status'] as 'healthy' | 'degraded') ?? 'degraded',
+    status: (data['status'] as 'ok' | 'healthy' | 'degraded') ?? 'degraded',
     isConnected: (data['isConnected'] as boolean) ?? false,
     pendingCount: (data['pendingCount'] as number) ?? 0,
   };

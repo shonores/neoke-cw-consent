@@ -104,7 +104,7 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
     if (!isCeConfigured()) return;
     try {
       const health = await checkCeHealth();
-      dispatch({ type: 'SET_HEALTH', isConnected: health.status === 'healthy', pendingCount: health.pendingCount });
+      dispatch({ type: 'SET_HEALTH', isConnected: health.status === 'healthy' || health.status === 'ok', pendingCount: health.pendingCount });
     } catch {
       dispatch({ type: 'SET_HEALTH', isConnected: false, pendingCount: 0 });
     }
@@ -129,7 +129,8 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
   // Ensure node is registered with CE whenever we have both CE and Auth configured
   useEffect(() => {
     if (state.ceUrl && state.ceEnabled && state.ceApiKey && authState.nodeIdentifier && authState.baseUrl) {
-      connectNode(state.ceApiKey, authState.nodeIdentifier, authState.baseUrl)
+      const cleanNodeUrl = authState.baseUrl.replace(/\/:$/, '');
+      connectNode(state.ceApiKey, authState.nodeIdentifier, cleanNodeUrl)
         .then(() => refreshHealth())
         .catch((err) => console.error('[ConsentEngineProvider] Failed to register node with CE:', err));
     }
@@ -164,7 +165,7 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
     try {
       const health = await checkCeHealth();
       dispatch({ type: 'CONFIGURE', ceUrl: trimmed, apiKey });
-      dispatch({ type: 'SET_HEALTH', isConnected: health.status === 'healthy', pendingCount: health.pendingCount });
+      dispatch({ type: 'SET_HEALTH', isConnected: health.status === 'healthy' || health.status === 'ok', pendingCount: health.pendingCount });
     } catch {
       dispatch({ type: 'CONFIGURE', ceUrl: trimmed, apiKey });
       dispatch({ type: 'SET_HEALTH', isConnected: false, pendingCount: 0 });
@@ -200,7 +201,7 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
     // Health check after configuration
     try {
       const health = await checkCeHealth();
-      dispatch({ type: 'SET_HEALTH', isConnected: health.status === 'healthy', pendingCount: health.pendingCount });
+      dispatch({ type: 'SET_HEALTH', isConnected: health.status === 'healthy' || health.status === 'ok', pendingCount: health.pendingCount });
     } catch { /* background polling will retry */ }
   }, []);
 
