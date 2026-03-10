@@ -189,7 +189,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
         nodeId: authState.nodeIdentifier || '',
         ruleType,
         enabled: true,
-        label: label || '',
+        label: label.trim() || 'Untitled Rule',
         party: {
           matchType: partyMatchType,
           value: partyMatchType !== 'any' ? partyValue : undefined,
