@@ -718,6 +718,36 @@ export async function receiveCredential(
 }
 
 // ============================================================
+// Verification-link resolution
+// ============================================================
+/**
+ * POSTs to a verification-link URL and returns the openid4vp:// invocationUrl.
+ * The verification-link endpoint is a server-side request factory: each POST
+ * generates a fresh one-time-use OpenID4VP request URI.
+ */
+export async function resolveVerificationLink(url: string): Promise<string> {
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
+    });
+  } catch {
+    throw new ApiError('Unable to reach the verification link endpoint. Please check your network.');
+  }
+  if (!response.ok) {
+    throw new ApiError(`Verification link could not be resolved (${response.status}).`);
+  }
+  const data = await response.json() as Record<string, unknown>;
+  const invocationUrl = data['invocationUrl'] as string | undefined;
+  if (!invocationUrl) {
+    throw new ApiError('Verification link returned an unexpected response.');
+  }
+  return invocationUrl;
+}
+
+// ============================================================
 // OpenID4VP — Present
 // ============================================================
 export async function previewPresentation(

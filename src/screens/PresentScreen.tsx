@@ -1,10 +1,10 @@
 import { useState, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { previewPresentationWithRetry, respondPresentationWithRetry, ApiError } from '../api/client';
+import { previewPresentationWithRetry, respondPresentationWithRetry, resolveVerificationLink, ApiError } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useConsentEngine } from '../context/ConsentEngineContext';
 import { isCeConfigured } from '../api/consentEngineClient';
-import { detectUriType } from '../utils/uriRouter';
+import { detectUriType, isVerificationLink } from '../utils/uriRouter';
 import {
   getCandidateLabel,
   getCardColor,
@@ -98,7 +98,19 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
 
   const processPresentUri = useCallback(async (uri: string) => {
     if (!state.token) return;
-    const trimmed = uri.trim();
+    let trimmed = uri.trim();
+
+    // Verification-link URLs need to be resolved to a proper openid4vp:// URI first
+    if (isVerificationLink(trimmed)) {
+      setStage('loading');
+      try {
+        trimmed = await resolveVerificationLink(trimmed);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to resolve the verification link.');
+        setStage('error');
+        return;
+      }
+    }
 
     if (onRouteToCe && isCeConfigured() && ceState.ceEnabled && ceState.ceApiKey) {
       onRouteToCe(trimmed);
