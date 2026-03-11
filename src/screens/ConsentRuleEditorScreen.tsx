@@ -67,7 +67,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
   const [label, setLabel] = useState('');
 
   const [credentialTypes, setCredentialTypes] = useState<NodeCredentialType[]>([]);
-  const [availableClaims, setAvailableClaims] = useState<string[]>([]);
+  const [availableClaims, setAvailableClaims] = useState<NodeCredentialType['claims']>([]);
 
   useEffect(() => {
     listNodeCredentialTypes(apiKey).then(setCredentialTypes).catch(() => { });
@@ -223,7 +223,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
-        <h1 className="text-[20px] font-bold text-[var(--text-main)] italic">
+        <h1 className="text-[20px] font-bold text-[var(--text-main)]">
           {editingRuleId ? 'Edit Rule' : 'New Rule'}
         </h1>
       </nav>
@@ -447,7 +447,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
             <div className={`bg-[var(--bg-white)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] overflow-hidden border-2 transition-all duration-200 ${conditions.has('time_of_day') ? 'border-[var(--primary)]' : 'border-transparent'}`}>
               <button onClick={() => toggleCondition('time_of_day')} className="w-full flex items-center justify-between px-4 py-4">
                 <div className="text-left">
-                  <p className="text-[15px] font-bold text-[var(--text-main)] italic">Time of day</p>
+                  <p className="text-[15px] font-bold text-[var(--text-main)]">Time of day</p>
                   <p className="text-[13px] text-[var(--text-muted)] font-medium">Only apply during specific hours</p>
                 </div>
                 <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${conditions.has('time_of_day') ? 'bg-[var(--primary)] border-[var(--primary)]' : 'border-[#c7c7cc]'}`}>
@@ -475,7 +475,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
             <div className={`bg-[var(--bg-white)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] overflow-hidden border-2 transition-all duration-200 ${conditions.has('day_of_week') ? 'border-[var(--primary)]' : 'border-transparent'}`}>
               <button onClick={() => toggleCondition('day_of_week')} className="w-full flex items-center justify-between px-4 py-4">
                 <div className="text-left">
-                  <p className="text-[15px] font-bold text-[var(--text-main)] italic">Day of week</p>
+                  <p className="text-[15px] font-bold text-[var(--text-main)]">Day of week</p>
                   <p className="text-[13px] text-[var(--text-muted)] font-medium">Only apply on certain days</p>
                 </div>
                 <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${conditions.has('day_of_week') ? 'bg-[var(--primary)] border-[var(--primary)]' : 'border-[#c7c7cc]'}`}>
@@ -502,7 +502,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
             <div className={`bg-[var(--bg-white)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] overflow-hidden border-2 transition-all duration-200 ${conditions.has('max_per_day') ? 'border-[var(--primary)]' : 'border-transparent'}`}>
               <button onClick={() => toggleCondition('max_per_day')} className="w-full flex items-center justify-between px-4 py-4">
                 <div className="text-left">
-                  <p className="text-[15px] font-bold text-[var(--text-main)] italic">Daily limit</p>
+                  <p className="text-[15px] font-bold text-[var(--text-main)]">Daily limit</p>
                   <p className="text-[13px] text-[var(--text-muted)] font-medium">Cap auto-approvals per day</p>
                 </div>
                 <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${conditions.has('max_per_day') ? 'bg-[var(--primary)] border-[var(--primary)]' : 'border-[#c7c7cc]'}`}>

@@ -78,7 +78,7 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
                 <path d="M15 18l-6-6 6-6" />
               </svg>
             </button>
-            <h1 className="text-[20px] font-bold text-[var(--text-main)] italic truncate max-w-[200px]">
+            <h1 className="text-[20px] font-bold text-[var(--text-main)] truncate max-w-[200px]">
               {label}
             </h1>
           </div>

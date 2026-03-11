@@ -234,7 +234,7 @@ export default function ConsentQueueScreen({ navigate }: Props) {
               <path d="M15 18l-6-6 6-6" />
             </svg>
           </button>
-          <h1 className="text-[20px] font-bold text-[var(--text-main)] italic">
+          <h1 className="text-[20px] font-bold text-[var(--text-main)]">
             Approval Queue
           </h1>
         </div>

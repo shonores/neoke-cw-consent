@@ -180,7 +180,7 @@ export default function ConsentRulesScreen({ navigate }: Props) {
               <path d="M15 18l-6-6 6-6" />
             </svg>
           </button>
-          <h1 className="text-[20px] font-bold text-[var(--text-main)] italic">
+          <h1 className="text-[20px] font-bold text-[var(--text-main)]">
             Consent Rules
           </h1>
         </div>

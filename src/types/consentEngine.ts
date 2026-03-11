@@ -141,6 +141,7 @@ export interface NodeCredentialType {
   format: string;
   displayName?: string;
   claims: NodeCredentialTypeClaim[];
+  issuer?: string;
 }
 
 // ============================================================

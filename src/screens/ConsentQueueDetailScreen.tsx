@@ -202,7 +202,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
-        <h1 className="text-[20px] font-bold text-[var(--text-main)] italic">
+        <h1 className="text-[20px] font-bold text-[var(--text-main)]">
           {isVP ? 'Verification' : 'Credential Offer'}
         </h1>
       </nav>
@@ -227,7 +227,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
                 {verifier?.name && (
                   <div className="flex items-center justify-between">
                     <span className="text-[13px] text-[var(--text-muted)] font-medium">Name</span>
-                    <span className="text-[15px] font-bold text-[var(--text-main)] italic">{verifier.name}</span>
+                    <span className="text-[15px] font-bold text-[var(--text-main)]">{verifier.name}</span>
                   </div>
                 )}
                 {verifier?.clientId && (
@@ -240,7 +240,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
                   <div className="flex items-center justify-between">
                     <span className="text-[13px] text-[var(--text-muted)] font-medium">Linked Domain</span>
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[14px] font-bold text-[var(--text-main)] italic">{verifier.linkedDomains[0]}</span>
+                      <span className="text-[14px] font-bold text-[var(--text-main)]">{verifier.linkedDomains[0]}</span>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                         <circle cx="12" cy="12" r="10" stroke="#059669" strokeWidth="2" fill="#05966910" />
                         <path d="M9 12l2 2 4-4" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -264,7 +264,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
                           <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </div>
-                      <span className="text-[15px] font-bold text-[var(--text-main)] italic">{field}</span>
+                      <span className="text-[15px] font-bold text-[var(--text-main)]">{field}</span>
                     </div>
                   ))}
                 </div>
@@ -277,7 +277,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
                 className="w-full flex items-center justify-between px-4 py-4 text-left active:bg-[var(--bg-ios)] transition-colors"
               >
                 <div className="pr-4">
-                  <p className="text-[15px] font-bold text-[var(--text-main)] italic">Create auto-approval rule</p>
+                  <p className="text-[15px] font-bold text-[var(--text-main)]">Create auto-approval rule</p>
                   <p className="text-[13px] text-[var(--text-muted)] font-medium">Automatically handle future requests</p>
                 </div>
                 <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${createRuleToggle ? 'bg-[var(--primary)]' : 'bg-[#e5e5ea]'}`}>
@@ -339,7 +339,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
                 <div className="divide-y divide-[var(--border-subtle)]">
                   {item.preview.credentialTypes.map((ct, i) => (
                     <div key={i} className="px-4 py-4">
-                      <p className="text-[16px] font-bold text-[var(--text-main)] italic">{ct}</p>
+                      <p className="text-[16px] font-bold text-[var(--text-main)]">{ct}</p>
                     </div>
                   ))}
                 </div>

@@ -22,7 +22,7 @@ export default function OptionCard({ selected, onClick, title, description, icon
                 {icon && <div className="flex-shrink-0">{icon}</div>}
 
                 <div className="flex-1 min-w-0">
-                    <p className="text-[15px] font-bold text-[var(--text-main)] italic truncate">{title}</p>
+                    <p className="text-[15px] font-bold text-[var(--text-main)] truncate">{title}</p>
                     {description && <p className="text-[13px] text-[var(--text-muted)] mt-0.5 font-medium truncate">{description}</p>}
                 </div>
 

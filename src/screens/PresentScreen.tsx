@@ -221,7 +221,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
               <path d="M15 18l-6-6 6-6" />
             </svg>
           </button>
-          <h1 className="text-[20px] font-bold text-[var(--text-main)] italic">
+          <h1 className="text-[20px] font-bold text-[var(--text-main)]">
             {multipleGroups ? 'Multiple Credentials' : 'Select Credential'}
           </h1>
         </nav>
@@ -438,7 +438,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
-        <h1 className="text-[20px] font-bold text-[var(--text-main)] italic">
+        <h1 className="text-[20px] font-bold text-[var(--text-main)]">
           Present
         </h1>
       </nav>

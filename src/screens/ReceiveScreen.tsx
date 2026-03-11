@@ -224,7 +224,7 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
               <path d="M15 18l-6-6 6-6" />
             </svg>
           </button>
-          <h1 className="text-[20px] font-bold text-[var(--text-main)] italic">Error</h1>
+          <h1 className="text-[20px] font-bold text-[var(--text-main)]">Error</h1>
         </nav>
         <div className="flex-1 flex flex-col items-center justify-center px-6 space-y-6">
           <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center">
@@ -284,7 +284,7 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
               <path d="M15 18l-6-6 6-6" />
             </svg>
           </button>
-          <h1 className="text-[20px] font-bold text-[var(--text-main)] italic">Save Credential</h1>
+          <h1 className="text-[20px] font-bold text-[var(--text-main)]">Save Credential</h1>
         </nav>
 
         {/* Title */}
@@ -339,7 +339,7 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
-        <h1 className="text-[20px] font-bold text-[var(--text-main)] italic">Scan QR</h1>
+        <h1 className="text-[20px] font-bold text-[var(--text-main)]">Scan QR</h1>
       </nav>
 
       {/* CE bypass notice */}
