@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
 import { listRules, enableRule, disableRule, deleteRule } from '../api/consentEngineClient';
-import Header from '../components/Header';
 import IconButton from '../components/IconButton';
 import PrimaryButton from '../components/PrimaryButton';
 import SecondaryButton from '../components/SecondaryButton';
@@ -170,17 +169,28 @@ export default function ConsentRulesScreen({ navigate }: Props) {
 
   return (
     <motion.div variants={variants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col bg-[var(--bg-ios)] min-h-screen">
-      <Header
-        title="Consent Rules"
-        onBack={() => navigate('account')}
-        rightAction={
-          <IconButton onClick={() => navigate('consent_rule_editor', { editingRuleId: null })} aria-label="New Rule">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      {/* Minimalist Top Nav */}
+      <nav className="px-5 pt-14 pb-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('account')}
+            className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 18l-6-6 6-6" />
             </svg>
-          </IconButton>
-        }
-      />
+          </button>
+          <h1 className="text-[20px] font-bold text-[var(--text-main)] italic">
+            Consent Rules
+          </h1>
+        </div>
+
+        <IconButton onClick={() => navigate('consent_rule_editor', { editingRuleId: null })} aria-label="New Rule">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </IconButton>
+      </nav>
 
       {/* Filter tabs */}
       <div className="px-5 mb-4">
@@ -252,7 +262,7 @@ export default function ConsentRulesScreen({ navigate }: Props) {
                   {/* Top row: dot + label + badge + toggle */}
                   <div className="flex items-center gap-2 mb-2">
                     <span className={`w-2 h-2 rounded-full flex-shrink-0 ${rule.enabled ? 'bg-green-500' : 'bg-[#c7c7cc]'}`} />
-                    <span className="text-[15px] font-semibold text-[#1c1c1e] flex-1 truncate">
+                    <span className="text-[15px] font-semibold text-[#1c1c1e] flex-1 truncate italic">
                       {rule.label ?? 'Unnamed rule'}
                     </span>
                     <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${rule.enabled ? 'bg-green-100 text-green-700' : 'bg-[#F2F2F7] text-[#8e8e93]'}`}>
@@ -268,12 +278,12 @@ export default function ConsentRulesScreen({ navigate }: Props) {
                   </div>
 
                   {/* Info row */}
-                  <p className="text-[13px] text-[#8e8e93] mb-1">
-                    <span className="capitalize font-medium text-[#1c1c1e]">{rule.ruleType}</span>
+                  <p className="text-[13px] text-[#8e8e93] mb-1 font-medium">
+                    <span className="capitalize font-bold text-[#1c1c1e] italic">{rule.ruleType}</span>
                     {' · '}{rule.credentialType.matchType === 'exact' ? (rule.credentialType.value ?? 'Any credential') : 'Any credential'}
                     {' · '}{partyLabel(rule)}
                   </p>
-                  <p className="text-[12px] text-[#8e8e93]">
+                  <p className="text-[12px] text-[#8e8e93] font-medium">
                     {expiryLabel(rule)}
                     {(rule.expiry.usedCount ?? 0) > 0 && (
                       <span className="ml-2">· {rule.expiry.usedCount} uses</span>
@@ -286,13 +296,13 @@ export default function ConsentRulesScreen({ navigate }: Props) {
                 <div className="flex border-t border-[var(--border-subtle)]">
                   <button
                     onClick={() => navigate('consent_rule_editor', { editingRuleId: rule.id })}
-                    className="flex-1 py-3 text-[14px] font-medium text-[var(--primary)] border-r border-[var(--border-subtle)] active:bg-[var(--primary-bg)] transition-colors"
+                    className="flex-1 py-3 text-[14px] font-bold text-[var(--primary)] border-r border-[var(--border-subtle)] active:bg-[var(--primary-bg)] transition-colors italic"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => setDeletingRule(rule)}
-                    className="flex-1 py-3 text-[14px] font-medium text-[var(--text-error)] active:bg-red-50 transition-colors"
+                    className="flex-1 py-3 text-[14px] font-bold text-[var(--text-error)] active:bg-red-50 transition-colors italic"
                   >
                     Delete
                   </button>

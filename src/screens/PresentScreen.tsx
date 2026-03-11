@@ -14,7 +14,6 @@ import {
 } from '../utils/credentialHelpers';
 import { getLocalCredentials } from '../store/localCredentials';
 import QRScanner from '../components/QRScanner';
-import Header from '../components/Header';
 import PrimaryButton from '../components/PrimaryButton';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
@@ -30,8 +29,6 @@ interface PresentScreenProps {
   onPresented?: () => void;
   onRouteToCe?: (uri: string) => void;
 }
-
-// ── Shared scan-toggle icons ─────────────────────────────────────────────────
 
 function IconCamera() {
   return (
@@ -65,19 +62,17 @@ function IconPaste() {
 function IconCheckCircle() {
   return (
     <svg width="56" height="56" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <circle cx="12" cy="12" r="10" stroke="#5B4FE9" strokeWidth="1.5" />
+      <circle cx="12" cy="12" r="10" stroke="var(--primary)" strokeWidth="1.5" />
       <path
         d="M8.5 12l2.5 2.5 4.5-5"
-        stroke="#5B4FE9"
-        strokeWidth="1.8"
+        stroke="var(--primary)"
+        strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
     </svg>
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 export default function PresentScreen({ navigate, initialUri, onPresented, onRouteToCe }: PresentScreenProps) {
   const { state, markExpired } = useAuth();
@@ -93,9 +88,6 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
   const [selections, setSelections] = useState<Record<string, number>>({});
   const [successResult, setSuccessResult] = useState<{ redirectUri?: string } | null>(null);
 
-  // Find the best local credential match for a VP candidate so thumbnails use
-  // per-credential display metadata (colors, logo) rather than type-only defaults.
-  // Prefers type+issuer match; falls back to type-only.
   const localCreds = getLocalCredentials();
   const findLocalCred = (candTypes: string[], candIssuer: string) => {
     const byBoth = localCreds.find(
@@ -108,7 +100,6 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
     if (!state.token) return;
     const trimmed = uri.trim();
 
-    // Route to CE if configured and available
     if (onRouteToCe && isCeConfigured() && ceState.ceEnabled && ceState.ceApiKey) {
       onRouteToCe(trimmed);
       return;
@@ -139,12 +130,11 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
       const hasAnyCandidate = data.queries?.some((q) => q.candidates?.length > 0);
       if (!data.queries || data.queries.length === 0 || !hasAnyCandidate) {
         setError(
-          "No matching credential found. The verifier is requesting a credential type that isn't in your wallet yet. Try receiving the required credential first."
+          "No matching credential found. The verifier is requesting a credential type that isn't in your wallet yet."
         );
         setStage('error');
         return;
       }
-      // Pre-fill selections with the first candidate for each query
       const initialSelections: Record<string, number> = {};
       for (const q of data.queries) {
         if (q.candidates?.length > 0) initialSelections[q.queryId] = q.candidates[0].index;
@@ -152,7 +142,6 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
       setSelections(initialSelections);
       setSkippedX509(usedSkip);
       setPreview(data);
-      // Go to selection screen only when at least one query has multiple candidates
       const needsSelection = data.queries.some((q) => (q.candidates?.length ?? 0) > 1);
       setStage(needsSelection ? 'select' : 'consent');
     } catch (err) {
@@ -160,11 +149,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
         markExpired();
         return;
       }
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Unable to process the presentation request. Please check your network connection and try again.'
-      );
+      setError(err instanceof Error ? err.message : 'Unable to process the request.');
       setStage('error');
     }
   }, [state.token, navigate, markExpired, ceState.ceEnabled, ceState.ceApiKey, onRouteToCe]);
@@ -196,13 +181,12 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
     }
   };
 
-  // ── Loading / Presenting ──
   if (stage === 'loading' || stage === 'presenting') {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 min-h-screen bg-[var(--bg-ios)]">
         <div className="text-center space-y-4">
           <LoadingSpinner size="lg" className="mx-auto" />
-          <p className="text-[var(--text-muted)] text-[15px] font-medium">
+          <p className="text-[var(--text-muted)] text-[15px] font-bold italic">
             {stage === 'loading' ? 'Processing request…' : 'Sharing credential…'}
           </p>
         </div>
@@ -210,20 +194,28 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
     );
   }
 
-  // ── Select (multiple candidates for one or more queries) ──
   if (stage === 'select' && preview) {
     const ambiguousQueries = preview.queries.filter((q) => (q.candidates?.length ?? 0) > 1);
     const multipleGroups = ambiguousQueries.length > 1;
 
     return (
       <div className="flex flex-col min-h-screen bg-[var(--bg-ios)]">
-        <Header
-          title={multipleGroups ? 'Multiple Credentials' : 'Select Credential'}
-          onBack={() => navigate('dashboard')}
-        />
+        <nav className="px-5 pt-14 pb-4 flex items-center gap-3">
+          <button
+            onClick={() => navigate('dashboard')}
+            className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+          <h1 className="text-[20px] font-bold text-[var(--text-main)] italic">
+            {multipleGroups ? 'Multiple Credentials' : 'Select Credential'}
+          </h1>
+        </nav>
 
         <div className="px-5 pb-6 flex-shrink-0">
-          <h2 className="text-[24px] font-bold text-[var(--text-main)] leading-tight">
+          <h2 className="text-[24px] font-bold text-[var(--text-main)] leading-tight italic">
             {multipleGroups ? 'Choose credentials to share' : 'Choose a credential to share'}
           </h2>
         </div>
@@ -233,7 +225,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
             const selectedIndex = selections[query.queryId] ?? query.candidates[0]?.index;
             return (
               <div key={query.queryId}>
-                <p className="text-[16px] font-bold text-[#1c1c1e] mb-3">
+                <p className="text-[16px] font-bold text-[var(--text-main)] mb-3 italic">
                   {multipleGroups ? (() => {
                     const first = query.candidates[0];
                     const lc = first ? findLocalCred(first.type, first.issuer) : undefined;
@@ -283,13 +275,21 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
     );
   }
 
-  // ── Error ──
   if (stage === 'error') {
     return (
       <div className="flex-1 flex flex-col min-h-screen bg-[var(--bg-ios)]">
-        <Header title="Error" onBack={() => navigate('dashboard')} />
+        <nav className="px-5 pt-14 pb-4">
+          <button
+            onClick={() => navigate('dashboard')}
+            className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+        </nav>
         <div className="flex-1 flex flex-col items-center justify-center px-6 space-y-6">
-          <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center">
+          <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center border border-red-100">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
               <path d="M12 8v4M12 16h.01" stroke="var(--text-error)" strokeWidth="2.5" strokeLinecap="round" />
               <circle cx="12" cy="12" r="10" stroke="var(--text-error)" strokeWidth="2" />
@@ -307,26 +307,25 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
     );
   }
 
-  // ── Success ──
   if (stage === 'success') {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 min-h-screen bg-[var(--bg-ios)]">
-        <div className="text-center space-y-6 w-full max-w-sm">
+      <div className="flex-1 flex flex-col items-center justify-center p-6 min-h-screen bg-[var(--bg-ios)] text-center">
+        <div className="space-y-8 w-full max-w-sm">
           <motion.div
             initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-24 h-24 bg-[var(--primary-bg)] rounded-full flex items-center justify-center mx-auto"
+            className="w-24 h-24 bg-green-50 border border-green-100 rounded-full flex items-center justify-center mx-auto"
           >
             <IconCheckCircle />
           </motion.div>
           <div>
-            <h2 className="text-[var(--text-main)] font-bold text-[28px] leading-tight">Shared!</h2>
-            <p className="text-[var(--text-muted)] text-[16px] mt-2 font-medium">The verifier has received your information.</p>
+            <h2 className="text-[var(--text-main)] font-bold text-[32px] leading-tight italic">Shared!</h2>
+            <p className="text-[var(--text-muted)] text-[16px] mt-2 font-bold italic">The verifier has received your information.</p>
           </div>
           {successResult?.redirectUri && (
-            <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] p-4 text-left shadow-[var(--shadow-sm)] border border-[var(--border-subtle)]">
-              <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-wider mb-2">Redirecting to</p>
-              <p className="text-[13px] font-mono text-[var(--text-main)] break-all">{successResult.redirectUri}</p>
+            <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] p-5 text-left shadow-[var(--shadow-sm)] border border-[var(--border-subtle)]">
+              <p className="text-[11px] text-[var(--text-muted)] font-bold uppercase tracking-wider mb-2 italic">Redirecting to</p>
+              <p className="text-[13px] font-mono text-[var(--text-main)] break-all font-bold">{successResult.redirectUri}</p>
             </div>
           )}
           <PrimaryButton onClick={() => { onPresented?.(); navigate('dashboard'); }}>
@@ -337,36 +336,41 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
     );
   }
 
-  // ── Consent ──
   if (stage === 'consent' && preview) {
     const verifierName = preview.verifier.name ?? parseIssuerLabel(preview.verifier.clientId);
 
     return (
       <div className="flex flex-col min-h-screen bg-[var(--bg-ios)] overflow-x-hidden">
-        <Header
-          title="Sharing Request"
-          onBack={() => setStage(preview.queries.some(q => q.candidates.length > 1) ? 'select' : 'scan')}
-        />
+        <nav className="px-5 pt-14 pb-4">
+          <button
+            onClick={() => setStage(preview.queries.some(q => q.candidates.length > 1) ? 'select' : 'scan')}
+            className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+        </nav>
 
         <div className="px-5 pb-6 flex-shrink-0">
-          <h2 className="text-[24px] font-bold text-[var(--text-main)] leading-tight break-words">
-            <span className="text-[var(--primary)] font-black italic">{verifierName}</span><br />
+          <h2 className="text-[28px] font-bold text-[var(--text-main)] leading-tight italic">
+            <span className="text-[var(--primary)] font-black">{verifierName}</span><br />
             requests some info
           </h2>
         </div>
 
-        <div className="px-5 flex-1 overflow-y-auto pb-40 space-y-6">
+        <div className="px-5 flex-1 overflow-y-auto pb-44 space-y-6">
           {preview.verifier.purpose && (
             <div>
-              <p className="text-[12px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Purpose</p>
-              <div className="bg-[var(--bg-white)] rounded-[var(--radius-xl)] px-4 py-4 shadow-[var(--shadow-sm)] border border-[var(--border-subtle)]">
-                <p className="text-[15px] font-medium text-[var(--text-main)] leading-relaxed italic">"{preview.verifier.purpose}"</p>
+              <p className="text-[12px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2 italic">Purpose</p>
+              <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] px-5 py-5 shadow-[var(--shadow-sm)] border border-[var(--border-subtle)]">
+                <p className="text-[15px] font-bold text-[var(--text-main)] leading-relaxed italic">"{preview.verifier.purpose}"</p>
               </div>
             </div>
           )}
 
           <div>
-            <p className="text-[12px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Info to share</p>
+            <p className="text-[12px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2 italic">Info to share</p>
             <div className="space-y-3">
               {preview.queries.map((query) => {
                 const cand = query.candidates.find((c) => c.index === selections[query.queryId]) ?? query.candidates[0];
@@ -392,8 +396,8 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
                       className="mr-4"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[15px] font-bold text-[var(--text-main)] truncate italic">{label}</p>
-                      <p className="text-[13px] text-[var(--text-muted)] truncate">{issuerLabel}</p>
+                      <p className="text-[16px] font-bold text-[var(--text-main)] truncate italic">{label}</p>
+                      <p className="text-[13px] text-[var(--text-muted)] truncate font-medium">{issuerLabel}</p>
                     </div>
                   </div>
                 );
@@ -411,13 +415,21 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
     );
   }
 
-  // ── Scan ──
   return (
     <div className="flex flex-col min-h-screen bg-[var(--bg-ios)]">
-      <Header
-        title="Present"
-        onBack={() => navigate('dashboard')}
-      />
+      <nav className="px-5 pt-14 pb-4 flex items-center gap-3">
+        <button
+          onClick={() => navigate('dashboard')}
+          className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+        <h1 className="text-[20px] font-bold text-[var(--text-main)] italic">
+          Present
+        </h1>
+      </nav>
 
       {ceBypassed && (
         <div className="px-5 pb-2">
@@ -426,22 +438,22 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
               <path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
             </svg>
-            <p className="text-[13px] font-medium text-blue-700">Policy active: Request routed directly.</p>
+            <p className="text-[13px] font-bold text-blue-700 italic">Policy active: Request routed directly.</p>
           </div>
         </div>
       )}
 
       <div className={`flex-1 overflow-y-auto px-5 space-y-5 ${showManual ? 'pb-28' : 'pb-6'}`}>
-        <div className="flex bg-black/5 rounded-[var(--radius-xl)] p-1 gap-1">
+        <div className="flex bg-black/5 rounded-[var(--radius-2xl)] p-1 gap-1">
           <button
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[14px] rounded-lg transition-all ${!showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[var(--text-muted)] font-medium'}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 text-[14px] rounded-xl transition-all italic ${!showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[var(--text-muted)] font-medium'}`}
             onClick={() => setShowManual(false)}
           >
             <IconCamera />
             Camera
           </button>
           <button
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[14px] rounded-lg transition-all ${showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[var(--text-muted)] font-medium'}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 text-[14px] rounded-xl transition-all italic ${showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[var(--text-muted)] font-medium'}`}
             onClick={() => setShowManual(true)}
           >
             <IconPaste />
@@ -456,7 +468,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
               onChange={(e) => { setManualUri(e.target.value); setError(''); }}
               placeholder="openid4vp://..."
               rows={5}
-              className="w-full bg-[var(--bg-white)] border border-[var(--border-subtle)] rounded-[var(--radius-2xl)] px-4 py-4 text-[var(--text-main)] placeholder-[#aeaeb2] text-[14px] font-mono focus:outline-none focus:ring-2 focus:ring-[var(--primary)] resize-none shadow-[var(--shadow-sm)]"
+              className="w-full bg-[var(--bg-white)] border border-[var(--border-subtle)] rounded-[var(--radius-2xl)] px-4 py-4 text-[var(--text-main)] placeholder-[#aeaeb2] text-[14px] font-mono focus:outline-none focus:ring-2 focus:ring-[var(--primary)] resize-none shadow-[var(--shadow-sm)] font-bold"
               aria-label="Paste presentation request URI"
             />
             {error && <ErrorMessage message={error} />}

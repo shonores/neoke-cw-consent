@@ -26,6 +26,7 @@ export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback
 
   useEffect(() => {
     let cancelled = false;
+    let autoFallbackTimer: ReturnType<typeof setTimeout> | null = null;
     (async () => {
       try {
         const result = await ceIntake(apiKey, rawLink);
@@ -35,7 +36,6 @@ export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback
 
         if (action === 'auto_executed') {
           setOverlayState('auto_executed');
-          // Auto-dismiss after 3s
           const t = setTimeout(() => { if (!cancelled) onDismiss(); }, 3000);
           autoDismissTimerRef.current = t;
         } else if (action === 'queued') {
@@ -47,13 +47,19 @@ export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback
         }
       } catch (err) {
         if (cancelled) return;
+        // CE is unreachable (CORS / network error) — auto-fallback to manual after 1.5s
+        const type = detectLinkType(rawLink);
         setReason(err instanceof Error ? err.message : 'Could not reach the Consent Engine.');
         setOverlayState('error');
+        autoFallbackTimer = setTimeout(() => {
+          if (!cancelled) onFallback(rawLink, type);
+        }, 1500);
       }
     })();
     return () => {
       cancelled = true;
       if (autoDismissTimerRef.current) clearTimeout(autoDismissTimerRef.current);
+      if (autoFallbackTimer) clearTimeout(autoFallbackTimer);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -199,33 +205,16 @@ export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback
               initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
               className="flex flex-col items-center gap-4 px-6 py-10"
             >
-              <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center">
+              <div className="w-16 h-16 bg-[var(--primary-bg)] rounded-full flex items-center justify-center animate-pulse">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                  <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="#F59E0B" strokeWidth="1.7" strokeLinejoin="round" fill="#F59E0B" fillOpacity="0.12" />
-                  <line x1="12" y1="9" x2="12" y2="13" stroke="#F59E0B" strokeWidth="1.7" strokeLinecap="round" />
-                  <line x1="12" y1="17" x2="12.01" y2="17" stroke="#F59E0B" strokeWidth="2.2" strokeLinecap="round" />
+                  <path d="M12 2L4 6v6c0 5.25 3.5 9.74 8 11 4.5-1.26 8-5.75 8-11V6l-8-4z"
+                    fill="#5B4FE9" fillOpacity="0.15" stroke="#5B4FE9" strokeWidth="1.7" strokeLinejoin="round" />
+                  <path d="M12 8v5M12 15.5h.01" stroke="#5B4FE9" strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
               </div>
               <div className="text-center">
-                <p className="text-[17px] font-semibold text-[#1c1c1e]">Consent Engine unavailable</p>
-                <p className="text-[14px] text-[#8e8e93] mt-1">Could not reach the Consent Engine. Process this request manually instead?</p>
-              </div>
-              <div className="flex gap-3 w-full pt-2">
-                <button
-                  onClick={onDismiss}
-                  className="flex-1 py-3 text-[15px] font-medium text-[#8e8e93] bg-[#F2F2F7] rounded-2xl"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    const type = detectLinkType(rawLink);
-                    onFallback(rawLink, type);
-                  }}
-                  className="flex-1 py-3 text-[15px] font-semibold text-white bg-[#5B4FE9] rounded-2xl active:opacity-80"
-                >
-                  Handle Manually →
-                </button>
+                <p className="text-[17px] font-semibold text-[#1c1c1e]">Routing manually…</p>
+                <p className="text-[14px] text-[#8e8e93] mt-1">Consent Engine unreachable. Processing your request directly.</p>
               </div>
             </motion.div>
           )}

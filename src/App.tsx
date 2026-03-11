@@ -33,8 +33,8 @@ function TabBar({
   ceEnabled: boolean;
   pendingCount: number;
 }) {
-  const homeActive    = currentView === 'dashboard';
-  const scanActive    = currentView === 'receive' || currentView === 'present';
+  const homeActive = currentView === 'dashboard';
+  const scanActive = currentView === 'receive' || currentView === 'present';
   const accountActive = currentView === 'account';
   const consentActive = ['consent_rules', 'consent_queue', 'consent_queue_detail', 'audit_log', 'consent_rule_editor'].includes(currentView);
 
@@ -70,12 +70,12 @@ function TabBar({
         aria-label="Scan QR Code"
       >
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <rect x="3"   y="3"   width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.7" fill={scanActive ? 'currentColor' : 'none'} fillOpacity={scanActive ? 0.12 : 0} />
-          <rect x="13"  y="3"   width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.7" fill={scanActive ? 'currentColor' : 'none'} fillOpacity={scanActive ? 0.12 : 0} />
-          <rect x="3"   y="13"  width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.7" fill={scanActive ? 'currentColor' : 'none'} fillOpacity={scanActive ? 0.12 : 0} />
-          <rect x="13"   y="13"   width="3.5" height="3.5" rx="0.5" fill="currentColor" />
-          <rect x="17.5" y="13"   width="3.5" height="3.5" rx="0.5" fill="currentColor" />
-          <rect x="13"   y="17.5" width="3.5" height="3.5" rx="0.5" fill="currentColor" />
+          <rect x="3" y="3" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.7" fill={scanActive ? 'currentColor' : 'none'} fillOpacity={scanActive ? 0.12 : 0} />
+          <rect x="13" y="3" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.7" fill={scanActive ? 'currentColor' : 'none'} fillOpacity={scanActive ? 0.12 : 0} />
+          <rect x="3" y="13" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.7" fill={scanActive ? 'currentColor' : 'none'} fillOpacity={scanActive ? 0.12 : 0} />
+          <rect x="13" y="13" width="3.5" height="3.5" rx="0.5" fill="currentColor" />
+          <rect x="17.5" y="13" width="3.5" height="3.5" rx="0.5" fill="currentColor" />
+          <rect x="13" y="17.5" width="3.5" height="3.5" rx="0.5" fill="currentColor" />
           <rect x="17.5" y="17.5" width="3.5" height="3.5" rx="0.5" fill="currentColor" />
         </svg>
         <span className="text-[10px] font-medium">Scan QR Code</span>
@@ -146,7 +146,7 @@ function AppInner() {
 
   // Onboarding step (used when not authenticated)
   const [onboardingStep, setOnboardingStep] = useState<1 | 2>(1);
-  const [pendingNodeId,  setPendingNodeId]  = useState('');
+  const [pendingNodeId, setPendingNodeId] = useState('');
   const [pendingBaseUrl, setPendingBaseUrl] = useState('');
 
   // Read saved node from localStorage to pre-fill step 1
@@ -181,13 +181,15 @@ function AppInner() {
   const deepLinkConsumed = useRef(false);
 
   // Authenticated navigation state
-  const [currentView,        setCurrentView]        = useState<ViewName>('dashboard');
+  const [currentView, setCurrentView] = useState<ViewName>('dashboard');
   const [selectedCredential, setSelectedCredential] = useState<Credential | null>(null);
-  const [pendingUri,         setPendingUri]          = useState<string | undefined>();
-  const [refreshSignal,      setRefreshSignal]       = useState(0);
-  const [editingRuleId,      setEditingRuleId]       = useState<string | null>(null);
+  const [pendingUri, setPendingUri] = useState<string | undefined>();
+  const [refreshSignal, setRefreshSignal] = useState(0);
+  const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
   const [selectedQueueItemId, setSelectedQueueItemId] = useState<string | null>(null);
-  const [ceProcessingUri,    setCeProcessingUri]     = useState<string | null>(null);
+  const [ceProcessingUri, setCeProcessingUri] = useState<string | null>(null);
+  // URI that was CE-bypassed manually — should NOT be re-routed to CE intake
+  const [ceBypassedUri, setCeBypassedUri] = useState<string | null>(null);
 
   const navigate = (
     view: ViewName,
@@ -278,8 +280,8 @@ function AppInner() {
           savedNodeId={savedNodeId}
           pendingAction={
             deepLinkType === 'receive' ? 'receive'
-            : deepLinkType === 'present' ? 'present'
-            : null
+              : deepLinkType === 'present' ? 'present'
+                : null
           }
           onContinue={(nodeId, baseUrl) => {
             setPendingNodeId(nodeId);
@@ -323,7 +325,11 @@ function AppInner() {
             navigate={navigate}
             onCredentialReceived={() => setRefreshSignal((s) => s + 1)}
             initialUri={pendingUri}
-            onRouteToCe={ceEnabled && ceApiKey ? (uri) => { setCeProcessingUri(uri); navigate('dashboard'); } : undefined}
+            onRouteToCe={ceEnabled && ceApiKey ? (uri) => {
+              if (uri === ceBypassedUri) return; // skip CE for manually-bypassed URIs
+              setCeProcessingUri(uri);
+              navigate('dashboard');
+            } : undefined}
           />
         )}
 
@@ -333,7 +339,11 @@ function AppInner() {
             navigate={navigate}
             initialUri={pendingUri}
             onPresented={() => setRefreshSignal((s) => s + 1)}
-            onRouteToCe={ceEnabled && ceApiKey ? (uri) => { setCeProcessingUri(uri); navigate('dashboard'); } : undefined}
+            onRouteToCe={ceEnabled && ceApiKey ? (uri) => {
+              if (uri === ceBypassedUri) return; // skip CE for manually-bypassed URIs
+              setCeProcessingUri(uri);
+              navigate('dashboard');
+            } : undefined}
           />
         )}
 
@@ -373,6 +383,7 @@ function AppInner() {
             apiKey={ceApiKey ?? ''}
             onDismiss={() => setCeProcessingUri(null)}
             onFallback={(uri, type) => {
+              setCeBypassedUri(uri);  // prevent re-routing this URI to CE overlay
               setCeProcessingUri(null);
               navigate(type === 'receive' ? 'receive' : 'present', { pendingUri: uri });
             }}

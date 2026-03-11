@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
 import { listAuditEvents } from '../api/consentEngineClient';
-import Header from '../components/Header';
 import PrimaryButton from '../components/PrimaryButton';
 import type { AuditEvent, AuditAction } from '../types/consentEngine';
 import type { ViewName } from '../types';
@@ -158,7 +157,6 @@ export default function AuditLogScreen({ navigate }: Props) {
 
   useEffect(() => { loadEvents(true); }, [loadEvents]);
 
-  // Infinite scroll observer
   useEffect(() => {
     if (!bottomRef.current || !hasMore || loadingMore) return;
     const observer = new IntersectionObserver(
@@ -178,7 +176,20 @@ export default function AuditLogScreen({ navigate }: Props) {
 
   return (
     <motion.div variants={variants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col bg-[var(--bg-ios)] min-h-screen">
-      <Header title="Activity Log" onBack={() => navigate('account')} />
+      {/* Minimalist Top Nav */}
+      <nav className="px-5 pt-14 pb-4 flex items-center gap-3">
+        <button
+          onClick={() => navigate('account')}
+          className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+        <h1 className="text-[20px] font-bold text-[var(--text-main)] italic">
+          Activity Log
+        </h1>
+      </nav>
 
       {/* Filter chips */}
       <div className="px-5 mb-6 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
@@ -263,7 +274,6 @@ export default function AuditLogScreen({ navigate }: Props) {
               </div>
             ))}
 
-            {/* Infinite scroll trigger */}
             <div ref={bottomRef} className="h-4 flex items-center justify-center">
               {loadingMore && (
                 <div className="w-5 h-5 border-2 border-[#5B4FE9] border-t-transparent rounded-full animate-spin" />

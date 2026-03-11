@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { clearLocalCredentials } from '../store/localCredentials';
 import { useAuth } from '../context/AuthContext';
 import { useConsentEngine } from '../context/ConsentEngineContext';
-import Header from '../components/Header';
 import PrimaryButton from '../components/PrimaryButton';
 import SecondaryButton from '../components/SecondaryButton';
 import type { ViewName } from '../types';
@@ -14,7 +13,6 @@ interface AccountScreenProps {
 export default function AccountScreen({ navigate }: AccountScreenProps) {
   const { state, logout } = useAuth();
   const { state: ceState, removeCe, refreshHealth } = useConsentEngine();
-  // clearLocalCredentials is used via handleClearCredentials below
   const [showDisconnectSheet, setShowDisconnectSheet] = useState(false);
 
   const nodeHost = (() => {
@@ -35,7 +33,20 @@ export default function AccountScreen({ navigate }: AccountScreenProps) {
 
   return (
     <div className="flex-1 flex flex-col bg-[var(--bg-ios)] min-h-screen">
-      <Header title="Account" />
+      {/* Minimalist Top Nav */}
+      <nav className="px-5 pt-14 pb-4 flex items-center gap-3">
+        <button
+          onClick={() => navigate('dashboard')}
+          className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+        <h1 className="text-[20px] font-bold text-[var(--text-main)] italic">
+          Account
+        </h1>
+      </nav>
 
       <main className="flex-1 px-5 pb-28 space-y-4">
         {/* Node info */}
@@ -131,6 +142,19 @@ export default function AccountScreen({ navigate }: AccountScreenProps) {
             className="w-full flex items-center justify-between px-4 py-4 text-left active:bg-black/3 transition-colors"
           >
             <span className="text-[15px] text-[var(--text-error)] font-semibold">Sign out</span>
+            <svg width="7" height="12" viewBox="0 0 7 12" fill="none" aria-hidden>
+              <path d="M1 1l5 5-5 5" stroke="#c7c7cc" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Audit Log link */}
+        <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] overflow-hidden shadow-[var(--shadow-sm)] border border-[var(--border-subtle)]">
+          <button
+            onClick={() => navigate('audit_log')}
+            className="w-full flex items-center justify-between px-4 py-4 text-left active:bg-black/3 transition-colors"
+          >
+            <span className="text-[15px] text-[var(--text-main)] font-semibold">Activity Log</span>
             <svg width="7" height="12" viewBox="0 0 7 12" fill="none" aria-hidden>
               <path d="M1 1l5 5-5 5" stroke="#c7c7cc" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>

@@ -32,16 +32,10 @@ export function clearLocalCredentials(): void {
  * with locally stored credentials (richer field data from the receive flow).
  * Writes the merged list back to localStorage so it stays in sync.
  *
- * Guard: if serverCreds is empty (discovery returned nothing), we keep the
- * existing local store untouched rather than wiping it — the server may have
- * returned an empty list due to a transient issue, not because credentials
- * were deleted.
+ * If serverCreds is empty, the local store is cleared to match the server.
  */
 export function mergeWithLocalCredentials(serverCreds: Credential[]): Credential[] {
   const local = getLocalCredentials();
-
-  // Don't overwrite local data when discovery returns nothing
-  if (serverCreds.length === 0) return local;
 
   const merged = serverCreds.map((serverCred) => {
     // Match by exact credential ID first (most precise)
@@ -68,7 +62,7 @@ export function mergeWithLocalCredentials(serverCreds: Credential[]): Credential
     return serverCred;
   });
 
-  // Write back so localStorage mirrors the server
+  // Write back so localStorage mirrors the server exactly
   localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
   return merged;
 }

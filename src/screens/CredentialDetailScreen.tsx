@@ -14,7 +14,6 @@ import { deleteCredential } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import StatusBadge from '../components/StatusBadge';
 import CredentialCardFace from '../components/CredentialCardFace';
-import Header from '../components/Header';
 import IconButton from '../components/IconButton';
 import type { Credential } from '../types';
 
@@ -41,13 +40,21 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
 
   const handleDelete = async () => {
     if (deleting) return;
+    if (!window.confirm('Are you sure you want to delete this credential?')) return;
+
     setDeleting(true);
-    if (state.token) {
-      await deleteCredential(state.token, credential.id);
+    try {
+      if (state.token) {
+        await deleteCredential(state.token, credential.id);
+      }
+      deleteLocalCredential(credential.id);
+      onCredentialDeleted ? onCredentialDeleted() : onBack();
+    } catch (err) {
+      console.error('Failed to delete credential', err);
+      alert('Failed to delete credential. Please try again.');
+    } finally {
+      setDeleting(false);
     }
-    deleteLocalCredential(credential.id);
-    // Notify parent so the dashboard re-fetches before navigating back
-    onCredentialDeleted ? onCredentialDeleted() : onBack();
   };
 
   return (
@@ -60,33 +67,44 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
     >
       {/* Inner column */}
       <div className="w-full max-w-[var(--max-width)] flex flex-col bg-[var(--bg-white)]">
-        <Header
-          title={label}
-          onBack={onBack}
-          rightAction={
-            <IconButton
-              onClick={handleDelete}
-              disabled={deleting}
-              className="hover:bg-red-50 group disabled:opacity-50"
-              aria-label="Delete credential"
+        {/* Minimalist Top Nav */}
+        <nav className="px-5 pt-14 pb-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onBack}
+              className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
             >
-              {deleting ? (
-                <div className="w-4 h-4 border-2 border-[var(--text-muted)]/30 border-t-[var(--text-error)] rounded-full animate-spin" />
-              ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                    stroke="currentColor"
-                    strokeWidth="1.7"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="group-hover:text-[var(--text-error)] transition-colors"
-                  />
-                </svg>
-              )}
-            </IconButton>
-          }
-        />
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+            <h1 className="text-[20px] font-bold text-[var(--text-main)] italic truncate max-w-[200px]">
+              {label}
+            </h1>
+          </div>
+
+          <IconButton
+            onClick={handleDelete}
+            disabled={deleting}
+            className="hover:bg-red-50 group disabled:opacity-50"
+            aria-label="Delete credential"
+          >
+            {deleting ? (
+              <div className="w-4 h-4 border-2 border-[var(--text-muted)]/30 border-t-[var(--text-error)] rounded-full animate-spin" />
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="group-hover:text-[var(--text-error)] transition-colors"
+                />
+              </svg>
+            )}
+          </IconButton>
+        </nav>
 
         {/* Card */}
         <div className="px-4 flex-shrink-0 mt-2">
@@ -109,7 +127,7 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
           )}
         </div>
 
-        {/* Fields — plain label/value pairs matching Open_credential.PNG */}
+        {/* Fields */}
         <div className="flex-1 px-5 pt-3 pb-10">
           {(namespaceGroups.length > 0 || genericFields.length > 0) && (
             <div className="space-y-0">
@@ -152,9 +170,6 @@ function PlainFieldRow({ label, value }: PlainFieldRowProps) {
   const isPhotoField =
     lowerLabel.includes('photo') || lowerLabel.includes('portrait') || lowerLabel.includes('picture');
 
-  // A real photo is at least ~1 KB of base64 (≈1366 chars).
-  // Anything shorter is a placeholder stub — skip the row entirely rather
-  // than rendering raw base64 text which breaks the mobile layout.
   const isImage = isPhotoField && typeof value === 'string' && value.length > 1000;
   if (isPhotoField && !isImage) return null;
 
@@ -165,11 +180,11 @@ function PlainFieldRow({ label, value }: PlainFieldRowProps) {
     if (raw.startsWith('data:')) {
       src = raw;
     } else if (raw.startsWith('iVBOR')) {
-      src = `data:image/png;base64,${raw}`;   // PNG
+      src = `data:image/png;base64,${raw}`;
     } else if (raw.startsWith('R0lGOD')) {
-      src = `data:image/gif;base64,${raw}`;   // GIF
+      src = `data:image/gif;base64,${raw}`;
     } else {
-      src = `data:image/jpeg;base64,${raw}`;  // JPEG (default)
+      src = `data:image/jpeg;base64,${raw}`;
     }
     return (
       <div className="py-3">
@@ -179,14 +194,6 @@ function PlainFieldRow({ label, value }: PlainFieldRowProps) {
           alt={label}
           className="w-24 h-32 object-cover rounded-xl"
           loading="lazy"
-          onError={(e) => {
-            console.error('[neoke] portrait img failed to load', e);
-            (e.currentTarget as HTMLImageElement).style.display = 'none';
-            (e.currentTarget as HTMLImageElement).insertAdjacentHTML(
-              'afterend',
-              '<p style="font-size:11px;color:#8e8e93">⚠ Could not render photo — see console</p>'
-            );
-          }}
         />
       </div>
     );
@@ -203,11 +210,9 @@ function PlainFieldRow({ label, value }: PlainFieldRowProps) {
     displayValue = (value as unknown[]).map(String).join(', ');
   } else if (typeof value === 'object' && value !== null) {
     const obj = value as Record<string, unknown>;
-    // Phone number: { countryCode, localNumber }
     if ('countryCode' in obj && 'localNumber' in obj) {
       displayValue = `${obj.countryCode} ${obj.localNumber}`;
     } else {
-      // Generic object: key: value pairs on separate lines
       displayValue = Object.entries(obj)
         .map(([k, v]) => `${k}: ${v}`)
         .join('\n');

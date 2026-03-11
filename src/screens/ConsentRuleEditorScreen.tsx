@@ -19,7 +19,6 @@ import type {
 } from '../types/consentEngine';
 import type { ViewName } from '../types';
 import PrimaryButton from '../components/PrimaryButton';
-import Header from '../components/Header';
 import OptionCard from '../components/OptionCard';
 
 const variants = {
@@ -36,23 +35,18 @@ interface Props {
 type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 const TOTAL_STEPS = 7;
-
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-
 
 export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Props) {
   const { state } = useConsentEngine();
   const { state: authState } = useAuth();
   const apiKey = state.ceApiKey ?? '';
 
-  // Wizard state
   const [step, setStep] = useState<Step>(1);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [loadingExisting, setLoadingExisting] = useState(!!editingRuleId);
 
-  // Form fields
   const [ruleType, setRuleType] = useState<RuleType>('verification');
   const [credentialType, setCredentialType] = useState('');
   const [credentialTypeMode, setCredentialTypeMode] = useState<'any' | 'specific'>('any');
@@ -72,16 +66,13 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
   const [maxUses, setMaxUses] = useState(10);
   const [label, setLabel] = useState('');
 
-  // Discovery data
   const [credentialTypes, setCredentialTypes] = useState<NodeCredentialType[]>([]);
   const [availableClaims, setAvailableClaims] = useState<string[]>([]);
 
-  // Load credential types from CE
   useEffect(() => {
     listNodeCredentialTypes(apiKey).then(setCredentialTypes).catch(() => { });
   }, [apiKey]);
 
-  // Load existing rule if editing
   useEffect(() => {
     if (!editingRuleId) return;
     (async () => {
@@ -126,7 +117,6 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
     })();
   }, [editingRuleId, apiKey]);
 
-  // Update available claims when credential type changes
   useEffect(() => {
     if (!credentialType) return;
     const ct = credentialTypes.find(t => t.id === credentialType);
@@ -210,24 +200,33 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
     else navigate('consent_rules');
   };
 
-  // Step 4 label differs by rule type
   const step4Label = ruleType === 'verification' ? 'Allowed Fields' : 'Trusted Issuer';
 
   if (loadingExisting) {
     return (
       <motion.div variants={variants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col bg-[var(--bg-ios)] min-h-screen items-center justify-center">
         <div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
-        <p className="text-[14px] text-[var(--text-muted)] mt-4">Loading rule…</p>
+        <p className="text-[14px] text-[var(--text-muted)] mt-4 font-medium italic">Loading rule details…</p>
       </motion.div>
     );
   }
 
   return (
     <motion.div variants={variants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col bg-[var(--bg-ios)] min-h-screen">
-      <Header
-        title={editingRuleId ? 'Edit Rule' : 'New Rule'}
-        onBack={goBack}
-      />
+      {/* Minimalist Top Nav */}
+      <nav className="px-5 pt-14 pb-4 flex items-center gap-3">
+        <button
+          onClick={goBack}
+          className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+        <h1 className="text-[20px] font-bold text-[var(--text-main)] italic">
+          {editingRuleId ? 'Edit Rule' : 'New Rule'}
+        </h1>
+      </nav>
 
       {/* Progress bar */}
       <div className="px-5 mb-6">
@@ -237,16 +236,15 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
             style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
           />
         </div>
-        <p className="text-[12px] text-[var(--text-muted)] mt-1.5 font-medium tracking-tight">Step {step} of {TOTAL_STEPS}</p>
+        <p className="text-[12px] text-[var(--text-muted)] mt-1.5 font-bold tracking-tight italic">Step {step} of {TOTAL_STEPS}</p>
       </div>
 
       <div className="flex-1 px-5 pb-36 space-y-4 overflow-y-auto">
-        {/* Step 1: Rule Type */}
         {step === 1 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-[22px] font-bold text-[var(--text-main)] mb-1">Rule Type</h2>
-              <p className="text-[14px] text-[var(--text-muted)]">What kind of requests should this rule handle?</p>
+              <h2 className="text-[22px] font-bold text-[var(--text-main)] mb-1 italic">Rule Type</h2>
+              <p className="text-[14px] text-[var(--text-muted)] font-medium">What kind of requests should this rule handle?</p>
             </div>
             <OptionCard
               selected={ruleType === 'verification'}
@@ -263,12 +261,11 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
           </div>
         )}
 
-        {/* Step 2: Credential Type */}
         {step === 2 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-[22px] font-bold text-[#1c1c1e] mb-1">Credential Type</h2>
-              <p className="text-[14px] text-[#8e8e93]">Which credential type does this rule apply to?</p>
+              <h2 className="text-[22px] font-bold text-[var(--text-main)] mb-1 italic">Credential Type</h2>
+              <p className="text-[14px] text-[var(--text-muted)] font-medium">Which credential type does this rule apply to?</p>
             </div>
             <OptionCard
               selected={credentialTypeMode === 'any'}
@@ -302,7 +299,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
                     value={credentialType}
                     onChange={e => setCredentialType(e.target.value)}
                     placeholder="e.g. org.iso.18013.5.1.mDL"
-                    className="w-full bg-white border border-black/8 rounded-2xl px-4 py-4 text-[15px] text-[#1c1c1e] placeholder-[#c7c7cc] focus:outline-none focus:border-[#5B4FE9] shadow-sm"
+                    className="w-full bg-white border border-black/8 rounded-2xl px-4 py-4 text-[15px] text-[var(--text-main)] font-medium placeholder-[#c7c7cc] focus:outline-none focus:border-[var(--primary)] shadow-sm italic"
                   />
                 )}
               </div>
@@ -310,12 +307,11 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
           </div>
         )}
 
-        {/* Step 3: Requesting Party (verification) or Trusted Issuer (issuance) */}
         {step === 3 && ruleType === 'verification' && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-[22px] font-bold text-[#1c1c1e] mb-1">Requesting Party</h2>
-              <p className="text-[14px] text-[#8e8e93]">Who is allowed to trigger this rule?</p>
+              <h2 className="text-[22px] font-bold text-[var(--text-main)] mb-1 italic">Requesting Party</h2>
+              <p className="text-[14px] text-[var(--text-muted)] font-medium">Who is allowed to trigger this rule?</p>
             </div>
             <OptionCard
               selected={partyMatchType === 'any'}
@@ -351,7 +347,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
                     : partyMatchType === 'domain' ? 'verifier.example.com'
                       : 'example.com'
                 }
-                className="w-full bg-white border border-black/8 rounded-2xl px-4 py-4 text-[15px] text-[#1c1c1e] placeholder-[#c7c7cc] focus:outline-none focus:border-[#5B4FE9] shadow-sm"
+                className="w-full bg-white border border-black/8 rounded-2xl px-4 py-4 text-[15px] text-[var(--text-main)] font-medium placeholder-[#c7c7cc] focus:outline-none focus:border-[var(--primary)] shadow-sm italic"
               />
             )}
           </div>
@@ -360,8 +356,8 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
         {step === 3 && ruleType === 'issuance' && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-[22px] font-bold text-[#1c1c1e] mb-1">Trusted Issuer</h2>
-              <p className="text-[14px] text-[#8e8e93]">Which issuers should this rule trust?</p>
+              <h2 className="text-[22px] font-bold text-[var(--text-main)] mb-1 italic">Trusted Issuer</h2>
+              <p className="text-[14px] text-[var(--text-muted)] font-medium">Which issuers should this rule trust?</p>
             </div>
             <OptionCard
               selected={trustedIssuerMode === 'any'}
@@ -381,30 +377,29 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
                 value={trustedIssuerDid}
                 onChange={e => setTrustedIssuerDid(e.target.value)}
                 placeholder="did:web:issuer.example.com"
-                className="w-full bg-white border border-black/8 rounded-2xl px-4 py-4 text-[15px] text-[#1c1c1e] placeholder-[#c7c7cc] focus:outline-none focus:border-[#5B4FE9] shadow-sm"
+                className="w-full bg-white border border-black/8 rounded-2xl px-4 py-4 text-[15px] text-[var(--text-main)] font-medium placeholder-[#c7c7cc] focus:outline-none focus:border-[var(--primary)] shadow-sm italic"
               />
             )}
           </div>
         )}
 
-        {/* Step 4: Allowed Fields (verification) or Trusted Issuer already done */}
-        {step === 4 && ruleType === 'verification' && (
+        {step === 4 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-[22px] font-bold text-[#1c1c1e] mb-1">Allowed Fields</h2>
-              <p className="text-[14px] text-[#8e8e93]">Which credential fields can be shared under this rule?</p>
+              <h2 className="text-[22px] font-bold text-[var(--text-main)] mb-1 italic">Allowed Fields</h2>
+              <p className="text-[14px] text-[var(--text-muted)] font-medium">{ruleType === 'verification' ? 'Which credential fields can be shared?' : 'Which fields should be auto-accepted?'}</p>
             </div>
             <OptionCard
               selected={fieldsMode === 'any'}
               onClick={() => setFieldsMode('any')}
-              title="Any requested field"
-              description="Share any field the verifier requests"
+              title={ruleType === 'verification' ? 'Any requested field' : 'All offered fields'}
+              description={ruleType === 'verification' ? 'Share any field the verifier requests' : 'Accept any fields the issuer provides'}
             />
             <OptionCard
               selected={fieldsMode === 'explicit'}
               onClick={() => setFieldsMode('explicit')}
               title="Only specific fields"
-              description="Restrict sharing to a list of approved fields"
+              description="Restrict to a list of approved fields"
             />
             {fieldsMode === 'explicit' && (
               <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] overflow-hidden border border-[var(--border-subtle)]">
@@ -415,7 +410,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
                       onClick={() => toggleField(claim)}
                       className="w-full flex items-center justify-between px-4 py-3.5 border-b border-[var(--border-subtle)] last:border-0 active:bg-black/3 text-left"
                     >
-                      <span className="text-[14px] text-[var(--text-main)]">{claim}</span>
+                      <span className="text-[14px] text-[var(--text-main)] font-medium italic">{claim}</span>
                       <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${explicitFields.includes(claim) ? 'bg-[var(--primary)] border-[var(--primary)]' : 'border-[#c7c7cc]'}`}>
                         {explicitFields.includes(claim) && (
                           <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
@@ -427,13 +422,13 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
                   ))
                 ) : (
                   <div className="px-4 py-4 space-y-2">
-                    <p className="text-[13px] text-[var(--text-muted)] mb-3">Enter field names separated by commas:</p>
+                    <p className="text-[13px] text-[var(--text-muted)] mb-3 font-medium">Enter field names separated by commas:</p>
                     <textarea
                       value={explicitFields.join(', ')}
                       onChange={e => setExplicitFields(e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
                       placeholder="given_name, family_name, birth_date"
                       rows={3}
-                      className="w-full text-[14px] text-[var(--text-main)] placeholder-[#c7c7cc] focus:outline-none resize-none"
+                      className="w-full text-[14px] text-[var(--text-main)] font-medium placeholder-[#c7c7cc] focus:outline-none resize-none italic"
                     />
                   </div>
                 )}
@@ -442,44 +437,18 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
           </div>
         )}
 
-        {step === 4 && ruleType === 'issuance' && (
-          <div className="space-y-4">
-            <div>
-              <h2 className="text-[22px] font-bold text-[#1c1c1e] mb-1">Allowed Fields</h2>
-              <p className="text-[14px] text-[#8e8e93]">Which fields from the offered credential should be auto-accepted?</p>
-            </div>
-            <OptionCard
-              selected={fieldsMode === 'any'}
-              onClick={() => setFieldsMode('any')}
-              title="All offered fields"
-              description="Accept any fields the issuer provides"
-            />
-            <OptionCard
-              selected={fieldsMode === 'explicit'}
-              onClick={() => setFieldsMode('explicit')}
-              title="Only specific fields"
-              description="Only accept selected fields"
-            />
-          </div>
-        )}
-
-        {/* Step 5: Conditions */}
         {step === 5 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-[22px] font-bold text-[#1c1c1e] mb-1">Conditions</h2>
-              <p className="text-[14px] text-[#8e8e93]">Add optional conditions that must be met for this rule to apply.</p>
+              <h2 className="text-[22px] font-bold text-[var(--text-main)] mb-1 italic">Conditions</h2>
+              <p className="text-[14px] text-[var(--text-muted)] font-medium">Add optional conditions that must be met.</p>
             </div>
 
-            {/* Time of day */}
             <div className={`bg-[var(--bg-white)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] overflow-hidden border-2 transition-all duration-200 ${conditions.has('time_of_day') ? 'border-[var(--primary)]' : 'border-transparent'}`}>
-              <button
-                onClick={() => toggleCondition('time_of_day')}
-                className="w-full flex items-center justify-between px-4 py-4"
-              >
+              <button onClick={() => toggleCondition('time_of_day')} className="w-full flex items-center justify-between px-4 py-4">
                 <div className="text-left">
-                  <p className="text-[15px] font-semibold text-[var(--text-main)]">Time of day</p>
-                  <p className="text-[13px] text-[var(--text-muted)]">Only apply during specific hours</p>
+                  <p className="text-[15px] font-bold text-[var(--text-main)] italic">Time of day</p>
+                  <p className="text-[13px] text-[var(--text-muted)] font-medium">Only apply during specific hours</p>
                 </div>
                 <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${conditions.has('time_of_day') ? 'bg-[var(--primary)] border-[var(--primary)]' : 'border-[#c7c7cc]'}`}>
                   {conditions.has('time_of_day') && (
@@ -492,32 +461,22 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
               {conditions.has('time_of_day') && (
                 <div className="px-4 pb-4 flex gap-4 border-t border-[var(--border-subtle)] pt-4">
                   <div className="flex-1">
-                    <label className="text-[11px] text-[var(--text-muted)] uppercase tracking-wide font-semibold mb-1 block">From (hour)</label>
-                    <input type="number" min={0} max={23} value={condStartHour}
-                      onChange={e => setCondStartHour(Number(e.target.value))}
-                      className="w-full bg-[var(--bg-ios)] rounded-xl px-3 py-2 text-[15px] text-[var(--text-main)] focus:outline-none"
-                    />
+                    <label className="text-[11px] text-[var(--text-muted)] uppercase tracking-wide font-bold mb-1 block">From (hour)</label>
+                    <input type="number" min={0} max={23} value={condStartHour} onChange={e => setCondStartHour(Number(e.target.value))} className="w-full bg-[var(--bg-ios)] rounded-xl px-3 py-2 text-[15px] text-[var(--text-main)] font-bold focus:outline-none" />
                   </div>
                   <div className="flex-1">
-                    <label className="text-[11px] text-[var(--text-muted)] uppercase tracking-wide font-semibold mb-1 block">To (hour)</label>
-                    <input type="number" min={0} max={23} value={condEndHour}
-                      onChange={e => setCondEndHour(Number(e.target.value))}
-                      className="w-full bg-[var(--bg-ios)] rounded-xl px-3 py-2 text-[15px] text-[var(--text-main)] focus:outline-none"
-                    />
+                    <label className="text-[11px] text-[var(--text-muted)] uppercase tracking-wide font-bold mb-1 block">To (hour)</label>
+                    <input type="number" min={0} max={23} value={condEndHour} onChange={e => setCondEndHour(Number(e.target.value))} className="w-full bg-[var(--bg-ios)] rounded-xl px-3 py-2 text-[15px] text-[var(--text-main)] font-bold focus:outline-none" />
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Day of week */}
             <div className={`bg-[var(--bg-white)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] overflow-hidden border-2 transition-all duration-200 ${conditions.has('day_of_week') ? 'border-[var(--primary)]' : 'border-transparent'}`}>
-              <button
-                onClick={() => toggleCondition('day_of_week')}
-                className="w-full flex items-center justify-between px-4 py-4"
-              >
+              <button onClick={() => toggleCondition('day_of_week')} className="w-full flex items-center justify-between px-4 py-4">
                 <div className="text-left">
-                  <p className="text-[15px] font-semibold text-[var(--text-main)]">Day of week</p>
-                  <p className="text-[13px] text-[var(--text-muted)]">Only apply on certain days</p>
+                  <p className="text-[15px] font-bold text-[var(--text-main)] italic">Day of week</p>
+                  <p className="text-[13px] text-[var(--text-muted)] font-medium">Only apply on certain days</p>
                 </div>
                 <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${conditions.has('day_of_week') ? 'bg-[var(--primary)] border-[var(--primary)]' : 'border-[#c7c7cc]'}`}>
                   {conditions.has('day_of_week') && (
@@ -531,14 +490,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
                 <div className="px-4 pb-4 border-t border-[var(--border-subtle)] pt-4">
                   <div className="flex gap-2 flex-wrap">
                     {DAY_NAMES.map((name, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => toggleDay(idx)}
-                        className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-all ${condAllowedDays.includes(idx)
-                          ? 'bg-[var(--primary)] text-white'
-                          : 'bg-[var(--bg-ios)] text-[var(--text-muted)]'
-                          }`}
-                      >
+                      <button key={idx} onClick={() => toggleDay(idx)} className={`px-3 py-1.5 rounded-full text-[13px] font-bold transition-all ${condAllowedDays.includes(idx) ? 'bg-[var(--primary)] text-white' : 'bg-[var(--bg-ios)] text-[var(--text-muted)]'}`}>
                         {name}
                       </button>
                     ))}
@@ -547,65 +499,33 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
               )}
             </div>
 
-            {/* Max per day */}
             <div className={`bg-[var(--bg-white)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] overflow-hidden border-2 transition-all duration-200 ${conditions.has('max_per_day') ? 'border-[var(--primary)]' : 'border-transparent'}`}>
-              <button
-                onClick={() => toggleCondition('max_per_day')}
-                className="w-full flex items-center justify-between px-4 py-4"
-              >
+              <button onClick={() => toggleCondition('max_per_day')} className="w-full flex items-center justify-between px-4 py-4">
                 <div className="text-left">
-                  <p className="text-[15px] font-semibold text-[var(--text-main)]">Daily limit</p>
-                  <p className="text-[13px] text-[var(--text-muted)]">Cap the number of auto-approvals per day</p>
+                  <p className="text-[15px] font-bold text-[var(--text-main)] italic">Daily limit</p>
+                  <p className="text-[13px] text-[var(--text-muted)] font-medium">Cap auto-approvals per day</p>
                 </div>
                 <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${conditions.has('max_per_day') ? 'bg-[var(--primary)] border-[var(--primary)]' : 'border-[#c7c7cc]'}`}>
-                  {conditions.has('max_per_day') && (
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                      <path d="M2 5l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  )}
+                  {conditions.has('max_per_day') && <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
                 </div>
               </button>
               {conditions.has('max_per_day') && (
                 <div className="px-4 pb-4 border-t border-[var(--border-subtle)] pt-4">
-                  <label className="text-[11px] text-[var(--text-muted)] uppercase tracking-wide font-semibold mb-2 block">Max per day</label>
-                  <input type="number" min={1} value={condMaxPerDay}
-                    onChange={e => setCondMaxPerDay(Number(e.target.value))}
-                    className="w-full bg-[var(--bg-ios)] rounded-xl px-3 py-2 text-[15px] text-[var(--text-main)] focus:outline-none"
-                  />
+                  <label className="text-[11px] text-[var(--text-muted)] uppercase tracking-wide font-bold mb-2 block">Max per day</label>
+                  <input type="number" min={1} value={condMaxPerDay} onChange={e => setCondMaxPerDay(Number(e.target.value))} className="w-full bg-[var(--bg-ios)] rounded-xl px-3 py-2 text-[15px] text-[var(--text-main)] font-bold focus:outline-none" />
                 </div>
               )}
             </div>
 
-            {/* Require linked domain */}
-            <div className={`bg-[var(--bg-white)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] overflow-hidden border-2 transition-all duration-200 ${conditions.has('require_linked_domain') ? 'border-[var(--primary)]' : 'border-transparent'}`}>
-              <button
-                onClick={() => toggleCondition('require_linked_domain')}
-                className="w-full flex items-center justify-between px-4 py-4"
-              >
-                <div className="text-left">
-                  <p className="text-[15px] font-semibold text-[var(--text-main)]">Require linked domain</p>
-                  <p className="text-[13px] text-[var(--text-muted)]">Only apply if verifier has a verified linked domain</p>
-                </div>
-                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${conditions.has('require_linked_domain') ? 'bg-[var(--primary)] border-[var(--primary)]' : 'border-[#c7c7cc]'}`}>
-                  {conditions.has('require_linked_domain') && (
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                      <path d="M2 5l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  )}
-                </div>
-              </button>
-            </div>
-
-            <p className="text-[13px] text-[var(--text-muted)] text-center">All conditions are optional. Leave all unchecked for no conditions.</p>
+            <p className="text-[13px] text-[var(--text-muted)] text-center font-medium">Leave unchecked for no conditions.</p>
           </div>
         )}
 
-        {/* Step 6: Expiry */}
         {step === 6 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-[22px] font-bold text-[#1c1c1e] mb-1">Rule Expiry</h2>
-              <p className="text-[14px] text-[#8e8e93]">When should this rule stop being active?</p>
+              <h2 className="text-[22px] font-bold text-[var(--text-main)] mb-1 italic">Rule Expiry</h2>
+              <p className="text-[14px] text-[var(--text-muted)] font-medium">When should this rule stop being active?</p>
             </div>
             <OptionCard
               selected={expiryType === 'never'}
@@ -617,88 +537,67 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
               selected={expiryType === 'date'}
               onClick={() => setExpiryType('date')}
               title="Expire on a date"
-              description="Rule stops applying after a specific date"
+              description="Rule stops after a specific date"
             />
             {expiryType === 'date' && (
-              <input
-                type="date"
-                value={expiresAt.slice(0, 10)}
-                onChange={e => setExpiresAt(new Date(e.target.value).toISOString())}
-                className="w-full bg-white border border-black/8 rounded-2xl px-4 py-4 text-[15px] text-[#1c1c1e] focus:outline-none focus:border-[#5B4FE9] shadow-sm"
-              />
+              <input type="date" value={expiresAt.slice(0, 10)} onChange={e => setExpiresAt(new Date(e.target.value).toISOString())} className="w-full bg-white border border-black/8 rounded-2xl px-4 py-4 text-[15px] text-[var(--text-main)] font-medium focus:outline-none focus:border-[var(--primary)] shadow-sm italic" />
             )}
             <OptionCard
               selected={expiryType === 'uses'}
               onClick={() => setExpiryType('uses')}
               title="After N uses"
-              description="Rule stops after being triggered a set number of times"
+              description="Rule stops after set number of uses"
             />
             {expiryType === 'uses' && (
               <div>
-                <label className="text-[11px] text-[#8e8e93] uppercase tracking-wide font-semibold mb-2 block">Maximum uses</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={maxUses}
-                  onChange={e => setMaxUses(Number(e.target.value))}
-                  className="w-full bg-white border border-black/8 rounded-2xl px-4 py-4 text-[15px] text-[#1c1c1e] focus:outline-none focus:border-[#5B4FE9] shadow-sm"
-                />
+                <label className="text-[11px] text-[var(--text-muted)] uppercase tracking-wide font-bold mb-2 block">Max uses</label>
+                <input type="number" min={1} value={maxUses} onChange={e => setMaxUses(Number(e.target.value))} className="w-full bg-white border border-black/8 rounded-2xl px-4 py-4 text-[15px] text-[var(--text-main)] font-bold focus:outline-none focus:border-[var(--primary)] shadow-sm" />
               </div>
             )}
           </div>
         )}
 
-        {/* Step 7: Label + Review */}
         {step === 7 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-[22px] font-bold text-[#1c1c1e] mb-1">Label & Review</h2>
-              <p className="text-[14px] text-[#8e8e93]">Give your rule a name and review the settings.</p>
+              <h2 className="text-[22px] font-bold text-[var(--text-main)] mb-1 italic">Label & Review</h2>
+              <p className="text-[14px] text-[var(--text-muted)] font-medium">Review settings before saving.</p>
             </div>
 
-            {/* Label input */}
             <div>
-              <label className="text-[11px] text-[#8e8e93] uppercase tracking-wide font-semibold mb-2 block">Rule name (optional)</label>
-              <input
-                type="text"
-                value={label}
-                onChange={e => setLabel(e.target.value)}
-                placeholder="e.g. Share driving licence with any verifier"
-                className="w-full bg-white border border-black/8 rounded-2xl px-4 py-4 text-[15px] text-[#1c1c1e] placeholder-[#c7c7cc] focus:outline-none focus:border-[#5B4FE9] shadow-sm"
-              />
+              <label className="text-[11px] text-[var(--text-muted)] uppercase tracking-wide font-bold mb-2 block">Rule name (optional)</label>
+              <input type="text" value={label} onChange={e => setLabel(e.target.value)} placeholder="e.g. Share driving licence" className="w-full bg-white border border-black/8 rounded-2xl px-4 py-4 text-[15px] text-[var(--text-main)] font-medium placeholder-[#c7c7cc] focus:outline-none focus:border-[var(--primary)] shadow-sm italic" />
             </div>
 
-            {/* Summary */}
             <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] overflow-hidden border border-[var(--border-subtle)]">
               <div className="px-4 py-2.5 border-b border-[var(--border-subtle)]">
-                <p className="text-[11px] text-[var(--text-muted)] font-semibold uppercase tracking-wide">Summary</p>
+                <p className="text-[11px] text-[var(--text-muted)] font-bold uppercase tracking-wide italic">Summary</p>
               </div>
               {[
                 ['Type', ruleType === 'verification' ? 'Verification' : 'Issuance'],
-                ['Credential', credentialTypeMode === 'any' ? 'Any' : credentialType || 'Not set'],
+                ['Credential', credentialTypeMode === 'any' ? 'Any' : credentialType || '—'],
                 ['Party', partyMatchType === 'any' ? 'Anyone' : `${partyMatchType}: ${partyValue}`],
-                ['Fields', fieldsMode === 'any' ? 'Any' : `Only: ${explicitFields.join(', ') || 'none'}`],
-                ['Expiry', expiryType === 'never' ? 'Never' : expiryType === 'date' ? `On ${expiresAt.slice(0, 10)}` : `After ${maxUses} uses`],
+                ['Fields', fieldsMode === 'any' ? 'Any' : explicitFields.join(', ') || 'none'],
+                ['Expiry', expiryType === 'never' ? 'Never' : expiryType === 'date' ? expiresAt.slice(0, 10) : `${maxUses} uses`],
                 ['Conditions', conditions.size === 0 ? 'None' : Array.from(conditions).join(', ')],
               ].map(([k, v]) => (
                 <div key={k} className="flex items-center px-4 py-3 border-b border-[var(--border-subtle)] last:border-0">
-                  <p className="text-[13px] text-[var(--text-muted)] w-24 flex-shrink-0">{k}</p>
-                  <p className="text-[14px] text-[var(--text-main)] font-medium italic">{v}</p>
+                  <p className="text-[13px] text-[var(--text-muted)] w-24 flex-shrink-0 font-medium">{k}</p>
+                  <p className="text-[14px] text-[var(--text-main)] font-bold italic truncate">{v}</p>
                 </div>
               ))}
             </div>
 
             {saveError && (
               <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3">
-                <p className="text-[14px] text-red-600">{saveError}</p>
+                <p className="text-[14px] text-[var(--text-error)] font-medium">{saveError}</p>
               </div>
             )}
           </div>
         )}
       </div>
 
-      {/* Fixed bottom nav */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-5 pt-4 pb-10 bg-[var(--bg-ios)] z-40 space-y-3 shadow-[0_-1px_0_rgba(0,0,0,0.05)]">
+      <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-5 pt-4 pb-10 bg-[var(--bg-ios)] z-40 shadow-[0_-1px_0_rgba(0,0,0,0.05)]">
         <PrimaryButton onClick={goNext} loading={saving && step === TOTAL_STEPS}>
           {step === TOTAL_STEPS
             ? (editingRuleId ? 'Save Changes' : 'Create Rule')
@@ -706,6 +605,6 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
           }
         </PrimaryButton>
       </div>
-    </motion.div >
+    </motion.div>
   );
 }
