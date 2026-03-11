@@ -325,8 +325,7 @@ function AppInner() {
             navigate={navigate}
             onCredentialReceived={() => setRefreshSignal((s) => s + 1)}
             initialUri={pendingUri}
-            onRouteToCe={ceEnabled && ceApiKey ? (uri) => {
-              if (uri === ceBypassedUri) return; // skip CE for manually-bypassed URIs
+            onRouteToCe={ceEnabled && ceApiKey && pendingUri !== ceBypassedUri ? (uri) => {
               setCeProcessingUri(uri);
               navigate('dashboard');
             } : undefined}
@@ -339,8 +338,7 @@ function AppInner() {
             navigate={navigate}
             initialUri={pendingUri}
             onPresented={() => setRefreshSignal((s) => s + 1)}
-            onRouteToCe={ceEnabled && ceApiKey ? (uri) => {
-              if (uri === ceBypassedUri) return; // skip CE for manually-bypassed URIs
+            onRouteToCe={ceEnabled && ceApiKey && pendingUri !== ceBypassedUri ? (uri) => {
               setCeProcessingUri(uri);
               navigate('dashboard');
             } : undefined}
