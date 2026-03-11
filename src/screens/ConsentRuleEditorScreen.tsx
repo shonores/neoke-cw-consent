@@ -403,24 +403,62 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
             />
             {fieldsMode === 'explicit' && (
               <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] overflow-hidden border border-[var(--border-subtle)]">
-                {availableClaims.length > 0 ? (
-                  availableClaims.map(claim => (
+                {availableClaims.length > 0 ? (() => {
+                  const hasNamespaces = availableClaims.some(c => c.namespace);
+                  if (hasNamespaces) {
+                    const groups = new Map<string, typeof availableClaims>();
+                    for (const c of availableClaims) {
+                      const ns = c.namespace ?? '';
+                      if (!groups.has(ns)) groups.set(ns, []);
+                      groups.get(ns)!.push(c);
+                    }
+                    return Array.from(groups.entries()).map(([ns, claims]) => (
+                      <div key={ns}>
+                        <div className="px-4 py-2 bg-[var(--bg-ios)] border-b border-[var(--border-subtle)]">
+                          <p className="text-[11px] text-[var(--text-muted)] font-bold uppercase tracking-wide">{ns.split('.').slice(-2).join('.')}</p>
+                        </div>
+                        {claims.map(claim => (
+                          <button
+                            key={claim.name}
+                            onClick={() => toggleField(claim.name)}
+                            className="w-full flex items-center justify-between px-4 py-3.5 border-b border-[var(--border-subtle)] last:border-0 active:bg-black/3 text-left"
+                          >
+                            <div>
+                              <span className="text-[14px] text-[var(--text-main)] font-medium">{claim.displayName ?? claim.name}</span>
+                              <span className="block text-[11px] text-[var(--text-muted)] font-mono">{claim.name}</span>
+                            </div>
+                            <div className={`w-5 h-5 rounded border-2 flex-shrink-0 flex items-center justify-center transition-colors ${explicitFields.includes(claim.name) ? 'bg-[var(--primary)] border-[var(--primary)]' : 'border-[#c7c7cc]'}`}>
+                              {explicitFields.includes(claim.name) && (
+                                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                                  <path d="M2 5l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              )}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    ));
+                  }
+                  return availableClaims.map(claim => (
                     <button
-                      key={claim}
-                      onClick={() => toggleField(claim)}
+                      key={claim.name}
+                      onClick={() => toggleField(claim.name)}
                       className="w-full flex items-center justify-between px-4 py-3.5 border-b border-[var(--border-subtle)] last:border-0 active:bg-black/3 text-left"
                     >
-                      <span className="text-[14px] text-[var(--text-main)] font-medium italic">{claim}</span>
-                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${explicitFields.includes(claim) ? 'bg-[var(--primary)] border-[var(--primary)]' : 'border-[#c7c7cc]'}`}>
-                        {explicitFields.includes(claim) && (
+                      <div>
+                        <span className="text-[14px] text-[var(--text-main)] font-medium">{claim.displayName ?? claim.name}</span>
+                        <span className="block text-[11px] text-[var(--text-muted)] font-mono">{claim.name}</span>
+                      </div>
+                      <div className={`w-5 h-5 rounded border-2 flex-shrink-0 flex items-center justify-center transition-colors ${explicitFields.includes(claim.name) ? 'bg-[var(--primary)] border-[var(--primary)]' : 'border-[#c7c7cc]'}`}>
+                        {explicitFields.includes(claim.name) && (
                           <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                             <path d="M2 5l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         )}
                       </div>
                     </button>
-                  ))
-                ) : (
+                  ));
+                })() : (
                   <div className="px-4 py-4 space-y-2">
                     <p className="text-[13px] text-[var(--text-muted)] mb-3 font-medium">Enter field names separated by commas:</p>
                     <textarea
