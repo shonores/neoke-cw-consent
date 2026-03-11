@@ -120,7 +120,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
   useEffect(() => {
     if (!credentialType) return;
     const ct = credentialTypes.find(t => t.id === credentialType);
-    if (ct) setAvailableClaims(ct.claims.map(c => c.name));
+    if (ct) setAvailableClaims(ct.claims);
   }, [credentialType, credentialTypes]);
 
   const toggleCondition = (type: ConditionType) => {
