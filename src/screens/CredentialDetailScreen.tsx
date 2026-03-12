@@ -182,7 +182,7 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
       animate={{ x: 0 }}
       exit={{ x: '100%' }}
       transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-      className="fixed inset-0 bg-[var(--bg-ios)] z-40 flex justify-center overflow-y-auto overflow-x-hidden"
+      className="fixed inset-0 bg-[var(--bg-white)] z-40 flex justify-center overflow-y-auto overflow-x-hidden"
     >
       {/* Inner column */}
       <div className="w-full max-w-[var(--max-width)] flex flex-col bg-[var(--bg-white)] min-h-full">
