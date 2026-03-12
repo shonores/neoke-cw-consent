@@ -113,6 +113,8 @@ export type ViewName =
   | 'consent_rule_editor'
   | 'consent_queue'
   | 'consent_queue_detail'
+  | 'travel_services'
+  | 'travel_service_detail'
   | 'audit_log';
 
 export interface NavState {

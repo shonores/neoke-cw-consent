@@ -14,6 +14,8 @@ import ConsentRuleEditorScreen from './screens/ConsentRuleEditorScreen';
 import ConsentQueueScreen from './screens/ConsentQueueScreen';
 import ConsentQueueDetailScreen from './screens/ConsentQueueDetailScreen';
 import AuditLogScreen from './screens/AuditLogScreen';
+import TravelServicesScreen from './screens/TravelServicesScreen';
+import TravelServiceDetailScreen from './screens/TravelServiceDetailScreen';
 import ReAuthModal from './components/ReAuthModal';
 import CeIntakeOverlay from './components/CeIntakeOverlay';
 import { detectUriType } from './utils/uriRouter';
@@ -187,6 +189,7 @@ function AppInner() {
   const [refreshSignal, setRefreshSignal] = useState(0);
   const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
   const [selectedQueueItemId, setSelectedQueueItemId] = useState<string | null>(null);
+  const [selectedServiceDid, setSelectedServiceDid] = useState<string | null>(null);
   const [ceProcessingUri, setCeProcessingUri] = useState<string | null>(null);
   // URI that was CE-bypassed manually — should NOT be re-routed to CE intake
   const [ceBypassedUri, setCeBypassedUri] = useState<string | null>(null);
@@ -198,12 +201,14 @@ function AppInner() {
       pendingUri?: string;
       editingRuleId?: string | null;
       selectedQueueItemId?: string | null;
+      selectedServiceDid?: string | null;
     }
   ) => {
     setSelectedCredential(extra?.selectedCredential ?? null);
     setPendingUri(extra?.pendingUri);
     if (extra && 'editingRuleId' in extra) setEditingRuleId(extra.editingRuleId ?? null);
     if (extra && 'selectedQueueItemId' in extra) setSelectedQueueItemId(extra.selectedQueueItemId ?? null);
+    if (extra && 'selectedServiceDid' in extra) setSelectedServiceDid(extra.selectedServiceDid ?? null);
     setCurrentView(view);
   };
 
@@ -293,7 +298,7 @@ function AppInner() {
   }
 
   // ── Authenticated — main wallet ──────────────────────────────────────────
-  const showTabBar = ['dashboard', 'account', 'consent_rules', 'consent_queue', 'audit_log'].includes(currentView);
+  const showTabBar = ['dashboard', 'account', 'consent_rules', 'consent_queue', 'audit_log', 'travel_services'].includes(currentView);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F2F2F7] w-full max-w-lg mx-auto">
@@ -369,6 +374,14 @@ function AppInner() {
 
         {currentView === 'audit_log' && (
           <AuditLogScreen key="audit_log" navigate={navigate} />
+        )}
+
+        {currentView === 'travel_services' && (
+          <TravelServicesScreen key="travel_services" navigate={navigate} />
+        )}
+
+        {currentView === 'travel_service_detail' && selectedServiceDid && (
+          <TravelServiceDetailScreen key="travel_service_detail" navigate={navigate} verifierDid={selectedServiceDid} />
         )}
       </AnimatePresence>
 

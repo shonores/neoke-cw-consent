@@ -236,10 +236,14 @@ export default function AuditLogScreen({ navigate }: Props) {
         limit: PAGE_SIZE,
         offset: offsetRef.current,
       });
+      const sorted = [...data].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
       if (reset) {
-        setEvents(data);
+        setEvents(sorted);
       } else {
-        setEvents(prev => [...prev, ...data]);
+        setEvents(prev => {
+          const combined = [...prev, ...sorted];
+          return combined.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+        });
       }
       offsetRef.current += data.length;
       setHasMore(data.length === PAGE_SIZE);
@@ -283,9 +287,18 @@ export default function AuditLogScreen({ navigate }: Props) {
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
-        <div>
-          <h1 className="text-[26px] font-bold text-[#28272e] leading-8">Activity</h1>
-        </div>
+        <h1 className="flex-1 text-[26px] font-bold text-[#28272e] leading-8">Activity</h1>
+        <button
+          onClick={() => loadEvents(true)}
+          className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
+          aria-label="Refresh"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M23 4v6h-6" />
+            <path d="M1 20v-6h6" />
+            <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
+          </svg>
+        </button>
       </nav>
 
       <main className="flex-1 px-4 pb-28 space-y-4">
