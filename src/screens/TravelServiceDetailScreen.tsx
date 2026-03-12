@@ -78,13 +78,10 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
     setLoading(true);
     setError('');
     try {
-      const [allEvents, allRules] = await Promise.all([
-        listAuditEvents(apiKey, { nodeId, limit: 200, offset: 0 }),
+      const [filtered, allRules] = await Promise.all([
+        listAuditEvents(apiKey, { nodeId, verifierDid, order: 'desc', limit: 50, offset: 0 }),
         listRules(apiKey),
       ]);
-      const filtered = allEvents
-        .filter(e => e.verifierDid === verifierDid)
-        .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
       setEvents(filtered);
       setRules(allRules);
     } catch (err) {

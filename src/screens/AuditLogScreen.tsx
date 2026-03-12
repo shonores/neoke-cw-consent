@@ -235,15 +235,12 @@ export default function AuditLogScreen({ navigate }: Props) {
         nodeId,
         limit: PAGE_SIZE,
         offset: offsetRef.current,
+        order: 'desc',
       });
-      const sorted = [...data].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
       if (reset) {
-        setEvents(sorted);
+        setEvents(data);
       } else {
-        setEvents(prev => {
-          const combined = [...prev, ...sorted];
-          return combined.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-        });
+        setEvents(prev => [...prev, ...data]);
       }
       offsetRef.current += data.length;
       setHasMore(data.length === PAGE_SIZE);
