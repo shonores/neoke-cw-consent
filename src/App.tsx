@@ -30,11 +30,13 @@ function TabBar({
   onNavigate,
   ceEnabled,
   pendingCount,
+  ceDisconnected,
 }: {
   currentView: ViewName;
   onNavigate: (view: ViewName) => void;
   ceEnabled: boolean;
   pendingCount: number;
+  ceDisconnected: boolean;
 }) {
   const homeActive = currentView === 'dashboard';
   const scanActive = currentView === 'receive' || currentView === 'present';
@@ -110,11 +112,13 @@ function TabBar({
                 fillOpacity={consentActive ? 0.08 : 0}
               />
             </svg>
-            {pendingCount > 0 && (
+            {pendingCount > 0 ? (
               <span className="absolute -top-1 -right-2 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
                 {pendingCount > 9 ? '9+' : pendingCount}
               </span>
-            )}
+            ) : ceDisconnected ? (
+              <span className="absolute -top-0.5 -right-0.5 w-[9px] h-[9px] bg-amber-400 rounded-full border-2 border-white" />
+            ) : null}
           </div>
           <span className="text-[10px] font-medium">Inbox</span>
         </button>
@@ -488,6 +492,7 @@ function AppInner() {
           onNavigate={navigate}
           ceEnabled={ceEnabled}
           pendingCount={ceState.pendingCount}
+          ceDisconnected={ceEnabled && !ceState.isConnected}
         />
       )}
     </div>

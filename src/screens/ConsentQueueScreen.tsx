@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
-import { listQueue } from '../api/consentEngineClient';
+import { listQueue, deleteQueueItem } from '../api/consentEngineClient';
 import IconButton from '../components/IconButton';
 import type { PendingRequest } from '../types/consentEngine';
 import type { ViewName } from '../types';
@@ -25,6 +25,17 @@ function timeAgo(dateStr: string): string {
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
   return `${Math.floor(hrs / 24)}d ago`;
+}
+
+function expiryLabel(item: PendingRequest): string | null {
+  if (item.status !== 'pending') return null;
+  const expiry = item.vpRequestExpiresAt ?? item.expiresAt;
+  const diff = new Date(expiry).getTime() - Date.now();
+  if (diff <= 0) return 'Expired';
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Expires in <1m';
+  if (mins < 60) return `Expires in ${mins}m`;
+  return `Expires in ${Math.floor(mins / 60)}h`;
 }
 
 function extractServiceName(did?: string, name?: string): string {
@@ -72,61 +83,180 @@ function ServiceAvatar() {
   );
 }
 
-function InboxItem({ item, onClick }: { item: PendingRequest; onClick: () => void }) {
+const SWIPE_REVEAL = 72;
+
+function SwipeableInboxItem({
+  item,
+  onClick,
+  onDelete,
+}: {
+  item: PendingRequest;
+  onClick: () => void;
+  onDelete: () => void;
+}) {
   const isPending = item.status === 'pending';
+  const expLabel = expiryLabel(item);
+  const isExpired = expLabel === 'Expired';
   const title = getItemTitle(item);
   const message = getItemMessage(item);
 
+  const [offset, setOffset] = useState(0);
+  const [isOpen, setIsOpen] = useState(false);
+  const startX = useRef(0);
+  const startOffset = useRef(0);
+  const dragging = useRef(false);
+
+  const snapOpen = () => { setOffset(-SWIPE_REVEAL); setIsOpen(true); };
+  const snapClosed = () => { setOffset(0); setIsOpen(false); };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    startX.current = e.touches[0].clientX;
+    startOffset.current = offset;
+    dragging.current = true;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!dragging.current) return;
+    const dx = e.touches[0].clientX - startX.current;
+    const next = Math.max(-SWIPE_REVEAL, Math.min(0, startOffset.current + dx));
+    setOffset(next);
+  };
+
+  const handleTouchEnd = () => {
+    dragging.current = false;
+    if (offset < -SWIPE_REVEAL / 2) snapOpen();
+    else snapClosed();
+  };
+
+  const handleClick = () => {
+    if (isOpen) { snapClosed(); return; }
+    if (isExpired) return;
+    onClick();
+  };
+
   return (
-    <button
-      className="w-full text-left"
-      onClick={onClick}
-    >
-      <div className="flex gap-3 items-center px-4 py-3 relative active:bg-[#f7f6f8] transition-colors">
-        {/* Unread dot */}
-        {isPending && (
-          <div className="absolute left-4 top-6 w-3 h-3 rounded-full bg-[#aa281e] border-2 border-white z-10" />
-        )}
-        <ServiceAvatar />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2 w-full">
-            <p className={`text-[16px] leading-6 truncate ${isPending ? 'font-semibold text-[#28272e]' : 'font-normal text-[#6d6b7e]'}`}>
-              {title}
-            </p>
-            <span className="text-[12px] text-[#868496] flex-shrink-0 leading-6">{timeAgo(item.createdAt)}</span>
-          </div>
-          <p className={`text-[14px] leading-5 line-clamp-2 ${isPending ? 'text-[#28272e] font-semibold' : 'text-[#6d6b7e]'}`}>
-            {message}
-          </p>
-        </div>
+    <div className="relative overflow-hidden">
+      {/* Delete action revealed on swipe */}
+      <div className="absolute right-0 top-0 bottom-0 w-[72px] bg-red-500 flex items-center justify-center">
+        <button
+          onClick={onDelete}
+          className="w-full h-full flex flex-col items-center justify-center gap-1 active:bg-red-600 transition-colors"
+          aria-label="Delete"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+            <path d="M10 11v6M14 11v6" />
+            <path d="M9 6V4h6v2" />
+          </svg>
+          <span className="text-[10px] text-white font-semibold">Delete</span>
+        </button>
       </div>
-    </button>
+
+      {/* Row content */}
+      <div
+        style={{
+          transform: `translateX(${offset}px)`,
+          transition: dragging.current ? 'none' : 'transform 0.2s ease',
+          background: 'white',
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <button className="w-full text-left" onClick={handleClick}>
+          <div className="flex gap-3 items-center px-4 py-3 relative active:bg-[#f7f6f8] transition-colors">
+            {isPending && (
+              <div className="absolute left-4 top-6 w-3 h-3 rounded-full bg-[#aa281e] border-2 border-white z-10" />
+            )}
+            <ServiceAvatar />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-2 w-full">
+                <p className={`text-[16px] leading-6 truncate ${isPending ? 'font-semibold text-[#28272e]' : 'font-normal text-[#6d6b7e]'}`}>
+                  {title}
+                </p>
+                <span className="text-[12px] text-[#868496] flex-shrink-0 leading-6">{timeAgo(item.createdAt)}</span>
+              </div>
+              <p className={`text-[14px] leading-5 line-clamp-2 ${isPending ? 'text-[#28272e] font-semibold' : 'text-[#6d6b7e]'}`}>
+                {message}
+              </p>
+              {expLabel && (
+                <p className={`text-[12px] font-semibold mt-0.5 ${isExpired ? 'text-[#aa281e]' : 'text-orange-600'}`}>
+                  {expLabel}
+                </p>
+              )}
+            </div>
+          </div>
+        </button>
+      </div>
+    </div>
   );
 }
 
 export default function ConsentQueueScreen({ navigate }: Props) {
   const { state, refreshPendingCount } = useConsentEngine();
   const apiKey = state.ceApiKey ?? '';
+  const pendingCount = state.pendingCount;
 
   const [items, setItems] = useState<PendingRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [clearing, setClearing] = useState(false);
+  const loadedOnceRef = useRef(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     setError('');
     try {
       const data = await listQueue(apiKey);
       setItems(data);
       await refreshPendingCount();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not load inbox.');
+      if (!silent) setError(err instanceof Error ? err.message : 'Could not load inbox.');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [apiKey, refreshPendingCount]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+    loadedOnceRef.current = true;
+  }, [load]);
+
+  // Silently refresh the list whenever the background poll detects a count change
+  const prevCountRef = useRef(pendingCount);
+  useEffect(() => {
+    if (!loadedOnceRef.current) return;
+    if (pendingCount !== prevCountRef.current) {
+      prevCountRef.current = pendingCount;
+      load(true);
+    }
+  }, [pendingCount, load]);
+
+  const handleDelete = async (id: string) => {
+    setItems(prev => prev.filter(i => i.id !== id));
+    try {
+      await deleteQueueItem(apiKey, id);
+      await refreshPendingCount();
+    } catch {
+      // Item already removed from UI; reload to re-sync
+      load();
+    }
+  };
+
+  const handleClearAll = async () => {
+    setClearing(true);
+    const ids = items.map(i => i.id);
+    setItems([]);
+    try {
+      await Promise.all(ids.map(id => deleteQueueItem(apiKey, id)));
+      await refreshPendingCount();
+    } catch {
+      load();
+    } finally {
+      setClearing(false);
+    }
+  };
 
   const pendingItems = items.filter(i => i.status === 'pending');
   const resolvedItems = items.filter(i => i.status !== 'pending');
@@ -138,12 +268,23 @@ export default function ConsentQueueScreen({ navigate }: Props) {
       {/* Nav */}
       <nav className="px-5 pt-14 pb-2 flex items-center justify-between">
         <h1 className="text-[28px] font-bold text-[#28272e] leading-8">Inbox</h1>
-        <IconButton onClick={load} aria-label="Refresh">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M21 12a9 9 0 11-9-9 9 9 0 019 9z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            <path d="M21 3v9h-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </IconButton>
+        <div className="flex items-center gap-2">
+          {items.length > 0 && (
+            <button
+              onClick={handleClearAll}
+              disabled={clearing}
+              className="text-[14px] font-medium text-[#aa281e] disabled:opacity-40 px-1 py-1"
+            >
+              Clear all
+            </button>
+          )}
+          <IconButton onClick={() => load()} aria-label="Refresh">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M21 12a9 9 0 11-9-9 9 9 0 019 9z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <path d="M21 3v9h-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </IconButton>
+        </div>
       </nav>
 
       <main className="flex-1 px-4 pb-28 space-y-3 pt-2">
@@ -163,7 +304,7 @@ export default function ConsentQueueScreen({ navigate }: Props) {
         ) : error ? (
           <div className="bg-red-50 border border-red-200 rounded-[12px] px-4 py-4">
             <p className="text-[14px] text-[#aa281e] mb-3 font-medium">{error}</p>
-            <button onClick={load} className="text-[14px] font-semibold text-[#5843de]">Try again</button>
+            <button onClick={() => load()} className="text-[14px] font-semibold text-[#5843de]">Try again</button>
           </div>
         ) : items.length === 0 ? (
           <div className="bg-white rounded-[12px] border border-[#f1f1f3] p-8 flex flex-col items-center text-center">
@@ -182,10 +323,11 @@ export default function ConsentQueueScreen({ navigate }: Props) {
             {pendingItems.length > 0 && (
               <div className="bg-white rounded-[12px] border border-[#f1f1f3] overflow-hidden divide-y divide-[#f1f1f3]">
                 {pendingItems.map(item => (
-                  <InboxItem
+                  <SwipeableInboxItem
                     key={item.id}
                     item={item}
                     onClick={() => navigate('consent_queue_detail', { selectedQueueItemId: item.id })}
+                    onDelete={() => handleDelete(item.id)}
                   />
                 ))}
               </div>
@@ -197,10 +339,11 @@ export default function ConsentQueueScreen({ navigate }: Props) {
                 )}
                 <div className="bg-white rounded-[12px] border border-[#f1f1f3] overflow-hidden divide-y divide-[#f1f1f3]">
                   {resolvedItems.map(item => (
-                    <InboxItem
+                    <SwipeableInboxItem
                       key={item.id}
                       item={item}
                       onClick={() => navigate('consent_queue_detail', { selectedQueueItemId: item.id })}
+                      onDelete={() => handleDelete(item.id)}
                     />
                   ))}
                 </div>

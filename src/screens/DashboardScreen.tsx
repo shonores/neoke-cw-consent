@@ -1,10 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { discoverWalletCredentials, ApiError } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { useConsentEngine } from '../context/ConsentEngineContext';
 import { getLocalCredentials, mergeWithLocalCredentials, clearLocalCredentials } from '../store/localCredentials';
 import CredentialStack from '../components/CredentialStack';
-import CeStatusBanner from '../components/CeStatusBanner';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import type { Credential, ViewName } from '../types';
@@ -18,8 +16,6 @@ const STALE_THRESHOLD_MS = 5 * 60 * 1000;
 
 export default function DashboardScreen({ navigate, refreshSignal }: DashboardScreenProps) {
   const { state, markExpired } = useAuth();
-  const { refreshHealth } = useConsentEngine();
-
   // Initialize with local credentials to avoid flicker
   const [credentials, setCredentials] = useState<Credential[]>(getLocalCredentials());
   const [loading, setLoading] = useState(false);
@@ -107,13 +103,6 @@ export default function DashboardScreen({ navigate, refreshSignal }: DashboardSc
       </nav>
 
       <main className="flex-1 pb-28">
-        <div className="px-5 mb-4">
-          <CeStatusBanner
-            onNavigateToQueue={() => navigate('consent_queue')}
-            onRetry={() => refreshHealth()}
-          />
-        </div>
-
         {loading ? (
           <div className="px-5 flex items-center justify-center pt-16">
             <div className="text-center space-y-3">

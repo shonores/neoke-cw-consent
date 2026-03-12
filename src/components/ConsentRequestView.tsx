@@ -28,6 +28,8 @@ export interface ConsentRequestViewProps {
   needsPin?: boolean;
   actionState: 'idle' | 'sharing';
   actionError?: string;
+  /** Disables the approve/share buttons (e.g. request expired) */
+  actionsDisabled?: boolean;
   onShare: () => void;
   /** When provided, renders the "Always share with…" button */
   onAlwaysShare?: () => void;
@@ -85,6 +87,7 @@ export default function ConsentRequestView({
   needsPin,
   actionState,
   actionError,
+  actionsDisabled,
   onShare,
   onAlwaysShare,
   onReject,
@@ -157,20 +160,22 @@ export default function ConsentRequestView({
       <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-5 pt-4 pb-10 bg-[var(--bg-ios)]/90 backdrop-blur-[4px] z-40 space-y-2 border-t border-[var(--border-subtle)]">
         <button
           onClick={onShare}
-          disabled={sharing}
-          className="w-full bg-[#5843de] text-white text-[16px] font-semibold rounded-2xl py-4 active:opacity-80 transition-opacity disabled:opacity-60"
+          disabled={sharing || actionsDisabled}
+          className="w-full bg-[#5843de] text-white text-[16px] font-semibold rounded-2xl py-4 active:opacity-80 transition-opacity disabled:opacity-40"
         >
           {sharing ? (
             <span className="flex items-center justify-center gap-2">
               <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               {isVP ? 'Sharing…' : 'Accepting…'}
             </span>
+          ) : actionsDisabled ? (
+            'Request expired'
           ) : (
             isVP ? 'Share information' : 'Accept credential'
           )}
         </button>
 
-        {isVP && onAlwaysShare && (
+        {isVP && onAlwaysShare && !actionsDisabled && (
           <button
             onClick={onAlwaysShare}
             disabled={sharing}

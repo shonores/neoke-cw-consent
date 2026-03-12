@@ -146,11 +146,11 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
     }
   }, [authState.token]);
 
-  // Background polling every 30s
+  // Background polling every 5s
   useEffect(() => {
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     if (!state.ceUrl || !state.ceEnabled || !state.ceApiKey) return;
-    pollIntervalRef.current = setInterval(() => { refreshPendingCount(); }, 30_000);
+    pollIntervalRef.current = setInterval(() => { refreshPendingCount(); }, 5_000);
     return () => { if (pollIntervalRef.current) clearInterval(pollIntervalRef.current); };
   }, [state.ceUrl, state.ceEnabled, state.ceApiKey, refreshPendingCount]);
 

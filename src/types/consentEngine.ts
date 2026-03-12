@@ -93,6 +93,7 @@ export interface PendingRequest {
   preview: QueueItemPreview;
   createdAt: string;
   expiresAt: string;
+  vpRequestExpiresAt?: string;
   resolvedAt?: string;
   resolvedAction?: 'approved' | 'rejected';
   rejectReason?: string;

@@ -185,7 +185,9 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
 
   const isVP = item.linkType === 'vp_request';
   const isResolved = item.status !== 'pending';
-  const isExpired = new Date(item.expiresAt).getTime() < Date.now();
+  // vpRequestExpiresAt is the actual VP protocol deadline; fall back to queue expiresAt
+  const effectiveExpiry = item.vpRequestExpiresAt ?? item.expiresAt;
+  const isExpired = new Date(effectiveExpiry).getTime() < Date.now();
   const serviceName = isVP
     ? extractServiceName(item.preview.verifier?.clientId, item.preview.verifier?.name)
     : extractServiceName(item.preview.issuerDid);
@@ -194,9 +196,14 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
   const credentialRows: { types: string[]; issuer: string; fields?: string[] }[] = [];
   if (isVP) {
     if (item.preview.matchedCredentials && item.preview.matchedCredentials.length > 0) {
-      item.preview.matchedCredentials.forEach(c =>
-        credentialRows.push({ types: [c.type], issuer: c.issuer, fields: item.preview.requestedFields })
-      );
+      item.preview.matchedCredentials.forEach(c => {
+        // CE may return type as a string or string[]
+        const rawType = c.type as unknown;
+        const types = Array.isArray(rawType)
+          ? (rawType as string[]).filter(t => t !== 'VerifiableCredential')
+          : [c.type as string];
+        credentialRows.push({ types, issuer: c.issuer, fields: item.preview.requestedFields });
+      });
     } else if (item.preview.credentialType) {
       credentialRows.push({
         types: [item.preview.credentialType],
@@ -236,20 +243,30 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
         linkedDomains={item.preview.verifier?.linkedDomains}
         credentialRows={credentialRows}
         needsPin={needsPin}
-        actionState={isResolved || isExpired ? 'idle' : actionState}
+        actionState={isResolved ? 'idle' : actionState}
+        actionsDisabled={isExpired || isResolved}
         actionError={actionError}
         onShare={() => handleShareClick(false)}
         onAlwaysShare={isVP ? () => handleShareClick(true) : undefined}
         onReject={handleReject}
         extras={
           <>
-            {item.status === 'pending' && !isExpired && new Date(item.expiresAt).getTime() - Date.now() < 3_600_000 && (
+            {item.status === 'pending' && isExpired && (
+              <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-[12px] px-4 py-3">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="flex-shrink-0">
+                  <circle cx="12" cy="12" r="10" stroke="#aa281e" strokeWidth="1.7" />
+                  <path d="M12 7v5l3 2" stroke="#aa281e" strokeWidth="1.7" strokeLinecap="round" />
+                </svg>
+                <p className="text-[13px] font-semibold text-[#aa281e]">Request expired · Cannot be approved</p>
+              </div>
+            )}
+            {item.status === 'pending' && !isExpired && new Date(effectiveExpiry).getTime() - Date.now() < 3_600_000 && (
               <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-[12px] px-4 py-3">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="flex-shrink-0">
                   <circle cx="12" cy="12" r="10" stroke="#f59e0b" strokeWidth="1.7" />
                   <path d="M12 7v5l3 2" stroke="#f59e0b" strokeWidth="1.7" strokeLinecap="round" />
                 </svg>
-                <p className="text-[13px] font-semibold text-orange-700">{timeUntil(item.expiresAt)} · Act now</p>
+                <p className="text-[13px] font-semibold text-orange-700">{timeUntil(effectiveExpiry)} · Act now</p>
               </div>
             )}
             {isResolved && (
