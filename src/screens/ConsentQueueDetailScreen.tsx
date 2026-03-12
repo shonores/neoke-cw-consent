@@ -274,7 +274,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
                 item.resolvedAction === 'approved' ? 'bg-green-50 border border-green-200' : 'bg-[#f7f6f8] border border-[#f1f1f3]'
               }`}>
                 <p className={`text-[13px] font-semibold ${item.resolvedAction === 'approved' ? 'text-[#198e41]' : 'text-[#6d6b7e]'}`}>
-                  {item.resolvedAction === 'approved' ? 'Approved' : item.status === 'expired' ? 'Expired' : 'Declined'}
+                  {item.resolvedAction === 'approved' ? 'Approved' : item.status === 'expired' ? 'Expired' : item.status === 'error' ? 'Failed' : 'Declined'}
                 </p>
               </div>
             )}

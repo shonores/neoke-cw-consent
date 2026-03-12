@@ -439,12 +439,16 @@ export default function AuditLogScreen({ navigate }: Props) {
         offset: offsetRef.current,
         order: 'desc',
       });
+      // L7: 'queued' events are operational state (request entered inbox), not user activity.
+      // Each interaction emits both a 'queued' + a terminal event; showing 'queued' doubles
+      // every entry and pollutes the feed with stale "View request" CTAs.
+      const filtered = data.filter(e => e.action !== 'queued');
       if (reset) {
-        setEvents(data);
+        setEvents(filtered);
       } else {
-        setEvents(prev => [...prev, ...data]);
+        setEvents(prev => [...prev, ...filtered]);
       }
-      offsetRef.current += data.length;
+      offsetRef.current += data.length; // advance by unfiltered count so CE pagination stays correct
       setHasMore(data.length === PAGE_SIZE);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load activity.');

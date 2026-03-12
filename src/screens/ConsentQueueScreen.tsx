@@ -91,6 +91,7 @@ function statusBadge(item: PendingRequest, isExpired: boolean): { label: string;
   if (item.status === 'pending') return null;
   if (item.resolvedAction === 'approved') return { label: 'Accepted', cls: 'bg-green-50 text-[#198e41]' };
   if (item.status === 'expired') return { label: 'Expired', cls: 'bg-[#f7f6f8] text-[#6d6b7e]' };
+  if (item.status === 'error') return { label: 'Failed', cls: 'bg-orange-50 text-orange-700' };
   return { label: 'Declined', cls: 'bg-[#f7f6f8] text-[#6d6b7e]' };
 }
 
