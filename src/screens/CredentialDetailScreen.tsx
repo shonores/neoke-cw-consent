@@ -134,12 +134,28 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
     if (tab !== 'activity' || !ceState.ceEnabled || !ceState.ceApiKey) return;
     setLoadingActivity(true);
     const credTypes = (credential.type ?? []).filter((t) => t !== 'VerifiableCredential');
+    const docType = credential.docType as string | undefined;
     listAuditEvents(ceState.ceApiKey, { limit: 200, order: 'desc' })
       .then((all) => {
-        const filtered = all.filter((e) => {
-          if (!e.credentialType) return false;
-          return credTypes.some((t) => e.credentialType!.includes(t) || t.includes(e.credentialType!));
-        });
+        // Log a sample event so we know what fields CE actually sends
+        if (all.length > 0) console.debug('[Activity] sample event:', all[0]);
+
+        const anyHaveType = all.some((e) => !!e.credentialType);
+
+        let filtered: AuditEvent[];
+        if (!anyHaveType) {
+          // CE doesn't populate credentialType yet — show all events as fallback
+          filtered = all;
+        } else {
+          filtered = all.filter((e) => {
+            if (!e.credentialType) return true; // include untyped events
+            const ct = e.credentialType.toLowerCase();
+            if (docType && ct.includes(docType.toLowerCase())) return true;
+            return credTypes.some((t) =>
+              ct.includes(t.toLowerCase()) || t.toLowerCase().includes(ct)
+            );
+          });
+        }
         setEvents(filtered);
       })
       .catch(() => setEvents([]))
@@ -176,7 +192,7 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
       className="fixed inset-0 bg-[var(--bg-ios)] z-40 flex justify-center overflow-y-auto overflow-x-hidden"
     >
       {/* Inner column */}
-      <div className="w-full max-w-[var(--max-width)] flex flex-col bg-[var(--bg-white)]">
+      <div className="w-full max-w-[var(--max-width)] flex flex-col bg-[var(--bg-white)] min-h-full">
         {/* Minimalist Top Nav */}
         <nav className="px-5 pt-14 pb-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
