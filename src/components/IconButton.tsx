@@ -8,11 +8,12 @@ export default function IconButton({ children, className = '', ...props }: IconB
     return (
         <button
             className={`
-        flex items-center justify-center 
-        w-10 h-10 rounded-full 
-        transition-all duration-150 
-        active:scale-90 active:bg-black/5
-        text-[#5B4FE9] 
+        flex items-center justify-center
+        w-10 h-10 rounded-full
+        bg-black/[0.05] hover:bg-black/10
+        transition-all duration-150
+        active:scale-90 active:bg-black/[0.15]
+        text-[#5843de]
         ${className}
       `}
             {...props}

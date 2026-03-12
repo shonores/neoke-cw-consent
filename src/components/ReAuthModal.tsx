@@ -62,7 +62,7 @@ export default function ReAuthModal() {
               value={apiKey}
               onChange={(e) => { setApiKey(e.target.value); setError(''); }}
               placeholder="API Key"
-              className="w-full bg-[#F2F2F7] border border-black/8 rounded-2xl px-4 py-4 text-[16px] text-[#1c1c1e] placeholder-[#aeaeb2] focus:outline-none focus:border-[#5B4FE9] transition-colors"
+              className="w-full bg-[#F2F2F7] border border-black/8 rounded-2xl px-4 py-4 text-[16px] text-[#1c1c1e] placeholder-[#aeaeb2] focus:outline-none focus:border-[#5843de] transition-colors"
               autoComplete="off"
               disabled={loading}
             />
@@ -75,7 +75,7 @@ export default function ReAuthModal() {
               type="submit"
               disabled={loading || !apiKey.trim()}
               className="w-full flex items-center justify-center gap-2 py-4 rounded-full text-white font-semibold text-[17px] transition-opacity disabled:opacity-50 min-h-[56px]"
-              style={{ backgroundColor: '#5B4FE9' }}
+              style={{ backgroundColor: '#5843de' }}
             >
               {loading ? (
                 <>

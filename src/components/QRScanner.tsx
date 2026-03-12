@@ -76,7 +76,7 @@ export default function QRScanner({ onScan, onError }: QRScannerProps) {
         <div className="relative w-full">
           {isStarting && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 rounded-2xl z-10 gap-3 min-h-[260px]">
-              <div className="w-8 h-8 border-2 border-[#5B4FE9]/30 border-t-[#5B4FE9] rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 border-[#5843de]/30 border-t-[#5843de] rounded-full animate-spin" />
               <p className="text-white/70 text-xs">
                 {hadCamera ? 'Starting camera…' : 'Requesting camera access…'}
               </p>

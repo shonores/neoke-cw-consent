@@ -69,7 +69,7 @@ export default function OnboardingStep1Screen({ savedNodeId, pendingAction, onCo
           onChange={(e) => { setNodeId(e.target.value); setError(''); }}
           onKeyDown={(e) => e.key === 'Enter' && handleContinue()}
           placeholder="Node identifier  (e.g. b2b-poc)"
-          className="w-full bg-white border border-black/8 rounded-2xl px-4 py-4 text-[16px] text-[#1c1c1e] placeholder-[#c7c7cc] focus:outline-none focus:border-[#5B4FE9] shadow-sm transition-colors"
+          className="w-full bg-white border border-black/[0.08] rounded-2xl px-4 py-4 text-[16px] text-[#1c1c1e] placeholder-[#c7c7cc] focus:outline-none focus:border-[#5843de] shadow-sm transition-colors"
           autoCapitalize="none"
           autoComplete="off"
           autoCorrect="off"

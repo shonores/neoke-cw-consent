@@ -95,10 +95,10 @@ export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback
               <div className="relative w-16 h-16">
                 <svg width="64" height="64" viewBox="0 0 24 24" fill="none" className="animate-pulse">
                   <path d="M12 2L4 6v6c0 5.25 3.5 9.74 8 11 4.5-1.26 8-5.75 8-11V6l-8-4z"
-                    fill="#5B4FE9" fillOpacity="0.15" stroke="#5B4FE9" strokeWidth="1.7" strokeLinejoin="round" />
+                    fill="#5843de" fillOpacity="0.15" stroke="#5843de" strokeWidth="1.7" strokeLinejoin="round" />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-5 h-5 border-2 border-[#5B4FE9] border-t-transparent rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-[#5843de] border-t-transparent rounded-full animate-spin" />
                 </div>
               </div>
               <div className="text-center">
@@ -127,7 +127,7 @@ export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback
               <div className="flex gap-3 w-full pt-2">
                 <button
                   onClick={() => { clearAutoDismiss(); onViewAudit(); }}
-                  className="flex-1 py-3 text-[15px] font-medium text-[#5B4FE9] bg-[#5B4FE9]/8 rounded-2xl transition-colors active:bg-[#5B4FE9]/15"
+                  className="flex-1 py-3 text-[15px] font-medium text-[#5843de] bg-[#5843de]/8 rounded-2xl transition-colors active:bg-[#5843de]/15"
                 >
                   View Activity →
                 </button>
@@ -160,7 +160,7 @@ export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback
               <div className="flex gap-3 w-full pt-2">
                 <button
                   onClick={() => onReviewQueue(queueItemId)}
-                  className="flex-1 py-3 text-[15px] font-semibold text-white bg-[#5B4FE9] rounded-2xl transition-opacity active:opacity-80"
+                  className="flex-1 py-3 text-[15px] font-semibold text-white bg-[#5843de] rounded-2xl transition-opacity active:opacity-80"
                 >
                   Review Now →
                 </button>
@@ -208,8 +208,8 @@ export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback
               <div className="w-16 h-16 bg-[var(--primary-bg)] rounded-full flex items-center justify-center animate-pulse">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
                   <path d="M12 2L4 6v6c0 5.25 3.5 9.74 8 11 4.5-1.26 8-5.75 8-11V6l-8-4z"
-                    fill="#5B4FE9" fillOpacity="0.15" stroke="#5B4FE9" strokeWidth="1.7" strokeLinejoin="round" />
-                  <path d="M12 8v5M12 15.5h.01" stroke="#5B4FE9" strokeWidth="1.8" strokeLinecap="round" />
+                    fill="#5843de" fillOpacity="0.15" stroke="#5843de" strokeWidth="1.7" strokeLinejoin="round" />
+                  <path d="M12 8v5M12 15.5h.01" stroke="#5843de" strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
               </div>
               <div className="text-center">

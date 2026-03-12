@@ -37,7 +37,7 @@ export default function PrimaryButton({
         transition-all duration-150
         active:scale-[0.98] active:opacity-90 
         disabled:opacity-50 disabled:cursor-not-allowed
-        bg-[var(--primary)]
+        bg-[var(--primary)] shadow-md shadow-[#5843de]/20
         ${className}
       `}
     >

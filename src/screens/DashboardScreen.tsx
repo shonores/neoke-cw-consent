@@ -142,8 +142,7 @@ export default function DashboardScreen({ navigate, refreshSignal }: DashboardSc
               </p>
               <button
                 onClick={() => navigate('receive')}
-                className="w-full text-white text-[16px] font-bold py-4 rounded-2xl transition-all active:scale-[0.98]"
-                style={{ backgroundColor: 'var(--primary)', boxShadow: '0 8px 20px -6px var(--primary)' }}
+                className="w-full text-white text-[16px] font-semibold py-4 rounded-full bg-[#5843de] shadow-md shadow-[#5843de]/20 transition-all active:scale-[0.98] active:opacity-90"
               >
                 Add Credential
               </button>

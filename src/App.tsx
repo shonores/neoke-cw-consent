@@ -50,7 +50,7 @@ function TabBar({
     >
       {/* Home */}
       <button
-        className={`flex-1 flex flex-col items-center gap-1 pt-3 pb-3 transition-colors ${homeActive ? 'text-[#5B4FE9]' : 'text-[#8e8e93]'}`}
+        className={`flex-1 flex flex-col items-center gap-1 pt-3 pb-3 transition-colors ${homeActive ? 'text-[#5843de]' : 'text-[#8e8e93]'}`}
         onClick={() => onNavigate('dashboard')}
         aria-label="Home"
       >
@@ -70,7 +70,7 @@ function TabBar({
 
       {/* Scan QR Code */}
       <button
-        className={`flex-1 flex flex-col items-center gap-1 pt-3 pb-3 transition-colors ${scanActive ? 'text-[#5B4FE9]' : 'text-[#8e8e93]'}`}
+        className={`flex-1 flex flex-col items-center gap-1 pt-3 pb-3 transition-colors ${scanActive ? 'text-[#5843de]' : 'text-[#8e8e93]'}`}
         onClick={() => onNavigate('receive')}
         aria-label="Scan QR Code"
       >
@@ -89,7 +89,7 @@ function TabBar({
       {/* Inbox (consent queue) */}
       {ceEnabled && (
         <button
-          className={`flex-1 flex flex-col items-center gap-1 pt-3 pb-3 transition-colors relative ${consentActive ? 'text-[#5B4FE9]' : 'text-[#8e8e93]'}`}
+          className={`flex-1 flex flex-col items-center gap-1 pt-3 pb-3 transition-colors relative ${consentActive ? 'text-[#5843de]' : 'text-[#8e8e93]'}`}
           onClick={() => onNavigate('consent_queue')}
           aria-label="Inbox"
         >
@@ -126,7 +126,7 @@ function TabBar({
 
       {/* Profile */}
       <button
-        className={`flex-1 flex flex-col items-center gap-1 pt-3 pb-3 transition-colors ${accountActive ? 'text-[#5B4FE9]' : 'text-[#8e8e93]'}`}
+        className={`flex-1 flex flex-col items-center gap-1 pt-3 pb-3 transition-colors ${accountActive ? 'text-[#5843de]' : 'text-[#8e8e93]'}`}
         onClick={() => onNavigate('account')}
         aria-label="Profile"
       >

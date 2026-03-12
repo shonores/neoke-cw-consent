@@ -48,7 +48,7 @@ export default function OnboardingStep3Screen({ onComplete, onSkip }: Props) {
       <div className="flex-1 flex flex-col px-6 pt-14 pb-10">
         {/* Icon */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #5B4FE9 0%, #7c3aed 100%)' }}>
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #5843de 0%, #7c3aed 100%)' }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path d="M12 2L4 6v6c0 5.25 3.5 9.74 8 11 4.5-1.26 8-5.75 8-11V6l-8-4z" stroke="white" strokeWidth="1.7" strokeLinejoin="round" fill="rgba(255,255,255,0.15)" />
             </svg>
@@ -71,7 +71,7 @@ export default function OnboardingStep3Screen({ onComplete, onSkip }: Props) {
               onChange={(e) => { setCeUrl(e.target.value); setError(''); }}
               onKeyDown={(e) => e.key === 'Enter' && handleConnect()}
               placeholder="https://consent.example.com"
-              className="w-full bg-white border border-black/8 rounded-2xl px-4 py-4 text-[16px] text-[#1c1c1e] placeholder-[#c7c7cc] focus:outline-none focus:border-[#5B4FE9] shadow-sm transition-colors"
+              className="w-full bg-white border border-black/[0.08] rounded-2xl px-4 py-4 text-[16px] text-[#1c1c1e] placeholder-[#c7c7cc] focus:outline-none focus:border-[#5843de] shadow-sm transition-colors"
               disabled={loading}
             />
           </div>

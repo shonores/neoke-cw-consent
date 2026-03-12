@@ -39,15 +39,15 @@ export default function CeStatusBanner({ onNavigateToQueue, onRetry }: Props) {
     return (
       <button
         onClick={onNavigateToQueue}
-        className="w-full flex items-center gap-2 px-4 py-3 bg-[#5B4FE9]/8 border border-[#5B4FE9]/20 rounded-2xl text-left transition-colors active:bg-[#5B4FE9]/12"
+        className="w-full flex items-center gap-2 px-4 py-3 bg-[#5843de]/8 border border-[#5843de]/20 rounded-2xl text-left transition-colors active:bg-[#5843de]/12"
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="flex-shrink-0 text-[#5B4FE9]">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="flex-shrink-0 text-[#5843de]">
           <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <span className="text-[13px] font-medium text-[#5B4FE9] flex-1">
+        <span className="text-[13px] font-medium text-[#5843de] flex-1">
           {state.pendingCount} request{state.pendingCount !== 1 ? 's' : ''} awaiting your approval · Review →
         </span>
-        <svg width="7" height="12" viewBox="0 0 7 12" fill="none" className="text-[#5B4FE9]/60">
+        <svg width="7" height="12" viewBox="0 0 7 12" fill="none" className="text-[#5843de]/60">
           <path d="M1 1l5 5-5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>

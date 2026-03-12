@@ -219,17 +219,17 @@ export default function ConsentRulesScreen({ navigate }: Props) {
             <p className="text-[14px] text-red-600 mb-3">{error}</p>
             <button
               onClick={load}
-              className="text-[14px] font-medium text-[#5B4FE9]"
+              className="text-[14px] font-medium text-[#5843de]"
             >
               Try again
             </button>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center pt-16 text-center px-4">
-            <div className="w-16 h-16 bg-[#5B4FE9]/10 rounded-full flex items-center justify-center mb-4">
+            <div className="w-16 h-16 bg-[#5843de]/10 rounded-full flex items-center justify-center mb-4">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
                 <path d="M12 2L4 6v6c0 5.25 3.5 9.74 8 11 4.5-1.26 8-5.75 8-11V6l-8-4z"
-                  stroke="#5B4FE9" strokeWidth="1.7" strokeLinejoin="round" fill="#5B4FE9" fillOpacity="0.12" />
+                  stroke="#5843de" strokeWidth="1.7" strokeLinejoin="round" fill="#5843de" fillOpacity="0.12" />
               </svg>
             </div>
             <p className="text-[17px] font-bold text-[#1c1c1e] mb-2">
@@ -242,7 +242,7 @@ export default function ConsentRulesScreen({ navigate }: Props) {
             </p>
             <button
               onClick={() => navigate('consent_rule_editor', { editingRuleId: null })}
-              className="px-6 py-3 rounded-full bg-[#5B4FE9] text-white text-[15px] font-semibold active:opacity-80"
+              className="px-6 py-3 rounded-full bg-[#5843de] text-white text-[15px] font-semibold active:opacity-80"
             >
               Create your first rule
             </button>
@@ -273,7 +273,7 @@ export default function ConsentRulesScreen({ navigate }: Props) {
                       onChange={(v) => handleToggle(rule, v)}
                     />
                     {togglingId === rule.id && (
-                      <div className="w-4 h-4 border-2 border-[#5B4FE9] border-t-transparent rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-[#5843de] border-t-transparent rounded-full animate-spin" />
                     )}
                   </div>
 

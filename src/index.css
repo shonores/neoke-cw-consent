@@ -1,24 +1,47 @@
 @import "tailwindcss";
 
 :root {
-  /* Colors */
-  --primary: #5B4FE9;
-  --primary-bg: rgba(91, 79, 233, 0.1);
-  --bg-ios: #F2F2F7;
-  --bg-white: #FFFFFF;
-  
+  /* Figma Design Tokens */
+  --color-brand: #5843de;
+  --color-brand-subtle: #f4f3fc;
+
   /* Text */
-  --text-main: #1c1c1e;
-  --text-muted: #8e8e93;
-  --text-error: #FF3B30;
-  --text-success: #34C759;
-  
+  --text-base: #28272e;
+  --text-subtle: #6d6b7e;
+  --text-placeholder: #868496;
+  --text-disabled: #abaab6;
+  --text-error: #aa281e;
+  --text-warning: #aa7212;
+  --text-success: #198e41;
+
+  /* Backgrounds */
+  --bg-screen: #f7f6f8;
+  --bg-base: #ffffff;
+  --bg-base-subtle: #f1f1f3;
+  --bg-brand: #5843de;
+  --bg-brand-subtle: #f4f3fc;
+  --bg-error: #fbeae9;
+  --bg-warning: #fcf4e5;
+  --bg-success: #ebfbf0;
+
+  /* Borders */
+  --border-base: #d7d6dc;
+  --border-subtle: #e8e8eb;
+  --border-brand: #5843de;
+
+  /* Legacy aliases — keep for backwards compatibility */
+  --primary: #5843de;
+  --primary-bg: #f4f3fc;
+  --bg-ios: #f7f6f8;
+  --bg-white: #ffffff;
+  --text-main: #28272e;
+  --text-muted: #6d6b7e;
+
   /* Layout */
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
-  --max-width: 512px; /* max-w-lg equivalent */
-  
+  --max-width: 512px;
+
   /* Borders & Shadows */
-  --border-subtle: rgba(0, 0, 0, 0.05);
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --radius-xl: 16px;
   --radius-2xl: 20px;

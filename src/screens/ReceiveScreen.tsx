@@ -62,10 +62,10 @@ function IconPaste() {
 function IconCheckCircle() {
   return (
     <svg width="56" height="56" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <circle cx="12" cy="12" r="10" stroke="#5B4FE9" strokeWidth="1.5" />
+      <circle cx="12" cy="12" r="10" stroke="#5843de" strokeWidth="1.5" />
       <path
         d="M8.5 12l2.5 2.5 4.5-5"
-        stroke="#5B4FE9"
+        stroke="#5843de"
         strokeWidth="1.8"
         strokeLinecap="round"
         strokeLinejoin="round"

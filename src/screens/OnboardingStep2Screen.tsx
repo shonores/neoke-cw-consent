@@ -90,7 +90,7 @@ export default function OnboardingStep2Screen({
           onChange={(e) => { setApiKey(e.target.value); setError(''); }}
           onKeyDown={(e) => e.key === 'Enter' && handleSignIn()}
           placeholder="API Key"
-          className="w-full bg-white border border-black/8 rounded-2xl px-4 py-4 text-[16px] text-[#1c1c1e] placeholder-[#c7c7cc] focus:outline-none focus:border-[#5B4FE9] shadow-sm transition-colors"
+          className="w-full bg-white border border-black/[0.08] rounded-2xl px-4 py-4 text-[16px] text-[#1c1c1e] placeholder-[#c7c7cc] focus:outline-none focus:border-[#5843de] shadow-sm transition-colors"
           autoComplete="off"
           disabled={loading}
           // eslint-disable-next-line jsx-a11y/no-autofocus

@@ -21,11 +21,11 @@ export default function SecondaryButton({
         ${fullWidth ? 'w-full' : ''} 
         flex items-center justify-center gap-2 
         py-4 rounded-full 
-        text-[var(--text-main)] font-semibold text-[17px] 
+        text-[#28272e] font-medium text-[17px] 
         transition-all duration-150
-        active:scale-[0.98] active:bg-[#e5e5ea]
+        active:scale-[0.98] active:bg-black/5
         disabled:opacity-50 disabled:cursor-not-allowed
-        bg-[#E5E5EA]
+        bg-white border border-black/[0.08]
         ${className}
       `}
         >

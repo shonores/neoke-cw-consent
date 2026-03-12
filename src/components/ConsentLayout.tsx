@@ -51,7 +51,7 @@ export default function ConsentLayout({
               min-h-[44px] transition-all duration-150 active:scale-95
               disabled:opacity-50 disabled:cursor-not-allowed
               ${action.variant === 'primary'
-                ? 'bg-blue-600 hover:bg-blue-500 text-white'
+                ? 'bg-[#5843de] hover:bg-[#5843de]/90 text-white'
                 : 'bg-[#f2f2f7] hover:bg-[#e5e5ea] text-[#1c1c1e] border border-black/5'}
             `}
           >
