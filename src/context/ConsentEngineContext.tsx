@@ -96,6 +96,7 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(ceReducer, undefined, initCeState);
   const { state: authState } = useAuth();
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sseAbortRef = useRef<AbortController | null>(null);
   const initializedRef = useRef(false);
 
   // Use refs for stable callbacks in effects
@@ -146,11 +147,68 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
     }
   }, [authState.token]);
 
-  // Background polling every 5s
+  // SSE connection for real-time push — EventSource doesn't support custom headers,
+  // so we use fetch + ReadableStream to parse the SSE stream manually.
+  useEffect(() => {
+    const { ceUrl, ceEnabled, ceApiKey } = state;
+    const nodeId = authState.nodeIdentifier;
+    if (!ceUrl || !ceEnabled || !ceApiKey || !nodeId) return;
+
+    sseAbortRef.current?.abort();
+    const controller = new AbortController();
+    sseAbortRef.current = controller;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const connect = async () => {
+      try {
+        const response = await fetch(`${ceUrl}/sse/${encodeURIComponent(nodeId)}`, {
+          headers: { Authorization: `ApiKey ${ceApiKey}` },
+          signal: controller.signal,
+        });
+        if (!response.ok || !response.body) throw new Error(`SSE ${response.status}`);
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let eventType = 'message';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() ?? '';
+          for (const line of lines) {
+            if (line.startsWith('event: ')) {
+              eventType = line.slice(7).trim();
+            } else if (line.startsWith('data: ')) {
+              if (eventType === 'queue.item.created' || eventType === 'queue.item.resolved') {
+                refreshPendingCount();
+              }
+              eventType = 'message';
+            } else if (line === '') {
+              eventType = 'message';
+            }
+          }
+        }
+      } catch {
+        if (controller.signal.aborted) return;
+        reconnectTimer = setTimeout(connect, 5_000);
+      }
+    };
+
+    connect();
+    return () => {
+      controller.abort();
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+    };
+  }, [state.ceUrl, state.ceEnabled, state.ceApiKey, authState.nodeIdentifier, refreshPendingCount]);
+
+  // Fallback polling every 30s (in case SSE drops silently)
   useEffect(() => {
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     if (!state.ceUrl || !state.ceEnabled || !state.ceApiKey) return;
-    pollIntervalRef.current = setInterval(() => { refreshPendingCount(); }, 5_000);
+    pollIntervalRef.current = setInterval(() => { refreshPendingCount(); }, 30_000);
     return () => { if (pollIntervalRef.current) clearInterval(pollIntervalRef.current); };
   }, [state.ceUrl, state.ceEnabled, state.ceApiKey, refreshPendingCount]);
 
