@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
 import { listAuditEvents } from '../api/consentEngineClient';
-import PrimaryButton from '../components/PrimaryButton';
 import type { AuditEvent, AuditAction } from '../types/consentEngine';
 import type { ViewName } from '../types';
 
@@ -16,100 +15,194 @@ interface Props {
   navigate: (view: ViewName) => void;
 }
 
-type FilterTab = 'all' | 'automated' | 'manual' | 'rejected_expired';
-
 const PAGE_SIZE = 20;
 
-function formatTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+function formatRelativeTime(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(dateStr).toLocaleDateString([], { day: 'numeric', month: 'short' });
 }
 
-function formatDate(dateStr: string): string {
+function formatDateCaption(dateStr: string): string {
   const d = new Date(dateStr);
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
-
-  if (d.toDateString() === today.toDateString()) return 'Today';
+  if (d.toDateString() === today.toDateString()) return '';
   if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
-  return d.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+  return d.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
-function groupByDate(events: AuditEvent[]): { date: string; events: AuditEvent[] }[] {
-  const groups: Map<string, AuditEvent[]> = new Map();
-  for (const event of events) {
-    const key = new Date(event.timestamp).toDateString();
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key)!.push(event);
+function extractServiceName(did?: string): string {
+  if (!did) return 'Unknown service';
+  // did:web:example.com → example.com
+  const webMatch = did.match(/^did:web:([^#?/]+)/);
+  if (webMatch) return webMatch[1];
+  // did:key:... → truncate
+  if (did.startsWith('did:')) {
+    const parts = did.split(':');
+    const last = parts[parts.length - 1];
+    return last.length > 16 ? last.slice(0, 8) + '…' + last.slice(-4) : last;
   }
-  return Array.from(groups.entries()).map(([, evts]) => ({
-    date: formatDate(evts[0].timestamp),
-    events: evts,
-  }));
+  return did.length > 20 ? did.slice(0, 10) + '…' + did.slice(-6) : did;
 }
 
-function actionMeta(action: AuditAction): { label: string; color: string; bg: string; icon: 'check' | 'x' | 'clock' | 'queue' } {
-  switch (action) {
-    case 'auto_presented':
-      return { label: 'Auto-shared', color: '#059669', bg: 'bg-green-50', icon: 'check' };
-    case 'auto_received':
-      return { label: 'Auto-received', color: '#059669', bg: 'bg-green-50', icon: 'check' };
-    case 'manually_approved':
-      return { label: 'Manually approved', color: '#059669', bg: 'bg-green-50', icon: 'check' };
-    case 'manually_rejected':
-      return { label: 'Rejected', color: '#EF4444', bg: 'bg-red-50', icon: 'x' };
+function getEventContent(event: AuditEvent): { title: string; description: string } {
+  const service = extractServiceName(event.verifierDid ?? event.issuerDid);
+  const credType = event.credentialType ? ` (${event.credentialType})` : '';
+
+  switch (event.action) {
     case 'queued':
-      return { label: 'Queued for approval', color: '#F59E0B', bg: 'bg-yellow-50', icon: 'queue' };
+      return {
+        title: service,
+        description: `${service} is requesting to verify your identity${credType}. Review and respond.`,
+      };
+    case 'auto_presented':
+      return {
+        title: service,
+        description: `Your credentials were automatically shared with ${service}${credType}.`,
+      };
+    case 'manually_approved':
+      return {
+        title: service,
+        description: `You approved sharing your credentials with ${service}${credType}.`,
+      };
+    case 'manually_rejected':
+      return {
+        title: service,
+        description: `You declined sharing your credentials with ${service}${credType}.`,
+      };
     case 'rejected':
-      return { label: 'Auto-rejected', color: '#EF4444', bg: 'bg-red-50', icon: 'x' };
+      return {
+        title: service,
+        description: `The request from ${service} was automatically rejected${credType}.`,
+      };
     case 'expired':
-      return { label: 'Expired', color: '#8e8e93', bg: 'bg-[#F2F2F7]', icon: 'clock' };
+      return {
+        title: service,
+        description: `The request from ${service} expired before it was resolved${credType}.`,
+      };
+    case 'auto_received':
+      return {
+        title: service,
+        description: `A credential was automatically received from ${service}${credType}.`,
+      };
     default:
-      return { label: action, color: '#8e8e93', bg: 'bg-[#F2F2F7]', icon: 'clock' };
+      return { title: service, description: `Activity from ${service}.` };
   }
 }
 
-function EventIcon({ action }: { action: AuditAction }) {
-  const { color, bg, icon } = actionMeta(action);
+function statusMeta(action: AuditAction): { label: string; type: 'pill' | 'text-red' | 'text-gray' | 'text-green' } | null {
+  switch (action) {
+    case 'queued':
+      return { label: 'View request', type: 'pill' };
+    case 'manually_rejected':
+    case 'rejected':
+      return { label: 'Declined', type: 'text-red' };
+    case 'expired':
+      return { label: 'Expired', type: 'text-gray' };
+    case 'auto_presented':
+    case 'manually_approved':
+      return { label: 'Shared successfully', type: 'text-green' };
+    case 'auto_received':
+      return { label: 'Received successfully', type: 'text-green' };
+    default:
+      return null;
+  }
+}
+
+function ServiceAvatar({ action }: { action: AuditAction }) {
+  const isShare = action === 'auto_presented' || action === 'manually_approved' || action === 'queued';
+  const isReceive = action === 'auto_received';
+  const isRejected = action === 'rejected' || action === 'manually_rejected';
+  const isExpired = action === 'expired';
+
   return (
-    <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${bg}`}>
-      {icon === 'check' && (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <path d="M5 13l4 4L19 7" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+    <div className="w-11 h-11 rounded-full bg-[#f4f3fc] flex items-center justify-center flex-shrink-0">
+      {isShare && (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+          <polyline points="16 6 12 2 8 6" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+          <line x1="12" y1="2" x2="12" y2="15" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round"/>
         </svg>
       )}
-      {icon === 'x' && (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <path d="M18 6L6 18M6 6l12 12" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
+      {isReceive && (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+          <polyline points="16 18 12 22 8 18" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+          <line x1="12" y1="2" x2="12" y2="22" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round"/>
         </svg>
       )}
-      {icon === 'clock' && (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.7" />
-          <path d="M12 7v5l3 2" stroke={color} strokeWidth="1.7" strokeLinecap="round" />
+      {isRejected && (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="9" stroke="#aa281e" strokeWidth="1.7"/>
+          <path d="M15 9l-6 6M9 9l6 6" stroke="#aa281e" strokeWidth="1.7" strokeLinecap="round"/>
         </svg>
       )}
-      {icon === 'queue' && (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.7" />
-          <path d="M12 7v5l3 2" stroke={color} strokeWidth="1.7" strokeLinecap="round" />
+      {isExpired && (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="9" stroke="#868496" strokeWidth="1.7"/>
+          <path d="M12 7v5l3 2" stroke="#868496" strokeWidth="1.7" strokeLinecap="round"/>
         </svg>
       )}
     </div>
   );
 }
 
-function filterEvents(events: AuditEvent[], tab: FilterTab): AuditEvent[] {
-  switch (tab) {
-    case 'automated':
-      return events.filter(e => e.action === 'auto_presented' || e.action === 'auto_received');
-    case 'manual':
-      return events.filter(e => e.action === 'manually_approved' || e.action === 'manually_rejected');
-    case 'rejected_expired':
-      return events.filter(e => e.action === 'rejected' || e.action === 'manually_rejected' || e.action === 'expired');
-    default:
-      return events;
-  }
+function ActivityItem({ event, onViewRequest }: { event: AuditEvent; onViewRequest?: () => void }) {
+  const { title, description } = getEventContent(event);
+  const status = statusMeta(event.action);
+  const dateCaption = formatDateCaption(event.timestamp);
+  const isQueued = event.action === 'queued';
+
+  return (
+    <div className={`rounded-[4px] w-full ${isQueued ? 'bg-[#f7f6f8]' : ''}`}>
+      <div className="flex flex-col gap-3 px-2 py-3">
+        {/* Top row: avatar + content */}
+        <div className="flex gap-3 items-start">
+          <ServiceAvatar action={event.action} />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 w-full">
+              <p className="flex-1 font-semibold text-[16px] leading-6 text-[#28272e] truncate">{title}</p>
+              <span className="text-[12px] text-[#868496] flex-shrink-0 leading-4">{formatRelativeTime(event.timestamp)}</span>
+            </div>
+            <p className="text-[14px] text-[#6d6b7e] leading-5 mt-0.5">{description}</p>
+          </div>
+        </div>
+
+        {/* Status row */}
+        {status && (
+          <div className="flex flex-col items-end gap-0.5">
+            {status.type === 'pill' ? (
+              <button
+                onClick={onViewRequest}
+                className="bg-[#5843de] text-white text-[14px] font-medium leading-5 px-3 py-1 rounded-full active:opacity-80 transition-opacity"
+              >
+                {status.label}
+              </button>
+            ) : (
+              <span className={`text-[14px] font-medium leading-5 ${
+                status.type === 'text-red' ? 'text-[#aa281e]' :
+                status.type === 'text-green' ? 'text-[#198e41]' :
+                'text-[#6d6b7e]'
+              }`}>
+                {status.label}
+              </span>
+            )}
+            {dateCaption && (
+              <span className="text-[12px] text-[#868496] leading-4">{dateCaption}</span>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function AuditLogScreen({ navigate }: Props) {
@@ -121,7 +214,6 @@ export default function AuditLogScreen({ navigate }: Props) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState('');
-  const [filter, setFilter] = useState<FilterTab>('all');
   const bottomRef = useRef<HTMLDivElement>(null);
   const offsetRef = useRef(0);
 
@@ -148,7 +240,7 @@ export default function AuditLogScreen({ navigate }: Props) {
       offsetRef.current += data.length;
       setHasMore(data.length === PAGE_SIZE);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not load audit log.');
+      setError(err instanceof Error ? err.message : 'Could not load activity.');
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -161,9 +253,7 @@ export default function AuditLogScreen({ navigate }: Props) {
     if (!bottomRef.current || !hasMore || loadingMore) return;
     const observer = new IntersectionObserver(
       entries => {
-        if (entries[0].isIntersecting && hasMore && !loadingMore) {
-          loadEvents(false);
-        }
+        if (entries[0].isIntersecting && hasMore && !loadingMore) loadEvents(false);
       },
       { threshold: 0.1 }
     );
@@ -171,12 +261,15 @@ export default function AuditLogScreen({ navigate }: Props) {
     return () => observer.disconnect();
   }, [hasMore, loadingMore, loadEvents]);
 
-  const filtered = filterEvents(events, filter);
-  const grouped = groupByDate(filtered);
-
   return (
-    <motion.div variants={variants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col bg-[var(--bg-ios)] min-h-screen">
-      {/* Minimalist Top Nav */}
+    <motion.div
+      variants={variants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      className="flex-1 flex flex-col bg-[#f7f6f8] min-h-screen"
+    >
+      {/* Nav */}
       <nav className="px-5 pt-14 pb-4 flex items-center gap-3">
         <button
           onClick={() => navigate('account')}
@@ -186,100 +279,74 @@ export default function AuditLogScreen({ navigate }: Props) {
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
-        <h1 className="text-[20px] font-bold text-[var(--text-main)]">
-          Activity Log
-        </h1>
+        <div>
+          <h1 className="text-[26px] font-bold text-[#28272e] leading-8">Activity</h1>
+        </div>
       </nav>
 
-      {/* Filter chips */}
-      <div className="px-5 mb-6 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-        {([
-          ['all', 'All'],
-          ['automated', 'Automated'],
-          ['manual', 'Manual'],
-          ['rejected_expired', 'Rejected & Expired'],
-        ] as const).map(([tab, label]) => (
-          <button
-            key={tab}
-            onClick={() => setFilter(tab)}
-            className={`flex-shrink-0 px-4 py-2.5 rounded-full text-[13px] font-bold transition-all shadow-[var(--shadow-sm)] border ${filter === tab
-              ? 'bg-[var(--primary)] text-white border-transparent'
-              : 'bg-[var(--bg-white)] text-[var(--text-muted)] border-[var(--border-subtle)]'
-              }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <main className="flex-1 px-4 pb-28 space-y-4">
+        {/* Description */}
+        <p className="text-[16px] text-[#28272e] leading-6 px-1">
+          A record of all data shared and consent requests, tracking every interaction and update in one place.
+        </p>
 
-      <main className="flex-1 px-5 pb-28 overflow-y-auto space-y-6">
         {loading ? (
-          <div className="space-y-3">
-            {[1, 2, 3, 4, 5].map(i => (
-              <div key={i} className="animate-pulse bg-white rounded-2xl h-16 w-full shadow-sm" />
+          <div className="bg-white rounded-[12px] border border-[#f1f1f3] p-2 space-y-0 divide-y divide-[#f1f1f3]">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="flex gap-3 px-2 py-3 animate-pulse">
+                <div className="w-11 h-11 rounded-full bg-[#f4f3fc] flex-shrink-0" />
+                <div className="flex-1 space-y-2 pt-1">
+                  <div className="h-4 bg-[#f1f1f3] rounded w-2/3" />
+                  <div className="h-3 bg-[#f1f1f3] rounded w-full" />
+                  <div className="h-3 bg-[#f1f1f3] rounded w-4/5" />
+                </div>
+              </div>
             ))}
           </div>
         ) : error ? (
-          <div className="bg-red-50 border border-red-200 rounded-[var(--radius-xl)] px-4 py-4">
-            <p className="text-[14px] text-[var(--text-error)] mb-4 font-medium">{error}</p>
-            <PrimaryButton onClick={() => loadEvents(true)}>Try again</PrimaryButton>
+          <div className="bg-red-50 border border-red-200 rounded-[12px] px-4 py-4">
+            <p className="text-[14px] text-[#aa281e] mb-4 font-medium">{error}</p>
+            <button
+              onClick={() => loadEvents(true)}
+              className="bg-[#5843de] text-white text-[15px] font-semibold px-6 py-3 rounded-full w-full active:opacity-80 transition-opacity"
+            >
+              Try again
+            </button>
           </div>
-        ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center pt-16 text-center px-4">
-            <div className="w-16 h-16 bg-[#5B4FE9]/10 rounded-full flex items-center justify-center mb-4">
+        ) : events.length === 0 ? (
+          <div className="bg-white rounded-[12px] border border-[#f1f1f3] p-8 flex flex-col items-center text-center">
+            <div className="w-16 h-16 bg-[#f4f3fc] rounded-full flex items-center justify-center mb-4">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L4 6v6c0 5.25 3.5 9.74 8 11 4.5-1.26 8-5.75 8-11V6l-8-4z" stroke="#5B4FE9" strokeWidth="1.7" strokeLinejoin="round" fill="#5B4FE9" fillOpacity="0.12" />
+                <path d="M12 2L4 6v6c0 5.25 3.5 9.74 8 11 4.5-1.26 8-5.75 8-11V6l-8-4z" stroke="#5843de" strokeWidth="1.7" strokeLinejoin="round" fill="#5843de" fillOpacity="0.12" />
               </svg>
             </div>
-            <p className="text-[17px] font-bold text-[#1c1c1e] mb-2">No activity yet</p>
-            <p className="text-[14px] text-[#8e8e93] leading-relaxed">
+            <p className="text-[17px] font-bold text-[#28272e] mb-2">No activity yet</p>
+            <p className="text-[14px] text-[#868496] leading-relaxed">
               Events will appear here as the Consent Engine handles requests on your behalf.
             </p>
           </div>
         ) : (
           <>
-            {grouped.map(group => (
-              <div key={group.date}>
-                <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-3 leading-none">{group.date}</p>
-                <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] overflow-hidden divide-y divide-[var(--border-subtle)] border border-[var(--border-subtle)]">
+            <div className="bg-white rounded-[12px] border border-[#f1f1f3] shadow-[0px_1px_1px_rgba(0,0,0,0.02),0px_0px_1px_rgba(0,0,0,0.02)] p-2 divide-y divide-[#f1f1f3]">
+              {events.map(event => (
+                <ActivityItem
+                  key={event.id}
+                  event={event}
+                  onViewRequest={
+                    event.action === 'queued'
+                      ? () => navigate('consent_queue')
+                      : undefined
+                  }
+                />
+              ))}
+            </div>
 
-                  {group.events.map(event => {
-                    const meta = actionMeta(event.action);
-                    return (
-                      <div key={event.id} className="flex items-center gap-4 px-4 py-4 active:bg-[var(--bg-ios)] transition-colors">
-                        <EventIcon action={event.action} />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2 mb-1">
-                            <p className="text-[14px] font-bold text-[var(--text-main)] truncate" style={{ color: meta.color }}>
-                              {meta.label}
-                            </p>
-                            <span className="text-[12px] font-medium text-[var(--text-muted)] flex-shrink-0">{formatTime(event.timestamp)}</span>
-                          </div>
-                          {(event.verifierDid || event.issuerDid || event.credentialType) && (
-                            <p className="text-[12px] text-[#8e8e93] truncate">
-                              {event.credentialType ?? ''}
-                              {(event.verifierDid || event.issuerDid) && (
-                                <span>{event.credentialType ? ' · ' : ''}{(event.verifierDid ?? event.issuerDid ?? '').slice(0, 30)}</span>
-                              )}
-                            </p>
-                          )}
-                          {event.ruleLabel && (
-                            <p className="text-[11px] text-[#5B4FE9] mt-0.5">Rule: {event.ruleLabel}</p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-
-            <div ref={bottomRef} className="h-4 flex items-center justify-center">
+            <div ref={bottomRef} className="h-6 flex items-center justify-center">
               {loadingMore && (
-                <div className="w-5 h-5 border-2 border-[#5B4FE9] border-t-transparent rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-[#5843de] border-t-transparent rounded-full animate-spin" />
               )}
-              {!hasMore && filtered.length > 0 && (
-                <p className="text-[12px] text-[#8e8e93]">All events loaded</p>
+              {!hasMore && events.length > 0 && (
+                <p className="text-[12px] text-[#868496]">All activity loaded</p>
               )}
             </div>
           </>

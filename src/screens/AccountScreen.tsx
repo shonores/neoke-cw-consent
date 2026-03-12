@@ -154,7 +154,7 @@ export default function AccountScreen({ navigate }: AccountScreenProps) {
             onClick={() => navigate('audit_log')}
             className="w-full flex items-center justify-between px-4 py-4 text-left active:bg-black/3 transition-colors"
           >
-            <span className="text-[15px] text-[var(--text-main)] font-semibold">Activity Log</span>
+            <span className="text-[15px] text-[var(--text-main)] font-semibold">Activity</span>
             <svg width="7" height="12" viewBox="0 0 7 12" fill="none" aria-hidden>
               <path d="M1 1l5 5-5 5" stroke="#c7c7cc" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
