@@ -32,7 +32,7 @@ export default function OnboardingStep2Screen({
     setError('');
     try {
       const { token, expiresAt } = await apiKeyAuth(key, nodeBaseUrl);
-      try { localStorage.setItem('neoke_ce_apikey', key); } catch { /* */ }
+      try { localStorage.setItem('neoke_node_apikey', key); } catch { /* */ }
       onSuccess(token, expiresAt);
     } catch (err) {
       setError(

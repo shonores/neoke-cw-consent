@@ -210,8 +210,7 @@ function AppInner() {
   // Auto-configure CE silently whenever a token is set and CE isn't yet configured
   useEffect(() => {
     if (!state.token || ceState.ceUrl) return;
-    const apiKey = localStorage.getItem('neoke_ce_apikey') ?? '';
-    if (apiKey) autoConfigureCe(apiKey);
+    autoConfigureCe();
   }, [state.token, ceState.ceUrl, autoConfigureCe]);
 
   // Reset state on login/logout; consume deep-link if present

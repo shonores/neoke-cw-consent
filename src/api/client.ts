@@ -33,7 +33,7 @@ export function getBaseUrl(): string {
 export function nodeIdentifierToUrl(identifier: string): string {
   const id = identifier.trim();
   if (id.startsWith('http')) return id.replace(/\/$/, '');
-  if (id.includes('.'))       return `https://${id}`;
+  if (id.includes('.')) return `https://${id}`;
   return `https://${id}.id-node.neoke.com`;
 }
 
@@ -341,61 +341,77 @@ function parseSdJwtClaims(token: string): Record<string, unknown> | undefined {
   }
 }
 
-// ── Token Status List (RFC 9596) ─────────────────────────────
-// Cache: uri → { bits-per-entry, decompressed byte array, fetched timestamp }
-const _statusListCache = new Map<string, { bits: number; data: Uint8Array; fetchedAt: number }>();
-const STATUS_LIST_CACHE_MS = 5 * 60 * 1000; // 5 minutes
+// Cache: uri → { bits, data, fetchedAt } OR Promise (if in flight)
+const _statusListCache = new Map<string, { bits: number; data: Uint8Array; fetchedAt: number } | Promise<{ bits: number; data: Uint8Array } | undefined>>();
+const STATUS_LIST_CACHE_MS = 10 * 60 * 1000; // 10 minutes
 
 async function fetchStatusListData(uri: string): Promise<{ bits: number; data: Uint8Array } | undefined> {
   const cached = _statusListCache.get(uri);
-  if (cached && Date.now() - cached.fetchedAt < STATUS_LIST_CACHE_MS) {
-    return { bits: cached.bits, data: cached.data };
-  }
-  try {
-    const resp = await fetch(uri, {
-      headers: { Accept: 'application/statuslist+jwt, application/jwt, */*' },
-      cache: 'no-store',
-    });
-    if (!resp.ok) return undefined;
-
-    const b64url = (s: string) =>
-      atob((s + '='.repeat((4 - (s.length % 4)) % 4)).replace(/-/g, '+').replace(/_/g, '/'));
-
-    const jwt = await resp.text();
-    const jwtParts = jwt.split('.');
-    if (jwtParts.length < 2) return undefined;
-
-    const payload = JSON.parse(b64url(jwtParts[1])) as Record<string, unknown>;
-    const sl = payload['status_list'] as Record<string, unknown> | undefined;
-    if (!sl) return undefined;
-
-    const bits = (sl['bits'] as number) ?? 1;
-    const lst = sl['lst'] as string;
-    const compressed = Uint8Array.from(b64url(lst), (c) => c.charCodeAt(0));
-
-    // ZLIB-decompress via DecompressionStream (supported in all modern browsers)
-    const ds = new DecompressionStream('deflate');
-    const writer = ds.writable.getWriter();
-    const reader = ds.readable.getReader();
-    writer.write(compressed);
-    writer.close();
-
-    const chunks: Uint8Array[] = [];
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      if (value) chunks.push(value);
+  if (cached) {
+    if (cached instanceof Promise) return cached;
+    if (Date.now() - cached.fetchedAt < STATUS_LIST_CACHE_MS) {
+      return { bits: cached.bits, data: cached.data };
     }
-    const total = chunks.reduce((n, c) => n + c.length, 0);
-    const data = new Uint8Array(total);
-    let off = 0;
-    for (const c of chunks) { data.set(c, off); off += c.length; }
-
-    _statusListCache.set(uri, { bits, data, fetchedAt: Date.now() });
-    return { bits, data };
-  } catch {
-    return undefined;
   }
+
+  const promise = (async () => {
+    try {
+      console.log(`[neoke:status-list] fetching ${uri}`);
+      const resp = await fetch(uri, {
+        headers: { Accept: 'application/statuslist+jwt, application/jwt, */*' },
+        cache: 'no-store',
+      });
+      if (!resp.ok) {
+        if (resp.status === 404) {
+          console.warn(`[neoke:status-list] 404 Not Found: ${uri}`);
+        }
+        return undefined;
+      }
+
+      const b64url = (s: string) =>
+        atob((s + '='.repeat((4 - (s.length % 4)) % 4)).replace(/-/g, '+').replace(/_/g, '/'));
+
+      const jwt = await resp.text();
+      const jwtParts = jwt.split('.');
+      if (jwtParts.length < 2) return undefined;
+
+      const payload = JSON.parse(b64url(jwtParts[1])) as Record<string, unknown>;
+      const sl = payload['status_list'] as Record<string, unknown> | undefined;
+      if (!sl) return undefined;
+
+      const bits = (sl['bits'] as number) ?? 1;
+      const lst = sl['lst'] as string;
+      const compressed = Uint8Array.from(b64url(lst), (c) => c.charCodeAt(0));
+
+      // ZLIB-decompress via DecompressionStream
+      const ds = new DecompressionStream('deflate');
+      const writer = ds.writable.getWriter();
+      const reader = ds.readable.getReader();
+      writer.write(compressed);
+      writer.close();
+
+      const chunks: Uint8Array[] = [];
+      for (; ;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) chunks.push(value);
+      }
+      const total = chunks.reduce((n, c) => n + c.length, 0);
+      const data = new Uint8Array(total);
+      let off = 0;
+      for (const c of chunks) { data.set(c, off); off += c.length; }
+
+      const result = { bits, data, fetchedAt: Date.now() };
+      _statusListCache.set(uri, result);
+      return result;
+    } catch (e) {
+      console.error(`[neoke:status-list] failed to fetch ${uri}:`, e);
+      return undefined;
+    }
+  })();
+
+  _statusListCache.set(uri, promise);
+  return promise;
 }
 
 /**
@@ -495,12 +511,12 @@ export async function fetchStoredCredentials(token: string): Promise<Credential[
       credentialSubject,
       displayMetadata: display
         ? {
-            backgroundColor: display.background_color,
-            textColor: display.text_color,
-            label: display.name,
-            description: display.description,
-            logoUrl: display.logo?.uri,
-          }
+          backgroundColor: display.background_color,
+          textColor: display.text_color,
+          label: display.name,
+          description: display.description,
+          logoUrl: display.logo?.uri,
+        }
         : undefined,
     } as Credential;
   }));

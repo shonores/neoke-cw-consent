@@ -17,7 +17,8 @@ export const CE_SK = {
   CE_DISMISSED: 'neoke_ce_dismissed',
 } as const;
 
-export const DEFAULT_CE_URL = 'https://neoke-consent-engine.fly.dev';
+export const DEFAULT_CE_URL    = 'https://neoke-consent-engine.fly.dev';
+export const DEFAULT_CE_APIKEY = '970fa93a67239497ece6aaa15b235d1a2d682588863983b618ff9717cec0b4e7';
 
 interface ConsentEngineState {
   ceUrl: string | null;
@@ -31,8 +32,8 @@ interface ConsentEngineState {
 interface ConsentEngineContextValue {
   state: ConsentEngineState;
   configureCe: (ceUrl: string, apiKey: string) => Promise<void>;
-  /** Silently configure CE with the default URL + given key — never throws. */
-  autoConfigureCe: (apiKey: string) => Promise<void>;
+  /** Silently configure CE with the default URL and hardcoded CE API key — never throws. */
+  autoConfigureCe: () => Promise<void>;
   removeCe: () => void;
   toggleCe: (enabled: boolean) => void;
   refreshHealth: () => Promise<void>;
@@ -81,10 +82,11 @@ function initCeState(): ConsentEngineState {
   try {
     const ceUrl = localStorage.getItem(CE_SK.CE_URL);
     const ceEnabled = localStorage.getItem(CE_SK.CE_ENABLED) === 'true';
-    const ceApiKey = localStorage.getItem(CE_SK.CE_APIKEY);
     if (ceUrl) {
       setCeBaseUrl(ceUrl);
-      return { ceUrl, ceEnabled, ceApiKey, isConnected: false, pendingCount: 0, lastChecked: null };
+      // Always use the hardcoded CE API key — localStorage may have an old value
+      localStorage.setItem(CE_SK.CE_APIKEY, DEFAULT_CE_APIKEY);
+      return { ceUrl, ceEnabled, ceApiKey: DEFAULT_CE_APIKEY, isConnected: false, pendingCount: 0, lastChecked: null };
     }
   } catch { /* */ }
   return defaultState;
@@ -130,7 +132,8 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (state.ceUrl && state.ceEnabled && state.ceApiKey && authState.nodeIdentifier && authState.baseUrl) {
       const cleanNodeUrl = authState.baseUrl.replace(/\/:$/, '');
-      connectNode(state.ceApiKey, authState.nodeIdentifier, cleanNodeUrl)
+      const nodeApiKey = localStorage.getItem('neoke_node_apikey') ?? '';
+      connectNode(state.ceApiKey, authState.nodeIdentifier, cleanNodeUrl, nodeApiKey)
         .then(() => refreshHealth())
         .catch((err) => console.error('[ConsentEngineProvider] Failed to register node with CE:', err));
     }
@@ -188,15 +191,15 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
     } catch { /* */ }
   }, []);
 
-  const autoConfigureCe = useCallback(async (apiKey: string) => {
-    if (!apiKey) return;
+  const autoConfigureCe = useCallback(async () => {
     const ceUrl = DEFAULT_CE_URL;
+    const ceApiKey = DEFAULT_CE_APIKEY;
     setCeBaseUrl(ceUrl);
-    dispatch({ type: 'CONFIGURE', ceUrl, apiKey });
+    dispatch({ type: 'CONFIGURE', ceUrl, apiKey: ceApiKey });
     try {
       localStorage.setItem(CE_SK.CE_URL, ceUrl);
       localStorage.setItem(CE_SK.CE_ENABLED, 'true');
-      localStorage.setItem(CE_SK.CE_APIKEY, apiKey);
+      localStorage.setItem(CE_SK.CE_APIKEY, ceApiKey);
     } catch { /* */ }
     // Health check after configuration
     try {

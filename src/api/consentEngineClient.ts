@@ -139,28 +139,26 @@ async function ceRequest<T>(
 // Node registration / reconnect
 // ============================================================
 export async function connectNode(
-  apiKey: string,
+  ceApiKey: string,   // CE API key — used in the Authorization header
   nodeId: string,
   nodeUrl: string,
+  nodeApiKey: string, // IDN node API key — passed in body so CE can connect to the node
 ): Promise<void> {
-  console.log('[ce:connectNode] attempting node registration', { nodeId, nodeUrl });
   try {
-    // First try PATCH to refresh an existing node's API key
-    const result = await ceRequest<unknown>(`/nodes/${nodeId}`, apiKey, {
+    // First try PATCH to refresh an existing node's connection
+    await ceRequest<unknown>(`/nodes/${nodeId}`, ceApiKey, {
       method: 'PATCH',
-      body: JSON.stringify({ nodeUrl, apiKey }),
+      body: JSON.stringify({ nodeUrl, apiKey: nodeApiKey }),
     });
-    console.log('[ce:connectNode] PATCH /nodes succeeded', result);
     return;
-  } catch (patchErr) {
-    console.log('[ce:connectNode] PATCH failed, trying POST', patchErr instanceof Error ? patchErr.message : patchErr);
+  } catch {
+    // PATCH failed (404 if not yet registered) — fall through to POST
   }
-  // Fallback: create new node entry
-  const result = await ceRequest<unknown>('/nodes', apiKey, {
+  // Register node for the first time
+  await ceRequest<unknown>('/nodes', ceApiKey, {
     method: 'POST',
-    body: JSON.stringify({ nodeId, nodeUrl, apiKey }),
+    body: JSON.stringify({ nodeId, nodeUrl, apiKey: nodeApiKey }),
   });
-  console.log('[ce:connectNode] POST /nodes succeeded', result);
 }
 
 // ============================================================
