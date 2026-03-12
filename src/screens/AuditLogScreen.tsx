@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
 import { useAuth } from '../context/AuthContext';
 import { listAuditEvents } from '../api/consentEngineClient';
@@ -12,10 +12,14 @@ function formatCredentialType(type: string): string {
   if (type.includes('photoid') || type.includes('PhotoID')) return 'Photo ID';
   if (type.includes('passport')) return 'Passport';
   if (type.includes('driverLicense') || type.includes('driving')) return 'Driver Licence';
-  // fallback: take last path segment
   const parts = type.split(/[./:]/).filter(Boolean);
   const last = parts[parts.length - 1] ?? type;
   return last.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function formatFieldName(field: string): string {
+  const name = field.includes(':') ? field.split(':').pop()! : field;
+  return name.replace(/_/g, ' ').replace(/\b\w/, c => c.toUpperCase());
 }
 
 const variants = {
@@ -25,10 +29,11 @@ const variants = {
 };
 
 interface Props {
-  navigate: (view: ViewName) => void;
+  navigate: (view: ViewName, extra?: { selectedServiceDid?: string }) => void;
 }
 
 const PAGE_SIZE = 20;
+const REFRESH_INTERVAL_MS = 30_000;
 
 function formatRelativeTime(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -40,6 +45,12 @@ function formatRelativeTime(dateStr: string): string {
   const days = Math.floor(hrs / 24);
   if (days < 7) return `${days}d ago`;
   return new Date(dateStr).toLocaleDateString([], { day: 'numeric', month: 'short' });
+}
+
+function formatFullDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) +
+    ' · ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 function formatDateCaption(dateStr: string): string {
@@ -54,10 +65,8 @@ function formatDateCaption(dateStr: string): string {
 
 function extractServiceName(did?: string): string {
   if (!did) return 'Unknown service';
-  // did:web:example.com → example.com
   const webMatch = did.match(/^did:web:([^#?/]+)/);
   if (webMatch) return webMatch[1];
-  // did:key:... → truncate
   if (did.startsWith('did:')) {
     const parts = did.split(':');
     const last = parts[parts.length - 1];
@@ -168,16 +177,26 @@ function ServiceAvatar({ action }: { action: AuditAction }) {
   );
 }
 
-function ActivityItem({ event, onViewRequest }: { event: AuditEvent; onViewRequest?: () => void }) {
+function ActivityItem({
+  event,
+  onViewRequest,
+  onTap,
+}: {
+  event: AuditEvent;
+  onViewRequest?: () => void;
+  onTap: () => void;
+}) {
   const { title, description } = getEventContent(event);
   const status = statusMeta(event.action);
   const dateCaption = formatDateCaption(event.timestamp);
   const isQueued = event.action === 'queued';
 
   return (
-    <div className={`rounded-[4px] w-full ${isQueued ? 'bg-[#f7f6f8]' : ''}`}>
+    <button
+      onClick={onTap}
+      className={`rounded-[4px] w-full text-left active:bg-[#f7f6f8] transition-colors ${isQueued ? 'bg-[#f7f6f8]' : ''}`}
+    >
       <div className="flex flex-col gap-3 px-2 py-3">
-        {/* Top row: avatar + content */}
         <div className="flex gap-3 items-start">
           <ServiceAvatar action={event.action} />
           <div className="flex-1 min-w-0">
@@ -189,12 +208,11 @@ function ActivityItem({ event, onViewRequest }: { event: AuditEvent; onViewReque
           </div>
         </div>
 
-        {/* Status row */}
         {status && (
           <div className="flex flex-col items-end gap-0.5">
             {status.type === 'pill' ? (
               <button
-                onClick={onViewRequest}
+                onClick={e => { e.stopPropagation(); onViewRequest?.(); }}
                 className="bg-[#5843de] text-white text-[14px] font-medium leading-5 px-3 py-1 rounded-full active:opacity-80 transition-opacity"
               >
                 {status.label}
@@ -214,7 +232,125 @@ function ActivityItem({ event, onViewRequest }: { event: AuditEvent; onViewReque
           </div>
         )}
       </div>
-    </div>
+    </button>
+  );
+}
+
+function EventDetailSheet({
+  event,
+  onClose,
+  onNavigateToService,
+}: {
+  event: AuditEvent;
+  onClose: () => void;
+  onNavigateToService: (did: string) => void;
+}) {
+  const service = extractServiceName(event.verifierDid ?? event.issuerDid);
+  const isShared = event.action === 'auto_presented' || event.action === 'manually_approved';
+  const isDeclined = event.action === 'rejected' || event.action === 'manually_rejected';
+  const fields = (event.allowedFields && event.allowedFields.length > 0)
+    ? event.allowedFields
+    : (event.requestedFields ?? []);
+
+  return (
+    <>
+      {/* Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.18 }}
+        className="fixed inset-0 bg-black/30 z-40"
+        onClick={onClose}
+      />
+      {/* Sheet */}
+      <motion.div
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
+        className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-[24px] shadow-2xl max-w-[512px] mx-auto"
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}
+      >
+        {/* Handle */}
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-9 h-1 rounded-full bg-[#d7d6dc]" />
+        </div>
+
+        {/* Header */}
+        <div className="flex items-center gap-3 px-5 pt-3 pb-4 border-b border-[#f1f1f3]">
+          <ServiceAvatar action={event.action} />
+          <div className="flex-1 min-w-0">
+            <p className="text-[17px] font-bold text-[#28272e] leading-6 truncate">{service}</p>
+            <p className="text-[13px] text-[#868496] leading-5">{formatFullDate(event.timestamp)}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-[#f4f3fc] flex items-center justify-center flex-shrink-0 active:opacity-70"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M1 1l12 12M13 1L1 13" stroke="#5843de" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div className="px-5 pt-4 space-y-4">
+          {/* Status */}
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+              isShared ? 'bg-[#198e41]' : isDeclined ? 'bg-[#aa281e]' : 'bg-[#868496]'
+            }`} />
+            <span className={`text-[14px] font-medium ${
+              isShared ? 'text-[#198e41]' : isDeclined ? 'text-[#aa281e]' : 'text-[#868496]'
+            }`}>
+              {isShared ? 'Shared successfully'
+                : isDeclined ? 'Declined'
+                : event.action === 'expired' ? 'Expired'
+                : event.action === 'queued' ? 'Awaiting approval'
+                : event.action === 'auto_received' ? 'Received'
+                : 'Activity'}
+            </span>
+            {event.credentialType && (
+              <span className="text-[13px] text-[#868496] ml-auto">{formatCredentialType(event.credentialType)}</span>
+            )}
+          </div>
+
+          {/* Fields */}
+          {fields.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-[12px] font-semibold text-[#868496] uppercase tracking-wider">
+                {isShared ? 'Information shared' : 'Information requested'}
+              </p>
+              <div className="bg-[#f7f6f8] rounded-[12px] divide-y divide-[#ebebed]">
+                {fields.map(field => (
+                  <div key={field} className="flex items-center gap-2.5 px-3 py-2.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#5843de] flex-shrink-0" />
+                    <span className="text-[15px] text-[#28272e]">{formatFieldName(field)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Navigate to travel service */}
+          {(event.verifierDid || event.issuerDid) && (
+            <button
+              onClick={() => {
+                const did = event.verifierDid ?? event.issuerDid!;
+                onClose();
+                onNavigateToService(did);
+              }}
+              className="w-full flex items-center justify-between bg-[#f7f6f8] rounded-[12px] px-4 py-3.5 active:opacity-70 transition-opacity"
+            >
+              <span className="text-[15px] font-semibold text-[#5843de]">Open {service} in Travel Services</span>
+              <svg width="7" height="12" viewBox="0 0 7 12" fill="none">
+                <path d="M1 1l5 5-5 5" stroke="#5843de" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </motion.div>
+    </>
   );
 }
 
@@ -229,6 +365,7 @@ export default function AuditLogScreen({ navigate }: Props) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState('');
+  const [selectedEvent, setSelectedEvent] = useState<AuditEvent | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const offsetRef = useRef(0);
 
@@ -265,6 +402,12 @@ export default function AuditLogScreen({ navigate }: Props) {
   }, [apiKey, nodeId]);
 
   useEffect(() => { loadEvents(true); }, [loadEvents]);
+
+  // Auto-refresh every 30s
+  useEffect(() => {
+    const id = setInterval(() => { loadEvents(true); }, REFRESH_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [loadEvents]);
 
   useEffect(() => {
     if (!bottomRef.current || !hasMore || loadingMore) return;
@@ -311,7 +454,6 @@ export default function AuditLogScreen({ navigate }: Props) {
       </nav>
 
       <main className="flex-1 px-4 pb-28 space-y-4">
-        {/* Description */}
         <p className="text-[16px] text-[#28272e] leading-6 px-1">
           A record of all data shared and consent requests, tracking every interaction and update in one place.
         </p>
@@ -363,6 +505,7 @@ export default function AuditLogScreen({ navigate }: Props) {
                       ? () => navigate('consent_queue')
                       : undefined
                   }
+                  onTap={() => setSelectedEvent(event)}
                 />
               ))}
             </div>
@@ -378,6 +521,17 @@ export default function AuditLogScreen({ navigate }: Props) {
           </>
         )}
       </main>
+
+      {/* Event detail bottom sheet */}
+      <AnimatePresence>
+        {selectedEvent && (
+          <EventDetailSheet
+            event={selectedEvent}
+            onClose={() => setSelectedEvent(null)}
+            onNavigateToService={did => navigate('travel_service_detail', { selectedServiceDid: did })}
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

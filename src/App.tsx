@@ -16,6 +16,7 @@ import ConsentQueueDetailScreen from './screens/ConsentQueueDetailScreen';
 import AuditLogScreen from './screens/AuditLogScreen';
 import TravelServicesScreen from './screens/TravelServicesScreen';
 import TravelServiceDetailScreen from './screens/TravelServiceDetailScreen';
+import PreferenceScreen from './screens/PreferenceScreen';
 import ReAuthModal from './components/ReAuthModal';
 import CeIntakeOverlay from './components/CeIntakeOverlay';
 import { detectUriType } from './utils/uriRouter';
@@ -432,6 +433,19 @@ function AppInner() {
 
         {currentView === 'travel_service_detail' && selectedServiceDid && (
           <TravelServiceDetailScreen key="travel_service_detail" navigate={navigate} verifierDid={selectedServiceDid} />
+        )}
+
+        {currentView === 'profile_dietary' && (
+          <PreferenceScreen key="profile_dietary" prefKey="dietary" navigate={navigate} />
+        )}
+        {currentView === 'profile_cuisines' && (
+          <PreferenceScreen key="profile_cuisines" prefKey="cuisines" navigate={navigate} />
+        )}
+        {currentView === 'profile_accessibility' && (
+          <PreferenceScreen key="profile_accessibility" prefKey="accessibility" navigate={navigate} />
+        )}
+        {currentView === 'profile_seat' && (
+          <PreferenceScreen key="profile_seat" prefKey="seat" navigate={navigate} />
         )}
       </AnimatePresence>
 

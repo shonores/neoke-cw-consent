@@ -1,19 +1,226 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { clearLocalCredentials } from '../store/localCredentials';
 import { useAuth } from '../context/AuthContext';
 import { useConsentEngine } from '../context/ConsentEngineContext';
-import PrimaryButton from '../components/PrimaryButton';
-import SecondaryButton from '../components/SecondaryButton';
 import type { ViewName } from '../types';
 
-interface AccountScreenProps {
+const variants = {
+  initial: { opacity: 0, y: 16 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.22, ease: 'easeOut' as const } },
+  exit: { opacity: 0, y: -8, transition: { duration: 0.14 } },
+};
+
+interface Props {
   navigate: (view: ViewName) => void;
 }
 
-export default function AccountScreen({ navigate }: AccountScreenProps) {
+// ─── Icons ───────────────────────────────────────────────────────────────────
+
+function IconPerson() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="12" cy="7" r="4" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+function IconDocuments() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+function IconSeat() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path d="M4 15V5a2 2 0 012-2h3" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M4 15h14a2 2 0 010 4H4a2 2 0 010-4z" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M14 15V8H9a2 2 0 00-2 2v5" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M14 8V5" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function IconDining() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M6 1v3M10 1v3M14 1v3" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function IconCuisines() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path d="M12 2a9 9 0 100 18A9 9 0 0012 2z" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M12 6v6l4 2" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+function IconAccessibility() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="4" r="1.5" stroke="#5843de" strokeWidth="1.7"/>
+      <path d="M6 8h12M12 8v6M9 22l3-8 3 8" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+function IconNode() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <rect x="2" y="3" width="20" height="14" rx="2" stroke="#5843de" strokeWidth="1.7" strokeLinejoin="round"/>
+      <path d="M8 21h8M12 17v4" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function IconShield() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path d="M12 2L4 6v6c0 5.25 3.5 9.74 8 11 4.5-1.26 8-5.75 8-11V6l-8-4z" stroke="#5843de" strokeWidth="1.7" strokeLinejoin="round" fill="#5843de" fillOpacity="0.1"/>
+      <path d="M9 12l2 2 4-4" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+function IconBuildings() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path d="M3 21h18M3 7v14M15 21V7M3 7h12M15 7h6v14" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M7 11h2M7 15h2M11 11h2M11 15h2" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function IconActivity() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+function IconEnvelope() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="#5843de" strokeWidth="1.7" strokeLinejoin="round"/>
+      <polyline points="22 6 12 13 2 6" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function IconDoc() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M14 2v6h6M16 13H8M16 17H8" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function IconLogout() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <polyline points="16 17 21 12 16 7" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <line x1="21" y1="12" x2="9" y2="12" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function IconTrash() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <polyline points="3 6 5 6 21 6" stroke="#aa281e" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6M9 6V4h6v2" stroke="#aa281e" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+function IconExternal() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" stroke="#868496" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+function IconChevron() {
+  return (
+    <svg width="7" height="12" viewBox="0 0 7 12" fill="none">
+      <path d="M1 1l5 5-5 5" stroke="#c7c7cc" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+// ─── Primitives ───────────────────────────────────────────────────────────────
+
+function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+  return (
+    <div className="pt-6 pb-3 px-4">
+      <p className="text-[16px] font-semibold text-[#28272e] leading-6">{title}</p>
+      {subtitle && <p className="text-[14px] text-[#6d6b7e] leading-5 mt-0.5">{subtitle}</p>}
+    </div>
+  );
+}
+
+function ListCard({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mx-4 bg-white rounded-[16px] p-1 flex flex-col gap-1">
+      {children}
+    </div>
+  );
+}
+
+function ListItem({
+  icon,
+  iconBg = 'bg-[#f4f3fc]',
+  label,
+  labelColor = 'text-[#28272e]',
+  sublabel,
+  right,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  iconBg?: string;
+  label: string;
+  labelColor?: string;
+  sublabel?: string;
+  right?: React.ReactNode;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full flex gap-3 items-center px-4 py-3 text-left active:bg-[#f7f6f8] transition-colors rounded-[12px]"
+    >
+      <div className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 ${iconBg}`}>
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className={`text-[16px] font-medium leading-6 ${labelColor}`}>{label}</p>
+        {sublabel && <p className="text-[13px] text-[#868496] leading-5">{sublabel}</p>}
+      </div>
+      {right ?? <IconChevron />}
+    </button>
+  );
+}
+
+// ─── Main screen ─────────────────────────────────────────────────────────────
+
+export default function AccountScreen({ navigate }: Props) {
   const { state, logout } = useAuth();
   const { state: ceState, removeCe, refreshHealth } = useConsentEngine();
   const [showDisconnectSheet, setShowDisconnectSheet] = useState(false);
+  const [showDeleteSheet, setShowDeleteSheet] = useState(false);
 
   const nodeHost = (() => {
     if (state.baseUrl) {
@@ -22,198 +229,216 @@ export default function AccountScreen({ navigate }: AccountScreenProps) {
     return state.nodeIdentifier ?? '—';
   })();
 
-  const handleClearCredentials = () => {
-    clearLocalCredentials();
-    navigate('dashboard');
-  };
-
-  const handleSignOut = () => {
-    logout();
-  };
-
   return (
-    <div className="flex-1 flex flex-col bg-[var(--bg-ios)] min-h-screen">
-      {/* Minimalist Top Nav */}
-      <nav className="px-5 pt-14 pb-4 flex items-center gap-3">
-        <button
-          onClick={() => navigate('dashboard')}
-          className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </button>
-        <h1 className="text-[20px] font-bold text-[var(--text-main)]">
-          Account
-        </h1>
-      </nav>
+    <motion.div
+      variants={variants} initial="initial" animate="animate" exit="exit"
+      className="flex-1 flex flex-col bg-[#f7f6f8] min-h-screen"
+    >
+      {/* Header */}
+      <div className="px-4 pt-14 pb-2">
+        <h1 className="text-[28px] font-bold text-[#28272e] leading-8">Profile</h1>
+      </div>
 
-      <main className="flex-1 px-5 pb-28 space-y-4">
-        {/* Node info */}
-        <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] overflow-hidden shadow-[var(--shadow-sm)] border border-[var(--border-subtle)]">
-          <div className="px-4 py-2.5 border-b border-[var(--border-subtle)]">
-            <p className="text-[11px] text-[var(--text-muted)] font-semibold uppercase tracking-wide">Connected Node</p>
-          </div>
-          <div className="px-4 py-3.5 flex items-center gap-2">
-            <span className="w-2 h-2 bg-[var(--text-success)] rounded-full flex-shrink-0" />
-            <div>
-              <p className="text-[15px] font-mono text-[var(--text-main)] italic">{nodeHost}</p>
-              <p className="text-[13px] text-[var(--text-muted)] mt-0.5">HTTPS · Secure connection</p>
+      <main className="flex-1 pb-32 overflow-y-auto">
+
+        {/* ── General ──────────────────────────────────────────── */}
+        <SectionHeader title="General" />
+        <ListCard>
+          <ListItem icon={<IconPerson />} label="Personal info" onClick={() => {}} />
+          <ListItem icon={<IconDocuments />} label="Documents" onClick={() => navigate('dashboard')} />
+        </ListCard>
+
+        {/* ── Travel preferences ───────────────────────────────── */}
+        <SectionHeader title="Travel preferences" />
+        <ListCard>
+          <ListItem icon={<IconSeat />} label="In flight seat preferences" onClick={() => navigate('profile_seat')} />
+          <ListItem icon={<IconDining />} label="Dietary requirements" onClick={() => navigate('profile_dietary')} />
+          <ListItem icon={<IconCuisines />} label="Preferred cuisines" onClick={() => navigate('profile_cuisines')} />
+          <ListItem icon={<IconAccessibility />} label="Accessibility needs" onClick={() => navigate('profile_accessibility')} />
+        </ListCard>
+
+        {/* ── Consent management ───────────────────────────────── */}
+        <SectionHeader
+          title="Consent management"
+          subtitle="Services you're connected to and have shared personal data with."
+        />
+        <ListCard>
+          {/* Connected Node */}
+          <ListItem
+            icon={<IconNode />}
+            label={nodeHost}
+            sublabel="Connected node · Secure"
+            right={
+              <span className="w-2 h-2 rounded-full bg-[#198e41] flex-shrink-0" />
+            }
+            onClick={() => {}}
+          />
+          {/* Consent Engine */}
+          <ListItem
+            icon={<IconShield />}
+            label="Consent Engine"
+            sublabel={ceState.isConnected ? 'Connected' : 'Not connected'}
+            right={
+              <div className="flex items-center gap-2">
+                {!ceState.isConnected && (
+                  <button
+                    onClick={e => { e.stopPropagation(); refreshHealth(); }}
+                    className="text-[13px] font-medium text-orange-600 active:opacity-70"
+                  >
+                    Retry
+                  </button>
+                )}
+                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${ceState.isConnected ? 'bg-[#198e41]' : 'bg-orange-400'}`} />
+              </div>
+            }
+            onClick={() => {}}
+          />
+          {/* CE sub-actions */}
+          {ceState.ceEnabled && (
+            <div className="flex gap-1 px-2 pb-1">
+              <button
+                onClick={() => navigate('consent_rules')}
+                className="flex-1 py-2.5 text-[14px] font-medium text-[#5843de] bg-[#f4f3fc] rounded-[10px] active:opacity-70 transition-opacity"
+              >
+                Rules
+              </button>
+              <button
+                onClick={() => navigate('consent_queue')}
+                className="flex-1 py-2.5 text-[14px] font-medium text-[#5843de] bg-[#f4f3fc] rounded-[10px] active:opacity-70 transition-opacity relative"
+              >
+                Queue
+                {ceState.pendingCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-[#FF3B30] text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                    {ceState.pendingCount > 9 ? '9+' : ceState.pendingCount}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setShowDisconnectSheet(true)}
+                className="flex-1 py-2.5 text-[14px] font-medium text-[#aa281e] bg-[#fbeae9] rounded-[10px] active:opacity-70 transition-opacity"
+              >
+                Disconnect
+              </button>
             </div>
-          </div>
-        </div>
-
-        {/* Consent Engine section */}
-        <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] overflow-hidden shadow-[var(--shadow-sm)] border border-[var(--border-subtle)]">
-          <div className="px-4 py-2.5 border-b border-[var(--border-subtle)] flex items-center justify-between">
-            <p className="text-[11px] text-[var(--text-muted)] font-semibold uppercase tracking-wide">Consent Engine</p>
-            <div className={`flex items-center gap-1.5 ${ceState.isConnected ? 'text-[var(--text-success)]' : 'text-orange-500'}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${ceState.isConnected ? 'bg-[var(--text-success)]' : 'bg-orange-500'}`} />
-              <span className="text-[12px] font-medium">{ceState.isConnected ? 'Connected' : 'Connecting…'}</span>
-            </div>
-          </div>
-
-          {!ceState.isConnected && (
-            <button
-              onClick={() => refreshHealth()}
-              className="w-full flex items-center gap-2 px-4 py-3 border-b border-[var(--border-subtle)] active:bg-orange-50 transition-colors"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-orange-500">
-                <path d="M10.29 3.86L1.82 18a2 2 0 001.82 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
-                <line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-                <line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-              <span className="text-[14px] font-medium text-orange-700 flex-1">Tap to retry connection</span>
-            </button>
           )}
+        </ListCard>
 
-          <div className="flex">
-            <button
-              onClick={() => navigate('consent_rules')}
-              className="flex-1 py-3.5 text-[14px] font-medium text-[var(--primary)] border-r border-[var(--border-subtle)] active:bg-[var(--primary-bg)] transition-colors"
-            >
-              Manage Rules
-            </button>
-            <button
-              onClick={() => navigate('consent_queue')}
-              className="flex-1 py-3.5 text-[14px] font-medium text-[var(--primary)] border-r border-[var(--border-subtle)] active:bg-[var(--primary-bg)] transition-colors"
-            >
-              View Queue
-              {ceState.pendingCount > 0 && (
-                <span className="ml-1.5 inline-flex items-center justify-center w-5 h-5 bg-[var(--text-error)] text-white text-[10px] font-bold rounded-full">
-                  {ceState.pendingCount > 9 ? '9+' : ceState.pendingCount}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setShowDisconnectSheet(true)}
-              className="flex-1 py-3.5 text-[14px] font-medium text-[var(--text-error)] active:bg-red-50 transition-colors"
-            >
-              Disconnect
-            </button>
-          </div>
-        </div>
+        <div className="h-2" />
 
-        {/* Session info */}
-        <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
-          <div className="px-4 py-2.5 border-b border-black/5">
-            <p className="text-[11px] text-[#8e8e93] font-semibold uppercase tracking-wide">Session</p>
-          </div>
-          <div className="px-4 py-3.5">
-            <p className="text-[14px] text-[#8e8e93]">
-              Session refreshes automatically while you're active. Expires after 7 days of inactivity.
-            </p>
-          </div>
-        </div>
+        <ListCard>
+          <ListItem icon={<IconBuildings />} label="Services" onClick={() => navigate('travel_services')} />
+          <ListItem icon={<IconActivity />} label="Activity" onClick={() => navigate('audit_log')} />
+        </ListCard>
 
-        {/* Actions */}
-        <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] overflow-hidden shadow-[var(--shadow-sm)] border border-[var(--border-subtle)]">
-          <button
-            onClick={handleClearCredentials}
-            className="w-full flex items-center justify-between px-4 py-4 text-left border-b border-[var(--border-subtle)] active:bg-black/3 transition-colors"
-          >
-            <span className="text-[15px] text-[var(--text-error)] font-medium">Clear all local credentials</span>
-            <svg width="7" height="12" viewBox="0 0 7 12" fill="none" aria-hidden>
-              <path d="M1 1l5 5-5 5" stroke="#c7c7cc" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          <button
-            onClick={handleSignOut}
-            className="w-full flex items-center justify-between px-4 py-4 text-left active:bg-black/3 transition-colors"
-          >
-            <span className="text-[15px] text-[var(--text-error)] font-semibold">Sign out</span>
-            <svg width="7" height="12" viewBox="0 0 7 12" fill="none" aria-hidden>
-              <path d="M1 1l5 5-5 5" stroke="#c7c7cc" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        </div>
+        {/* ── Feedback and legal ───────────────────────────────── */}
+        <SectionHeader title="Feedback and legal" />
+        <ListCard>
+          <ListItem
+            icon={<IconEnvelope />}
+            label="Give us feedback"
+            right={<IconExternal />}
+            onClick={() => {}}
+          />
+          <ListItem
+            icon={<IconDoc />}
+            label="Terms and Conditions"
+            right={<IconExternal />}
+            onClick={() => {}}
+          />
+          <ListItem
+            icon={<IconDoc />}
+            label="Privacy Statement"
+            right={<IconExternal />}
+            onClick={() => {}}
+          />
+        </ListCard>
 
-        {/* Travel Services & Activity links */}
-        <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] overflow-hidden shadow-[var(--shadow-sm)] border border-[var(--border-subtle)]">
-          <button
-            onClick={() => navigate('travel_services')}
-            className="w-full flex items-center justify-between px-4 py-4 text-left border-b border-[var(--border-subtle)] active:bg-black/3 transition-colors"
-          >
-            <span className="text-[15px] text-[var(--text-main)] font-semibold">Travel Services</span>
-            <svg width="7" height="12" viewBox="0 0 7 12" fill="none" aria-hidden>
-              <path d="M1 1l5 5-5 5" stroke="#c7c7cc" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          <button
-            onClick={() => navigate('audit_log')}
-            className="w-full flex items-center justify-between px-4 py-4 text-left active:bg-black/3 transition-colors"
-          >
-            <span className="text-[15px] text-[var(--text-main)] font-semibold">Activity</span>
-            <svg width="7" height="12" viewBox="0 0 7 12" fill="none" aria-hidden>
-              <path d="M1 1l5 5-5 5" stroke="#c7c7cc" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        </div>
+        {/* ── Account ──────────────────────────────────────────── */}
+        <SectionHeader title="Account" />
+        <ListCard>
+          <ListItem
+            icon={<IconLogout />}
+            label="Log out"
+            right={null}
+            onClick={logout}
+          />
+          <ListItem
+            icon={<IconTrash />}
+            iconBg="bg-[#fbeae9]"
+            label="Delete account"
+            labelColor="text-[#aa281e]"
+            right={null}
+            onClick={() => setShowDeleteSheet(true)}
+          />
+        </ListCard>
 
-        {/* App footer */}
-        <div className="text-center pt-4 pb-4">
-          <div className="inline-flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #5B4FE9 0%, #7c3aed 100%)' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <rect x="2" y="5" width="20" height="14" rx="2.5" stroke="white" strokeWidth="1.6" />
-                <path d="M2 10h20" stroke="white" strokeWidth="1.4" />
-                <rect x="14" y="13" width="4" height="2.5" rx="1" fill="white" />
-              </svg>
-            </div>
-            <span className="text-[15px] font-bold text-[#1c1c1e]">Neoke Cloud Wallet</span>
-          </div>
-        </div>
+        {/* Version */}
+        <p className="text-[14px] text-[#868496] text-center py-6">Version 0.01</p>
       </main>
 
-      {/* Disconnect confirmation sheet */}
+      {/* ── Disconnect CE sheet ─────────────────────────────────── */}
       {showDisconnectSheet && (
         <div className="fixed inset-0 z-50" onClick={() => setShowDisconnectSheet(false)}>
           <div className="absolute inset-0 bg-black/40" />
           <div
-            className="fixed inset-x-0 bottom-0 bg-white rounded-t-3xl shadow-2xl p-6 z-50 border-t border-black/5"
+            className="absolute inset-x-0 bottom-0 bg-white rounded-t-[24px] p-6 z-50"
+            style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}
             onClick={e => e.stopPropagation()}
           >
-            <div className="w-10 h-1 bg-[#c7c7cc] rounded-full mx-auto mb-5" />
-            <h3 className="text-[18px] font-bold text-[#1c1c1e] mb-2">Disconnect Consent Engine?</h3>
-            <p className="text-[14px] text-[#8e8e93] mb-6">
+            <div className="w-9 h-1 bg-[#d7d6dc] rounded-full mx-auto mb-5" />
+            <h3 className="text-[18px] font-bold text-[#28272e] mb-2">Disconnect Consent Engine?</h3>
+            <p className="text-[14px] text-[#6d6b7e] mb-6 leading-5">
               All consent rules and queue history will remain on the Consent Engine. You can reconnect at any time.
             </p>
             <div className="space-y-3">
-              <PrimaryButton
+              <button
                 onClick={() => { removeCe(); setShowDisconnectSheet(false); }}
-                className="bg-[var(--text-error)]"
+                className="w-full bg-[#aa281e] text-white text-[16px] font-semibold py-4 rounded-full active:opacity-80"
               >
                 Disconnect
-              </PrimaryButton>
-              <SecondaryButton
+              </button>
+              <button
                 onClick={() => setShowDisconnectSheet(false)}
+                className="w-full bg-[#f4f3fc] text-[#5843de] text-[16px] font-semibold py-4 rounded-full active:opacity-80"
               >
                 Cancel
-              </SecondaryButton>
+              </button>
             </div>
           </div>
         </div>
       )}
-    </div>
+
+      {/* ── Delete account sheet ─────────────────────────────────── */}
+      {showDeleteSheet && (
+        <div className="fixed inset-0 z-50" onClick={() => setShowDeleteSheet(false)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div
+            className="absolute inset-x-0 bottom-0 bg-white rounded-t-[24px] p-6 z-50"
+            style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="w-9 h-1 bg-[#d7d6dc] rounded-full mx-auto mb-5" />
+            <h3 className="text-[18px] font-bold text-[#28272e] mb-2">Delete account?</h3>
+            <p className="text-[14px] text-[#6d6b7e] mb-6 leading-5">
+              This will clear all local credentials and sign you out. This action cannot be undone.
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={() => { clearLocalCredentials(); logout(); setShowDeleteSheet(false); }}
+                className="w-full bg-[#aa281e] text-white text-[16px] font-semibold py-4 rounded-full active:opacity-80"
+              >
+                Delete account
+              </button>
+              <button
+                onClick={() => setShowDeleteSheet(false)}
+                className="w-full bg-[#f4f3fc] text-[#5843de] text-[16px] font-semibold py-4 rounded-full active:opacity-80"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </motion.div>
   );
 }

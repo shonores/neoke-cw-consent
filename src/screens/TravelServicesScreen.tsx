@@ -2,9 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
 import { useAuth } from '../context/AuthContext';
-import { listAuditEvents, listRules } from '../api/consentEngineClient';
+import { listAuditSummary, listRules } from '../api/consentEngineClient';
 import type { ConsentRule } from '../types/consentEngine';
 import type { ViewName } from '../types';
+
+const REFRESH_INTERVAL_MS = 30_000;
 
 const variants = {
   initial: { opacity: 0, y: 16 },
@@ -60,31 +62,17 @@ export default function TravelServicesScreen({ navigate }: Props) {
     setLoading(true);
     setError('');
     try {
-      const [events, rules] = await Promise.all([
-        listAuditEvents(apiKey, { nodeId, limit: 200, offset: 0 }),
+      const [summary, rules] = await Promise.all([
+        listAuditSummary(apiKey, nodeId),
         listRules(apiKey),
       ]);
 
-      const shareEvents = events.filter(e =>
-        e.linkType === 'vp_request' &&
-        (e.action === 'auto_presented' || e.action === 'manually_approved') &&
-        e.verifierDid
-      );
-
-      const map = new Map<string, string>();
-      for (const e of shareEvents) {
-        const did = e.verifierDid!;
-        const existing = map.get(did);
-        if (!existing || e.timestamp > existing) {
-          map.set(did, e.timestamp);
-        }
-      }
-
-      const serviceList = Array.from(map.entries())
-        .map(([did, lastShared]) => ({
-          did,
-          name: extractServiceName(did),
-          lastShared,
+      const serviceList = summary
+        .filter(e => e.verifierDid)
+        .map(e => ({
+          did: e.verifierDid,
+          name: extractServiceName(e.verifierDid),
+          lastShared: e.lastSharedAt,
         }))
         .sort((a, b) => b.lastShared.localeCompare(a.lastShared));
 
@@ -112,6 +100,12 @@ export default function TravelServicesScreen({ navigate }: Props) {
   }, [apiKey, nodeId]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Auto-refresh every 30s
+  useEffect(() => {
+    const id = setInterval(() => { load(); }, REFRESH_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [load]);
 
   return (
     <motion.div variants={variants} initial="initial" animate="animate" exit="exit"

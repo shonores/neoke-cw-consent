@@ -115,7 +115,11 @@ export type ViewName =
   | 'consent_queue_detail'
   | 'travel_services'
   | 'travel_service_detail'
-  | 'audit_log';
+  | 'audit_log'
+  | 'profile_dietary'
+  | 'profile_cuisines'
+  | 'profile_accessibility'
+  | 'profile_seat';
 
 export interface NavState {
   view: ViewName;

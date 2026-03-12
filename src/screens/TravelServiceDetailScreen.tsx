@@ -57,7 +57,11 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
   const { state: authState } = useAuth();
   const apiKey = state.ceApiKey ?? '';
   const nodeId = authState.nodeIdentifier ?? '';
-  const serviceName = extractServiceName(verifierDid);
+
+  // Global rule: verifierDid = '__global__<ruleId>'
+  const isGlobalRule = verifierDid.startsWith('__global__');
+  const globalRuleId = isGlobalRule ? verifierDid.slice('__global__'.length) : null;
+  const serviceName = isGlobalRule ? 'All requesters' : extractServiceName(verifierDid);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -65,15 +69,18 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
   const [rules, setRules] = useState<ConsentRule[]>([]);
   const [error, setError] = useState('');
 
-  const alwaysRule = rules.find(
-    r => r.ruleType === 'verification' &&
-         r.party.matchType === 'did' &&
-         r.party.value === verifierDid
-  ) ?? null;
+  const alwaysRule = isGlobalRule
+    ? (rules.find(r => r.id === globalRuleId) ?? null)
+    : (rules.find(
+        r => r.ruleType === 'verification' &&
+             r.party.matchType === 'did' &&
+             r.party.value === verifierDid
+      ) ?? null);
   const isAlways = alwaysRule?.enabled === true;
 
+  // Use allowedFields (actually disclosed) when available, fall back to requestedFields
   const allFields: string[] = Array.from(new Set(
-    events.flatMap(e => e.requestedFields ?? [])
+    events.flatMap(e => (e.allowedFields && e.allowedFields.length > 0) ? e.allowedFields : (e.requestedFields ?? []))
   ));
 
   const allowedFields: string[] = alwaysRule?.allowedFields?.matchType === 'explicit'
@@ -84,8 +91,11 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
     setLoading(true);
     setError('');
     try {
+      const auditOpts = isGlobalRule
+        ? { nodeId, order: 'desc' as const, limit: 50, offset: 0 }
+        : { nodeId, verifierDid, order: 'desc' as const, limit: 50, offset: 0 };
       const [filtered, allRules] = await Promise.all([
-        listAuditEvents(apiKey, { nodeId, verifierDid, order: 'desc', limit: 50, offset: 0 }),
+        listAuditEvents(apiKey, auditOpts),
         listRules(apiKey),
       ]);
       setEvents(filtered);
@@ -95,7 +105,7 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
     } finally {
       setLoading(false);
     }
-  }, [apiKey, nodeId, verifierDid]);
+  }, [apiKey, nodeId, verifierDid, isGlobalRule]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -105,10 +115,11 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
     try {
       if (!alwaysRule) {
         const payload: CreateRulePayload = {
-          nodeId: '',
+          nodeId,
+          label: `Always share with ${serviceName}`,
           ruleType: 'verification',
           enabled: true,
-          party: { matchType: 'did', value: verifierDid },
+          party: isGlobalRule ? { matchType: 'any' } : { matchType: 'did', value: verifierDid },
           credentialType: { matchType: 'any' },
           allowedFields: allFields.length > 0
             ? { matchType: 'explicit', fields: allFields }

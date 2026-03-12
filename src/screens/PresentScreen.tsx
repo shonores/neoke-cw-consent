@@ -210,8 +210,10 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
         });
         const uniqueFields = [...new Set(allFields)];
 
+        const verifierName = preview.verifier.name || preview.verifier.clientId;
         const payload: CreateRulePayload = {
-          nodeId: '',
+          nodeId: state.nodeIdentifier ?? '',
+          label: `Always share with ${verifierName}`,
           ruleType: 'verification',
           enabled: true,
           party: { matchType: 'did', value: preview.verifier.clientId },

@@ -123,7 +123,14 @@ export interface AuditEvent {
   issuerDid?: string;
   credentialType?: string;
   requestedFields?: string[];
+  allowedFields?: string[];
   timestamp: string;
+}
+
+export interface AuditSummaryEntry {
+  verifierDid: string;
+  lastSharedAt: string;
+  count: number;
 }
 
 // ============================================================

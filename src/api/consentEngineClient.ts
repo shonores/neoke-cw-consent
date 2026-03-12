@@ -3,6 +3,7 @@ import type {
   CreateRulePayload,
   PendingRequest,
   AuditEvent,
+  AuditSummaryEntry,
   NodeCredentialType,
   IntakeResult,
 } from '../types/consentEngine';
@@ -327,6 +328,23 @@ export async function listAuditEvents(
       }
       return [];
     })(),
+    allowedFields: (() => {
+      if (Array.isArray(e.allowedFields)) return e.allowedFields;
+      if (typeof e.allowedFieldsJson === 'string') {
+        try { return JSON.parse(e.allowedFieldsJson) as string[]; } catch { return undefined; }
+      }
+      return undefined;
+    })(),
+  }));
+}
+
+export async function listAuditSummary(apiKey: string, nodeId: string): Promise<AuditSummaryEntry[]> {
+  const result = await ceRequest<any>(`/audit/summary?nodeId=${encodeURIComponent(nodeId)}`, apiKey);
+  const raw = Array.isArray(result) ? result : (result.summary ?? result.data ?? result.entries ?? []);
+  return raw.map((e: any) => ({
+    verifierDid: e.partyDid ?? e.verifierDid ?? '',
+    lastSharedAt: e.lastSharedAt ?? e.lastShared ?? e.timestamp ?? '',
+    count: e.count ?? e.total ?? 0,
   }));
 }
 
