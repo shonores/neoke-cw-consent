@@ -276,7 +276,8 @@ function AppInner() {
         deepLinkConsumed.current = true;
         window.history.replaceState({}, '', window.location.pathname);
 
-        if (ceEnabled && ceApiKey) {
+        // Issuance (credential offer) always goes directly to wallet — CE not involved
+        if (ceEnabled && ceApiKey && deepLinkType !== 'receive') {
           navigate('dashboard');
           setCeProcessingUri(deepLinkUri);
           return;
@@ -393,10 +394,7 @@ function AppInner() {
             navigate={navigate}
             onCredentialReceived={() => setRefreshSignal((s) => s + 1)}
             initialUri={pendingUri}
-            onRouteToCe={ceEnabled && ceApiKey && pendingUri !== ceBypassedUri ? (uri) => {
-              setCeProcessingUri(uri);
-              navigate('dashboard');
-            } : undefined}
+            onRouteToCe={undefined}
           />
         )}
 

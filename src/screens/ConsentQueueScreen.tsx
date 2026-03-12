@@ -85,6 +85,14 @@ function ServiceAvatar() {
 
 const SWIPE_REVEAL = 72;
 
+function statusBadge(item: PendingRequest, isExpired: boolean): { label: string; cls: string } | null {
+  if (item.status === 'pending' && isExpired) return { label: 'Expired', cls: 'bg-red-50 text-[#aa281e]' };
+  if (item.status === 'pending') return null;
+  if (item.resolvedAction === 'approved') return { label: 'Accepted', cls: 'bg-green-50 text-[#198e41]' };
+  if (item.status === 'expired') return { label: 'Expired', cls: 'bg-[#f7f6f8] text-[#6d6b7e]' };
+  return { label: 'Declined', cls: 'bg-[#f7f6f8] text-[#6d6b7e]' };
+}
+
 function SwipeableInboxItem({
   item,
   onClick,
@@ -97,6 +105,8 @@ function SwipeableInboxItem({
   const isPending = item.status === 'pending';
   const expLabel = expiryLabel(item);
   const isExpired = expLabel === 'Expired';
+  const isActionable = isPending && !isExpired;
+  const badge = statusBadge(item, isExpired);
   const title = getItemTitle(item);
   const message = getItemMessage(item);
 
@@ -130,7 +140,7 @@ function SwipeableInboxItem({
 
   const handleClick = () => {
     if (isOpen) { snapClosed(); return; }
-    if (isExpired) return;
+    if (!isActionable) return;
     onClick();
   };
 
@@ -166,21 +176,26 @@ function SwipeableInboxItem({
       >
         <button className="w-full text-left" onClick={handleClick}>
           <div className="flex gap-3 items-center px-4 py-3 relative active:bg-[#f7f6f8] transition-colors">
-            {isPending && (
+            {isActionable && (
               <div className="absolute left-4 top-6 w-3 h-3 rounded-full bg-[#aa281e] border-2 border-white z-10" />
             )}
             <ServiceAvatar />
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2 w-full">
-                <p className={`text-[16px] leading-6 truncate ${isPending ? 'font-semibold text-[#28272e]' : 'font-normal text-[#6d6b7e]'}`}>
+                <p className={`text-[16px] leading-6 truncate ${isActionable ? 'font-semibold text-[#28272e]' : 'font-normal text-[#6d6b7e]'}`}>
                   {title}
                 </p>
                 <span className="text-[12px] text-[#868496] flex-shrink-0 leading-6">{timeAgo(item.createdAt)}</span>
               </div>
-              <p className={`text-[14px] leading-5 line-clamp-2 ${isPending ? 'text-[#28272e] font-semibold' : 'text-[#6d6b7e]'}`}>
+              <p className={`text-[14px] leading-5 line-clamp-2 ${isActionable ? 'text-[#28272e] font-semibold' : 'text-[#6d6b7e]'}`}>
                 {message}
               </p>
-              {expLabel && (
+              {badge && (
+                <span className={`text-[12px] font-semibold mt-1 px-2 py-0.5 rounded-full self-start ${badge.cls}`}>
+                  {badge.label}
+                </span>
+              )}
+              {!badge && expLabel && (
                 <p className={`text-[12px] font-semibold mt-0.5 ${isExpired ? 'text-[#aa281e]' : 'text-orange-600'}`}>
                   {expLabel}
                 </p>

@@ -328,6 +328,14 @@ export async function listAuditEvents(
   }));
 }
 
+export async function deleteAuditEvent(apiKey: string, eventId: string): Promise<void> {
+  await ceRequest<void>(`/audit/${eventId}`, apiKey, { method: 'DELETE' });
+}
+
+export async function clearAuditEvents(apiKey: string, nodeId: string): Promise<void> {
+  await ceRequest<void>(`/audit?nodeId=${encodeURIComponent(nodeId)}`, apiKey, { method: 'DELETE' });
+}
+
 export async function listAuditSummary(apiKey: string, nodeId: string, opts?: { verifierDid?: string }): Promise<AuditSummaryEntry[]> {
   const params = new URLSearchParams({ nodeId });
   if (opts?.verifierDid) params.set('verifierDid', opts.verifierDid);

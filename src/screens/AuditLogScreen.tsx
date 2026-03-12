@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
 import { useAuth } from '../context/AuthContext';
-import { listAuditEvents } from '../api/consentEngineClient';
+import { listAuditEvents, deleteAuditEvent, clearAuditEvents } from '../api/consentEngineClient';
 import type { AuditEvent, AuditAction } from '../types/consentEngine';
 import type { ViewName } from '../types';
 
@@ -354,6 +354,57 @@ function EventDetailSheet({
   );
 }
 
+const SWIPE_REVEAL = 72;
+
+function SwipeableActivityItem({ children, onDelete }: { children: React.ReactNode; onDelete: () => void }) {
+  const [offset, setOffset] = useState(0);
+  const [isOpen, setIsOpen] = useState(false);
+  const startX = useRef(0);
+  const startOffset = useRef(0);
+  const dragging = useRef(false);
+
+  const snapOpen = () => { setOffset(-SWIPE_REVEAL); setIsOpen(true); };
+  const snapClosed = () => { setOffset(0); setIsOpen(false); };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    startX.current = e.touches[0].clientX;
+    startOffset.current = offset;
+    dragging.current = true;
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!dragging.current) return;
+    const dx = e.touches[0].clientX - startX.current;
+    setOffset(Math.max(-SWIPE_REVEAL, Math.min(0, startOffset.current + dx)));
+  };
+  const handleTouchEnd = () => {
+    dragging.current = false;
+    if (offset < -SWIPE_REVEAL / 2) snapOpen(); else snapClosed();
+  };
+
+  return (
+    <div className="relative overflow-hidden">
+      <div className="absolute right-0 top-0 bottom-0 w-[72px] bg-red-500 flex items-center justify-center">
+        <button onClick={onDelete} className="w-full h-full flex flex-col items-center justify-center gap-1 active:bg-red-600 transition-colors" aria-label="Delete">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+            <path d="M10 11v6M14 11v6" /><path d="M9 6V4h6v2" />
+          </svg>
+          <span className="text-[10px] text-white font-semibold">Delete</span>
+        </button>
+      </div>
+      <div
+        style={{ transform: `translateX(${offset}px)`, transition: dragging.current ? 'none' : 'transform 0.2s ease', background: 'white' }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onClick={isOpen ? snapClosed : undefined}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export default function AuditLogScreen({ navigate }: Props) {
   const { state } = useConsentEngine();
   const { state: authState } = useAuth();
@@ -366,6 +417,7 @@ export default function AuditLogScreen({ navigate }: Props) {
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<AuditEvent | null>(null);
+  const [clearing, setClearing] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const offsetRef = useRef(0);
 
@@ -402,6 +454,18 @@ export default function AuditLogScreen({ navigate }: Props) {
   }, [apiKey, nodeId]);
 
   useEffect(() => { loadEvents(true); }, [loadEvents]);
+
+  const handleDeleteEvent = async (id: string) => {
+    setEvents(prev => prev.filter(e => e.id !== id));
+    try { await deleteAuditEvent(apiKey, id); } catch { /* CE may not yet support delete; item hidden locally */ }
+  };
+
+  const handleClearAll = async () => {
+    setClearing(true);
+    setEvents([]);
+    try { await clearAuditEvents(apiKey, nodeId); } catch { /* CE may not yet support bulk delete */ }
+    setClearing(false);
+  };
 
   // Auto-refresh every 30s
   useEffect(() => {
@@ -440,6 +504,15 @@ export default function AuditLogScreen({ navigate }: Props) {
           </svg>
         </button>
         <h1 className="flex-1 text-[26px] font-bold text-[#28272e] leading-8">Activity</h1>
+        {events.length > 0 && (
+          <button
+            onClick={handleClearAll}
+            disabled={clearing}
+            className="text-[14px] font-medium text-[#aa281e] disabled:opacity-40 px-1 py-1"
+          >
+            Clear all
+          </button>
+        )}
         <button
           onClick={() => loadEvents(true)}
           className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
@@ -495,18 +568,19 @@ export default function AuditLogScreen({ navigate }: Props) {
           </div>
         ) : (
           <>
-            <div className="bg-white rounded-[12px] border border-[#f1f1f3] shadow-[0px_1px_1px_rgba(0,0,0,0.02),0px_0px_1px_rgba(0,0,0,0.02)] p-2 divide-y divide-[#f1f1f3]">
+            <div className="bg-white rounded-[12px] border border-[#f1f1f3] shadow-[0px_1px_1px_rgba(0,0,0,0.02),0px_0px_1px_rgba(0,0,0,0.02)] overflow-hidden divide-y divide-[#f1f1f3]">
               {events.map(event => (
-                <ActivityItem
-                  key={event.id}
-                  event={event}
-                  onViewRequest={
-                    event.action === 'queued'
-                      ? () => navigate('consent_queue')
-                      : undefined
-                  }
-                  onTap={() => setSelectedEvent(event)}
-                />
+                <SwipeableActivityItem key={event.id} onDelete={() => handleDeleteEvent(event.id)}>
+                  <ActivityItem
+                    event={event}
+                    onViewRequest={
+                      event.action === 'queued'
+                        ? () => navigate('consent_queue')
+                        : undefined
+                    }
+                    onTap={() => setSelectedEvent(event)}
+                  />
+                </SwipeableActivityItem>
               ))}
             </div>
 
