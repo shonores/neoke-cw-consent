@@ -33,6 +33,7 @@ const CE_ERROR_MESSAGES: Record<string, string> = {
   REQUEST_NOT_FOUND: 'The queued request could not be found.',
   REQUEST_ALREADY_RESOLVED: 'This request has already been approved or rejected.',
   REQUEST_EXPIRED: 'This request has expired and can no longer be processed.',
+  REQUEST_STILL_PENDING: 'Cannot delete an active pending request. Reject it first.',
   NODE_DISCONNECTED: 'The Consent Engine is not connected to your wallet node.',
   INVALID_API_KEY: 'Invalid API key. Please check your credentials.',
 };
@@ -94,9 +95,11 @@ async function ceRequest<T>(
     throw new CeApiError('Consent Engine URL is not configured.');
   }
 
+  // B6: only include Content-Type when there is a body (DELETE/GET with no body
+  // should not carry Content-Type — some servers reject it)
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     'Authorization': `ApiKey ${apiKey}`,
+    ...(options.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
     ...(options.headers as Record<string, string> | undefined),
   };
 
@@ -174,8 +177,8 @@ export async function checkCeHealth(): Promise<{ status: 'ok' | 'healthy' | 'deg
   try {
     response = await doFetch();
   } catch {
-    // Cold-start retry after a brief delay
-    await new Promise(resolve => setTimeout(resolve, 2500));
+    // B2: cold-start retry — short pause then one more attempt
+    await new Promise(resolve => setTimeout(resolve, 500));
     try {
       response = await doFetch();
     } catch {
@@ -297,6 +300,10 @@ export async function deleteQueueItem(apiKey: string, requestId: string): Promis
   await ceRequest<void>(`/queue/${requestId}`, apiKey, {
     method: 'DELETE',
   });
+}
+
+export async function clearQueueItems(apiKey: string, nodeId: string): Promise<void> {
+  await ceRequest<void>(`/queue?nodeId=${encodeURIComponent(nodeId)}`, apiKey, { method: 'DELETE' });
 }
 
 // ============================================================

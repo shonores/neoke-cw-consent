@@ -16,7 +16,8 @@ let _typeDisplayCache: Map<string, import('../types').DisplayMetadata> | null = 
 
 export function setBaseUrl(url: string): void {
   _baseUrl = url.replace(/\/$/, '');
-  _typeDisplayCache = null; // invalidate cache when switching nodes
+  _typeDisplayCache = null;
+  if (!url) _statusListCache.clear(); // B8: clear revocation cache on logout
 }
 
 export function getBaseUrl(): string {
@@ -116,8 +117,6 @@ async function request<T>(
   }
 
   const url = `${_baseUrl}${path}`;
-  console.log(`[neoke:request] ${fetchOptions.method ?? 'GET'} ${url}`);
-  if (fetchOptions.body) console.log(`[neoke:request] body:`, fetchOptions.body);
 
   let response: Response;
   try {
@@ -127,13 +126,11 @@ async function request<T>(
       cache: 'no-store', // never serve a cached response for wallet API calls
     });
   } catch (e) {
-    console.error(`[neoke:request] network error on ${url}:`, e);
     throw new ApiError(
       'Unable to connect to the wallet server. Please check your network and try again.'
     );
   }
 
-  console.log(`[neoke:request] response status: ${response.status}`);
   if (!response.ok) {
     let body: unknown;
     try {
@@ -141,7 +138,6 @@ async function request<T>(
     } catch {
       body = null;
     }
-    console.error(`[neoke:request] ERROR ${response.status} on ${path}:`, JSON.stringify(body));
     throw new ApiError(friendlyError(response.status, body), response.status, body);
   }
 
@@ -356,17 +352,11 @@ async function fetchStatusListData(uri: string): Promise<{ bits: number; data: U
 
   const promise = (async () => {
     try {
-      console.log(`[neoke:status-list] fetching ${uri}`);
       const resp = await fetch(uri, {
         headers: { Accept: 'application/statuslist+jwt, application/jwt, */*' },
         cache: 'no-store',
       });
-      if (!resp.ok) {
-        if (resp.status === 404) {
-          console.warn(`[neoke:status-list] 404 Not Found: ${uri}`);
-        }
-        return undefined;
-      }
+      if (!resp.ok) return undefined;
 
       const b64url = (s: string) =>
         atob((s + '='.repeat((4 - (s.length % 4)) % 4)).replace(/-/g, '+').replace(/_/g, '/'));
@@ -404,8 +394,7 @@ async function fetchStatusListData(uri: string): Promise<{ bits: number; data: U
       const result = { bits, data, fetchedAt: Date.now() };
       _statusListCache.set(uri, result);
       return result;
-    } catch (e) {
-      console.error(`[neoke:status-list] failed to fetch ${uri}:`, e);
+    } catch {
       return undefined;
     }
   })();
@@ -667,15 +656,12 @@ export async function deleteCredential(token: string, credentialId: string): Pro
   const pathId = credentialId.includes(':')
     ? credentialId.split(':').pop()!
     : credentialId;
-  console.log('[neoke] deleteCredential id:', credentialId, '→ path:', pathId);
   try {
     await request<void>(`/:/credentials/stored/${pathId}`, {
       method: 'DELETE',
       token,
     });
-    console.log('[neoke] deleteCredential success');
-  } catch (err) {
-    console.error('[neoke] deleteCredential failed:', err);
+  } catch {
     // Local removal proceeds regardless
   }
 }
@@ -715,20 +701,17 @@ export async function receiveCredential(
       token,
       body: JSON.stringify(baseBody),
     });
-    console.log('[neoke] receiveCredential raw →', JSON.stringify(raw));
     return raw as ReceiveCredentialResponse;
   } catch (err) {
     // Don't retry on auth/forbidden errors — those won't be fixed by changing bindingMode.
     if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
       throw err;
     }
-    console.log('[neoke] receiveCredential first attempt failed, retrying with bindingMode=jwk');
     const raw = await request<unknown>('/:/oid4vci/receive', {
       method: 'POST',
       token,
       body: JSON.stringify({ ...baseBody, bindingMode: 'jwk' }),
     });
-    console.log('[neoke] receiveCredential (jwk) raw →', JSON.stringify(raw));
     return raw as ReceiveCredentialResponse;
   }
 }
@@ -802,21 +785,13 @@ export async function previewPresentationWithRetry(
   token: string,
   requestUri: string,
 ): Promise<{ data: VPPreviewResponse; skippedX509: boolean }> {
-  const normalizedUri = normalizeVpUri(requestUri);
-  if (normalizedUri !== requestUri) {
-    console.log('[neoke] stripped request_uri_method from VP URI');
-  }
-  console.log('[neoke] previewPresentation attempt 1, uri:', normalizedUri);
-  requestUri = normalizedUri;
+  requestUri = normalizeVpUri(requestUri);
   try {
     const data = await previewPresentation(token, requestUri);
-    console.log('[neoke] previewPresentation attempt 1 succeeded');
     return { data, skippedX509: false };
   } catch (err) {
     if (err instanceof ApiError && err.status === 401) throw err;
-    console.log('[neoke] previewPresentation attempt 1 failed:', (err as Error).message, '— retrying with skipX509ChainValidation');
     const data = await previewPresentation(token, requestUri, true);
-    console.log('[neoke] previewPresentation attempt 2 (skipX509) succeeded');
     return { data, skippedX509: true };
   }
 }

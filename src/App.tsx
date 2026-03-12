@@ -171,26 +171,14 @@ function AppInner() {
   });
 
   // ── Deep-link detection ──────────────────────────────────────────────────
+  // B5: use URLSearchParams exclusively — the manual indexOf approach mishandled encoded URIs
   const [deepLinkUri] = useState<string | null>(() => {
-    const search = window.location.search;
-    if (!search) return null;
-
-    const raw = search.startsWith('?') ? search.slice(1) : search;
-    for (const key of ['uri', 'offer_uri']) {
-      const prefix = `${key}=`;
-      const idx = raw.indexOf(prefix);
-      if (idx !== -1) {
-        const candidate = raw.slice(idx + prefix.length);
-        if (detectUriType(candidate) !== 'unknown') return candidate;
-      }
-    }
-
-    const p = new URLSearchParams(search);
+    if (!window.location.search) return null;
+    const p = new URLSearchParams(window.location.search);
     for (const key of ['uri', 'offer_uri']) {
       const val = p.get(key);
       if (val && detectUriType(val) !== 'unknown') return val;
     }
-
     return null;
   });
   const deepLinkType = deepLinkUri ? detectUriType(deepLinkUri) : null;

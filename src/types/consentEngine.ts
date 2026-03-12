@@ -94,6 +94,8 @@ export interface PendingRequest {
   createdAt: string;
   expiresAt: string;
   vpRequestExpiresAt?: string;
+  /** Server-computed — avoids client-side clock-drift comparisons. */
+  isExpired?: boolean;
   resolvedAt?: string;
   resolvedAction?: 'approved' | 'rejected';
   rejectReason?: string;

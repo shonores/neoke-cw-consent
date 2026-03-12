@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
-import { listQueue, deleteQueueItem } from '../api/consentEngineClient';
+import { useAuth } from '../context/AuthContext';
+import { listQueue, deleteQueueItem, clearQueueItems } from '../api/consentEngineClient';
 import IconButton from '../components/IconButton';
 import type { PendingRequest } from '../types/consentEngine';
 import type { ViewName } from '../types';
@@ -104,7 +105,8 @@ function SwipeableInboxItem({
 }) {
   const isPending = item.status === 'pending';
   const expLabel = expiryLabel(item);
-  const isExpired = expLabel === 'Expired';
+  // L6: prefer server-computed flag; fall back to client-side for items without it
+  const isExpired = item.isExpired ?? (expLabel === 'Expired');
   const isActionable = isPending && !isExpired;
   const badge = statusBadge(item, isExpired);
   const title = getItemTitle(item);
@@ -210,7 +212,9 @@ function SwipeableInboxItem({
 
 export default function ConsentQueueScreen({ navigate }: Props) {
   const { state, refreshPendingCount } = useConsentEngine();
+  const { state: authState } = useAuth();
   const apiKey = state.ceApiKey ?? '';
+  const nodeId = authState.nodeIdentifier ?? '';
   const pendingCount = state.pendingCount;
 
   const [items, setItems] = useState<PendingRequest[]>([]);
@@ -261,10 +265,10 @@ export default function ConsentQueueScreen({ navigate }: Props) {
 
   const handleClearAll = async () => {
     setClearing(true);
-    const ids = items.map(i => i.id);
-    setItems([]);
+    // Optimistically remove only resolved/expired items — pending items cannot be bulk-deleted
+    setItems(prev => prev.filter(i => i.status === 'pending'));
     try {
-      await Promise.all(ids.map(id => deleteQueueItem(apiKey, id)));
+      await clearQueueItems(apiKey, nodeId);
       await refreshPendingCount();
     } catch {
       load();

@@ -23,11 +23,15 @@ export default function DashboardScreen({ navigate, refreshSignal }: DashboardSc
   const [usingLocalFallback, setUsingLocalFallback] = useState(false);
 
   const lastFetchRef = useRef(0);
+  // B1: use a ref so fetchCredentials doesn't change identity when credentials updates,
+  // which would otherwise reset the polling interval on every successful fetch.
+  const credentialsLengthRef = useRef(credentials.length);
+  credentialsLengthRef.current = credentials.length;
   const token = state.token;
 
   const fetchCredentials = useCallback(async (showSpinner = true) => {
     if (!token) return;
-    if (showSpinner && credentials.length === 0) setLoading(true);
+    if (showSpinner && credentialsLengthRef.current === 0) setLoading(true);
     setError('');
     setUsingLocalFallback(false);
 
@@ -56,7 +60,7 @@ export default function DashboardScreen({ navigate, refreshSignal }: DashboardSc
     } finally {
       setLoading(false);
     }
-  }, [token, markExpired, credentials.length]);
+  }, [token, markExpired]);
 
   useEffect(() => {
     fetchCredentials(true);

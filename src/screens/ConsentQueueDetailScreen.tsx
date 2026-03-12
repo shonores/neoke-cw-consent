@@ -185,9 +185,9 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
 
   const isVP = item.linkType === 'vp_request';
   const isResolved = item.status !== 'pending';
-  // vpRequestExpiresAt is the actual VP protocol deadline; fall back to queue expiresAt
   const effectiveExpiry = item.vpRequestExpiresAt ?? item.expiresAt;
-  const isExpired = new Date(effectiveExpiry).getTime() < Date.now();
+  // L6: prefer server-computed flag to avoid clock-drift issues
+  const isExpired = item.isExpired ?? (new Date(effectiveExpiry).getTime() < Date.now());
   const serviceName = isVP
     ? extractServiceName(item.preview.verifier?.clientId, item.preview.verifier?.name)
     : extractServiceName(item.preview.issuerDid);

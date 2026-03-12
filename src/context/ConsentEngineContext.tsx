@@ -27,6 +27,8 @@ interface ConsentEngineState {
   isConnected: boolean;
   pendingCount: number;
   lastChecked: number | null;
+  /** Increments on each audit.event.created SSE push so AuditLogScreen can react. */
+  sseAuditCount: number;
 }
 
 interface ConsentEngineContextValue {
@@ -48,6 +50,7 @@ type CEAction =
   | { type: 'TOGGLE'; enabled: boolean }
   | { type: 'SET_HEALTH'; isConnected: boolean; pendingCount: number }
   | { type: 'SET_PENDING_COUNT'; count: number }
+  | { type: 'SSE_AUDIT' }
   | { type: 'RESET' };
 
 const defaultState: ConsentEngineState = {
@@ -57,6 +60,7 @@ const defaultState: ConsentEngineState = {
   isConnected: false,
   pendingCount: 0,
   lastChecked: null,
+  sseAuditCount: 0,
 };
 
 function ceReducer(state: ConsentEngineState, action: CEAction): ConsentEngineState {
@@ -71,6 +75,8 @@ function ceReducer(state: ConsentEngineState, action: CEAction): ConsentEngineSt
       return { ...state, isConnected: action.isConnected, pendingCount: action.pendingCount, lastChecked: Date.now() };
     case 'SET_PENDING_COUNT':
       return { ...state, pendingCount: action.count, lastChecked: Date.now() };
+    case 'SSE_AUDIT':
+      return { ...state, sseAuditCount: state.sseAuditCount + 1 };
     case 'RESET':
       return { ...state, isConnected: false };
     default:
@@ -86,7 +92,7 @@ function initCeState(): ConsentEngineState {
       setCeBaseUrl(ceUrl);
       // Always use the hardcoded CE API key — localStorage may have an old value
       localStorage.setItem(CE_SK.CE_APIKEY, DEFAULT_CE_APIKEY);
-      return { ceUrl, ceEnabled, ceApiKey: DEFAULT_CE_APIKEY, isConnected: false, pendingCount: 0, lastChecked: null };
+      return { ceUrl, ceEnabled, ceApiKey: DEFAULT_CE_APIKEY, isConnected: false, pendingCount: 0, lastChecked: null, sseAuditCount: 0 };
     }
   } catch { /* */ }
   return defaultState;
@@ -98,6 +104,8 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const sseAbortRef = useRef<AbortController | null>(null);
   const initializedRef = useRef(false);
+  // B7: track last registered (ceUrl, nodeId) to prevent duplicate connectNode calls
+  const lastRegisteredRef = useRef('');
 
   // Use refs for stable callbacks in effects
   const stateRef = useRef(state);
@@ -129,15 +137,19 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
     }
   }, [state.ceUrl, state.ceEnabled, state.ceApiKey, refreshHealth]);
 
-  // Ensure node is registered with CE whenever we have both CE and Auth configured
+  // Ensure node is registered with CE whenever we have both CE and Auth configured.
+  // B7: guard with a ref so the registration only fires once per (ceUrl, nodeId) pair,
+  // even if other dependencies change and re-run this effect.
   useEffect(() => {
-    if (state.ceUrl && state.ceEnabled && state.ceApiKey && authState.nodeIdentifier && authState.baseUrl) {
-      const cleanNodeUrl = authState.baseUrl.replace(/\/:$/, '');
-      const nodeApiKey = localStorage.getItem('neoke_node_apikey') ?? '';
-      connectNode(state.ceApiKey, authState.nodeIdentifier, cleanNodeUrl, nodeApiKey)
-        .then(() => refreshHealth())
-        .catch((err) => console.error('[ConsentEngineProvider] Failed to register node with CE:', err));
-    }
+    if (!state.ceUrl || !state.ceEnabled || !state.ceApiKey || !authState.nodeIdentifier || !authState.baseUrl) return;
+    const key = `${state.ceUrl}::${authState.nodeIdentifier}`;
+    if (lastRegisteredRef.current === key) return;
+    lastRegisteredRef.current = key;
+    const cleanNodeUrl = authState.baseUrl.replace(/\/:$/, '');
+    const nodeApiKey = localStorage.getItem('neoke_node_apikey') ?? '';
+    connectNode(state.ceApiKey, authState.nodeIdentifier, cleanNodeUrl, nodeApiKey)
+      .then(() => refreshHealth())
+      .catch(() => { /* silent — health poll will surface the issue */ });
   }, [state.ceUrl, state.ceEnabled, state.ceApiKey, authState.nodeIdentifier, authState.baseUrl, refreshHealth]);
 
   // Reset connected state on auth token loss (but keep config)
@@ -158,6 +170,8 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
     const controller = new AbortController();
     sseAbortRef.current = controller;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let attempt = 0;
+    const MAX_SSE_ATTEMPTS = 10;
 
     const connect = async () => {
       try {
@@ -166,6 +180,9 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
           signal: controller.signal,
         });
         if (!response.ok || !response.body) throw new Error(`SSE ${response.status}`);
+
+        // B3: reset backoff counter on successful connection
+        attempt = 0;
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
@@ -185,6 +202,9 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
               if (eventType === 'queue.item.created' || eventType === 'queue.item.resolved') {
                 refreshPendingCount();
               }
+              if (eventType === 'audit.event.created') {
+                dispatch({ type: 'SSE_AUDIT' });
+              }
               eventType = 'message';
             } else if (line === '') {
               eventType = 'message';
@@ -193,7 +213,11 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
         }
       } catch {
         if (controller.signal.aborted) return;
-        reconnectTimer = setTimeout(connect, 5_000);
+        // B3: exponential backoff — 5s, 10s, 20s, 40s, 60s cap; give up after MAX attempts
+        if (attempt >= MAX_SSE_ATTEMPTS) return;
+        const delay = Math.min(5_000 * Math.pow(2, attempt), 60_000);
+        attempt++;
+        reconnectTimer = setTimeout(connect, delay);
       }
     };
 

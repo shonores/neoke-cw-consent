@@ -33,7 +33,6 @@ interface Props {
 }
 
 const PAGE_SIZE = 20;
-const REFRESH_INTERVAL_MS = 30_000;
 
 function formatRelativeTime(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -410,6 +409,7 @@ export default function AuditLogScreen({ navigate }: Props) {
   const { state: authState } = useAuth();
   const apiKey = state.ceApiKey ?? '';
   const nodeId = authState.nodeIdentifier ?? '';
+  const { sseAuditCount } = state;
 
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -420,6 +420,7 @@ export default function AuditLogScreen({ navigate }: Props) {
   const [clearing, setClearing] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const offsetRef = useRef(0);
+  const loadedOnceRef = useRef(false);
 
   const loadEvents = useCallback(async (reset = false) => {
     if (reset) {
@@ -453,7 +454,19 @@ export default function AuditLogScreen({ navigate }: Props) {
     }
   }, [apiKey, nodeId]);
 
-  useEffect(() => { loadEvents(true); }, [loadEvents]);
+  useEffect(() => {
+    loadEvents(true).then(() => { loadedOnceRef.current = true; });
+  }, [loadEvents]);
+
+  // SSE-driven refresh: reload on every audit.event.created push from CE
+  const prevAuditCountRef = useRef(sseAuditCount);
+  useEffect(() => {
+    if (!loadedOnceRef.current) return;
+    if (sseAuditCount !== prevAuditCountRef.current) {
+      prevAuditCountRef.current = sseAuditCount;
+      loadEvents(true);
+    }
+  }, [sseAuditCount, loadEvents]);
 
   const handleDeleteEvent = async (id: string) => {
     setEvents(prev => prev.filter(e => e.id !== id));
@@ -466,12 +479,6 @@ export default function AuditLogScreen({ navigate }: Props) {
     try { await clearAuditEvents(apiKey, nodeId); } catch { /* CE may not yet support bulk delete */ }
     setClearing(false);
   };
-
-  // Auto-refresh every 30s
-  useEffect(() => {
-    const id = setInterval(() => { loadEvents(true); }, REFRESH_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, [loadEvents]);
 
   useEffect(() => {
     if (!bottomRef.current || !hasMore || loadingMore) return;

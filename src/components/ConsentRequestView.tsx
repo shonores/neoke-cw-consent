@@ -114,7 +114,7 @@ export default function ConsentRequestView({
         </div>
 
         {/* Credential cards */}
-        {credentialRows.length > 0 && (
+        {credentialRows.length > 0 ? (
           <div>
             <p className="text-[12px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-3">
               {isVP ? 'Info to share' : 'Credential offered'}
@@ -125,7 +125,25 @@ export default function ConsentRequestView({
               ))}
             </div>
           </div>
-        )}
+        ) : isVP ? (
+          <div>
+            <p className="text-[12px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-3">
+              Info to share
+            </p>
+            <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] flex items-center px-4 py-4 shadow-[var(--shadow-sm)] border border-[var(--border-subtle)]">
+              <div className="mr-4 w-10 h-10 bg-[#f4f3fc] rounded-full flex items-center justify-center flex-shrink-0">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2L4 6v6c0 5.25 3.5 9.74 8 11 4.5-1.26 8-5.75 8-11V6l-8-4z"
+                    fill="#5843de" fillOpacity="0.15" stroke="#5843de" strokeWidth="1.7" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[16px] font-bold text-[var(--text-main)]">Identity credential</p>
+                <p className="text-[13px] text-[var(--text-muted)]">Credential details not included in request</p>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {/* Verified domain */}
         {isVP && linkedDomains && linkedDomains.length > 0 && (
