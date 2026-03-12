@@ -219,8 +219,9 @@ export async function ceIntake(apiKey: string, rawLink: string): Promise<IntakeR
 // ============================================================
 // Rules CRUD
 // ============================================================
-export async function listRules(apiKey: string): Promise<ConsentRule[]> {
-  const result = await ceRequest<{ rules?: ConsentRule[] } | ConsentRule[]>('/rules', apiKey);
+export async function listRules(apiKey: string, opts?: { partyDid?: string }): Promise<ConsentRule[]> {
+  const qs = opts?.partyDid ? `?partyDid=${encodeURIComponent(opts.partyDid)}` : '';
+  const result = await ceRequest<{ rules?: ConsentRule[] } | ConsentRule[]>(`/rules${qs}`, apiKey);
   if (Array.isArray(result)) return result;
   return result.rules ?? [];
 }
@@ -316,36 +317,26 @@ export async function listAuditEvents(
   const qs = params.toString() ? `?${params.toString()}` : '';
   const result = await ceRequest<any>(`/audit${qs}`, apiKey);
   const raw = Array.isArray(result) ? result : (result.events ?? []);
-  // Transform raw API shape → AuditEvent type
   return raw.map((e: any) => ({
     ...e,
-    verifierDid: e.partyDid ?? e.verifierDid,
-    issuerDid: e.issuerDid ?? (e.requestType === 'issuance' ? e.partyDid : undefined),
-    linkType: e.linkType ?? (e.requestType === 'verification' ? 'vp_request' : e.requestType === 'issuance' ? 'credential_offer' : 'vp_request'),
-    requestedFields: (() => {
-      if (Array.isArray(e.requestedFields)) return e.requestedFields;
-      if (typeof e.requestedFieldsJson === 'string') {
-        try { return JSON.parse(e.requestedFieldsJson) as string[]; } catch { return []; }
-      }
-      return [];
-    })(),
-    allowedFields: (() => {
-      if (Array.isArray(e.allowedFields)) return e.allowedFields;
-      if (typeof e.allowedFieldsJson === 'string') {
-        try { return JSON.parse(e.allowedFieldsJson) as string[]; } catch { return undefined; }
-      }
-      return undefined;
-    })(),
+    // Fields are now direct from CE; keep legacy fallbacks for old events in DB
+    verifierDid: e.verifierDid ?? e.partyDid,
+    issuerDid: e.issuerDid,
+    linkType: e.linkType,
+    requestedFields: Array.isArray(e.requestedFields) ? e.requestedFields : [],
+    allowedFields: Array.isArray(e.allowedFields) ? e.allowedFields : undefined,
   }));
 }
 
-export async function listAuditSummary(apiKey: string, nodeId: string): Promise<AuditSummaryEntry[]> {
-  const result = await ceRequest<any>(`/audit/summary?nodeId=${encodeURIComponent(nodeId)}`, apiKey);
-  const raw = Array.isArray(result) ? result : (result.summary ?? result.data ?? result.entries ?? []);
+export async function listAuditSummary(apiKey: string, nodeId: string, opts?: { verifierDid?: string }): Promise<AuditSummaryEntry[]> {
+  const params = new URLSearchParams({ nodeId });
+  if (opts?.verifierDid) params.set('verifierDid', opts.verifierDid);
+  const result = await ceRequest<any>(`/audit/summary?${params.toString()}`, apiKey);
+  const raw = Array.isArray(result) ? result : (result.summary ?? []);
   return raw.map((e: any) => ({
-    verifierDid: e.partyDid ?? e.verifierDid ?? '',
-    lastSharedAt: e.lastSharedAt ?? e.lastShared ?? e.timestamp ?? '',
-    count: e.count ?? e.total ?? 0,
+    verifierDid: e.verifierDid ?? '',
+    lastSharedAt: e.lastSharedAt ?? '',
+    count: e.count ?? 0,
   }));
 }
 
@@ -353,7 +344,7 @@ export async function listAuditSummary(apiKey: string, nodeId: string): Promise<
 // Discovery
 // ============================================================
 export async function listNodeCredentialTypes(apiKey: string): Promise<NodeCredentialType[]> {
-  const result = await ceRequest<{ types?: NodeCredentialType[] } | NodeCredentialType[]>('/credential-types', apiKey);
+  const result = await ceRequest<any>('/credential-types', apiKey);
   if (Array.isArray(result)) return result;
-  return result.types ?? [];
+  return result.credentialTypes ?? result.types ?? [];
 }

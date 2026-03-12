@@ -144,12 +144,13 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
       const auditOpts = isGlobalRule
         ? { nodeId, order: 'desc' as const, limit: 50, offset: 0 }
         : { nodeId, verifierDid, order: 'desc' as const, limit: 50, offset: 0 };
-      const [filtered, allRules] = await Promise.all([
+      const rulesOpts = isGlobalRule ? undefined : { partyDid: verifierDid };
+      const [filtered, fetchedRules] = await Promise.all([
         listAuditEvents(apiKey, auditOpts),
-        listRules(apiKey),
+        listRules(apiKey, rulesOpts),
       ]);
       setEvents(filtered);
-      setRules(allRules);
+      setRules(fetchedRules);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load data.');
     } finally {
