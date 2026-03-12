@@ -29,6 +29,8 @@ interface ConsentEngineState {
   lastChecked: number | null;
   /** Increments on each audit.event.created SSE push so AuditLogScreen can react. */
   sseAuditCount: number;
+  /** Increments on each queue.item.created/resolved SSE push so ConsentQueueScreen can react immediately. */
+  sseQueueCount: number;
 }
 
 interface ConsentEngineContextValue {
@@ -51,6 +53,7 @@ type CEAction =
   | { type: 'SET_HEALTH'; isConnected: boolean; pendingCount: number }
   | { type: 'SET_PENDING_COUNT'; count: number }
   | { type: 'SSE_AUDIT' }
+  | { type: 'SSE_QUEUE' }
   | { type: 'RESET' };
 
 const defaultState: ConsentEngineState = {
@@ -61,6 +64,7 @@ const defaultState: ConsentEngineState = {
   pendingCount: 0,
   lastChecked: null,
   sseAuditCount: 0,
+  sseQueueCount: 0,
 };
 
 function ceReducer(state: ConsentEngineState, action: CEAction): ConsentEngineState {
@@ -77,6 +81,8 @@ function ceReducer(state: ConsentEngineState, action: CEAction): ConsentEngineSt
       return { ...state, pendingCount: action.count, lastChecked: Date.now() };
     case 'SSE_AUDIT':
       return { ...state, sseAuditCount: state.sseAuditCount + 1 };
+    case 'SSE_QUEUE':
+      return { ...state, sseQueueCount: state.sseQueueCount + 1 };
     case 'RESET':
       return { ...state, isConnected: false };
     default:
@@ -92,7 +98,7 @@ function initCeState(): ConsentEngineState {
       setCeBaseUrl(ceUrl);
       // Always use the hardcoded CE API key — localStorage may have an old value
       localStorage.setItem(CE_SK.CE_APIKEY, DEFAULT_CE_APIKEY);
-      return { ceUrl, ceEnabled, ceApiKey: DEFAULT_CE_APIKEY, isConnected: false, pendingCount: 0, lastChecked: null, sseAuditCount: 0 };
+      return { ceUrl, ceEnabled, ceApiKey: DEFAULT_CE_APIKEY, isConnected: false, pendingCount: 0, lastChecked: null, sseAuditCount: 0, sseQueueCount: 0 };
     }
   } catch { /* */ }
   return defaultState;
@@ -200,6 +206,7 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
               eventType = line.slice(7).trim();
             } else if (line.startsWith('data: ')) {
               if (eventType === 'queue.item.created' || eventType === 'queue.item.resolved') {
+                dispatch({ type: 'SSE_QUEUE' });
                 refreshPendingCount();
               }
               if (eventType === 'audit.event.created') {

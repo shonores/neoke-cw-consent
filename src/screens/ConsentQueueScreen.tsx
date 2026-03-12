@@ -217,6 +217,7 @@ export default function ConsentQueueScreen({ navigate }: Props) {
   const apiKey = state.ceApiKey ?? '';
   const nodeId = authState.nodeIdentifier ?? '';
   const pendingCount = state.pendingCount;
+  const sseQueueCount = state.sseQueueCount;
 
   const [items, setItems] = useState<PendingRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -243,7 +244,17 @@ export default function ConsentQueueScreen({ navigate }: Props) {
     loadedOnceRef.current = true;
   }, [load]);
 
-  // Silently refresh the list whenever the background poll detects a count change
+  // React immediately to SSE queue events (before the health poll resolves)
+  const prevSseQueueRef = useRef(sseQueueCount);
+  useEffect(() => {
+    if (!loadedOnceRef.current) return;
+    if (sseQueueCount !== prevSseQueueRef.current) {
+      prevSseQueueRef.current = sseQueueCount;
+      load(true);
+    }
+  }, [sseQueueCount, load]);
+
+  // Also refresh on pendingCount changes (fallback poll / count drift)
   const prevCountRef = useRef(pendingCount);
   useEffect(() => {
     if (!loadedOnceRef.current) return;
