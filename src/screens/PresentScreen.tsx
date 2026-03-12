@@ -3,7 +3,8 @@ import { motion } from 'framer-motion';
 import { previewPresentationWithRetry, respondPresentationWithRetry, resolveVerificationLink, ApiError } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useConsentEngine } from '../context/ConsentEngineContext';
-import { isCeConfigured } from '../api/consentEngineClient';
+import { isCeConfigured, createRule } from '../api/consentEngineClient';
+import type { CreateRulePayload } from '../types/consentEngine';
 import { detectUriType, isVerificationLink } from '../utils/uriRouter';
 import {
   getCandidateLabel,
@@ -193,12 +194,49 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
     }
   };
 
+  const handleAlwaysShare = async () => {
+    if (!preview) return;
+    const apiKey = ceState.ceApiKey;
+    if (apiKey && isCeConfigured() && ceState.ceEnabled) {
+      try {
+        const credTypes = preview.queries.flatMap(q => {
+          const cand = q.candidates.find(c => c.index === selections[q.queryId]) ?? q.candidates[0];
+          return cand?.type ?? [];
+        });
+        const uniqueTypes = [...new Set(credTypes)];
+        const allFields = preview.queries.flatMap(q => {
+          const cand = q.candidates.find(c => c.index === selections[q.queryId]) ?? q.candidates[0];
+          return cand?.claims?.disclosed ?? [];
+        });
+        const uniqueFields = [...new Set(allFields)];
+
+        const payload: CreateRulePayload = {
+          nodeId: '',
+          ruleType: 'verification',
+          enabled: true,
+          party: { matchType: 'did', value: preview.verifier.clientId },
+          credentialType: uniqueTypes.length > 0
+            ? { matchType: 'exact', value: uniqueTypes[0] }
+            : { matchType: 'any' },
+          allowedFields: uniqueFields.length > 0
+            ? { matchType: 'explicit', fields: uniqueFields }
+            : { matchType: 'any' },
+          expiry: { type: 'never' },
+        };
+        await createRule(apiKey, payload);
+      } catch {
+        // rule creation failure is non-fatal — proceed to share anyway
+      }
+    }
+    await handleShare();
+  };
+
   if (stage === 'loading' || stage === 'presenting') {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 min-h-screen bg-[var(--bg-ios)]">
         <div className="text-center space-y-4">
           <LoadingSpinner size="lg" className="mx-auto" />
-          <p className="text-[var(--text-muted)] text-[15px] font-bold italic">
+          <p className="text-[var(--text-muted)] text-[15px] font-bold">
             {stage === 'loading' ? 'Processing request…' : 'Sharing credential…'}
           </p>
         </div>
@@ -227,7 +265,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
         </nav>
 
         <div className="px-5 pb-6 flex-shrink-0">
-          <h2 className="text-[24px] font-bold text-[var(--text-main)] leading-tight italic">
+          <h2 className="text-[24px] font-bold text-[var(--text-main)] leading-tight">
             {multipleGroups ? 'Choose credentials to share' : 'Choose a credential to share'}
           </h2>
         </div>
@@ -237,7 +275,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
             const selectedIndex = selections[query.queryId] ?? query.candidates[0]?.index;
             return (
               <div key={query.queryId}>
-                <p className="text-[16px] font-bold text-[var(--text-main)] mb-3 italic">
+                <p className="text-[16px] font-bold text-[var(--text-main)] mb-3">
                   {multipleGroups ? (() => {
                     const first = query.candidates[0];
                     const lc = first ? findLocalCred(first.type, first.issuer) : undefined;
@@ -331,12 +369,12 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
             <IconCheckCircle />
           </motion.div>
           <div>
-            <h2 className="text-[var(--text-main)] font-bold text-[32px] leading-tight italic">Shared!</h2>
-            <p className="text-[var(--text-muted)] text-[16px] mt-2 font-bold italic">The verifier has received your information.</p>
+            <h2 className="text-[var(--text-main)] font-bold text-[32px] leading-tight">Shared!</h2>
+            <p className="text-[var(--text-muted)] text-[16px] mt-2 font-bold">The verifier has received your information.</p>
           </div>
           {successResult?.redirectUri && (
             <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] p-5 text-left shadow-[var(--shadow-sm)] border border-[var(--border-subtle)]">
-              <p className="text-[11px] text-[var(--text-muted)] font-bold uppercase tracking-wider mb-2 italic">Redirecting to</p>
+              <p className="text-[11px] text-[var(--text-muted)] font-bold uppercase tracking-wider mb-2">Redirecting to</p>
               <p className="text-[13px] font-mono text-[var(--text-main)] break-all font-bold">{successResult.redirectUri}</p>
             </div>
           )}
@@ -365,7 +403,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
         </nav>
 
         <div className="px-5 pb-6 flex-shrink-0">
-          <h2 className="text-[28px] font-bold text-[var(--text-main)] leading-tight italic">
+          <h2 className="text-[28px] font-bold text-[var(--text-main)] leading-tight">
             <span className="text-[var(--primary)] font-black">{verifierName}</span><br />
             requests some info
           </h2>
@@ -374,15 +412,15 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
         <div className="px-5 flex-1 overflow-y-auto pb-44 space-y-6">
           {preview.verifier.purpose && (
             <div>
-              <p className="text-[12px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2 italic">Purpose</p>
+              <p className="text-[12px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Purpose</p>
               <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] px-5 py-5 shadow-[var(--shadow-sm)] border border-[var(--border-subtle)]">
-                <p className="text-[15px] font-bold text-[var(--text-main)] leading-relaxed italic">"{preview.verifier.purpose}"</p>
+                <p className="text-[15px] font-bold text-[var(--text-main)] leading-relaxed">"{preview.verifier.purpose}"</p>
               </div>
             </div>
           )}
 
           <div>
-            <p className="text-[12px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2 italic">Info to share</p>
+            <p className="text-[12px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Info to share</p>
             <div className="space-y-3">
               {preview.queries.map((query) => {
                 const cand = query.candidates.find((c) => c.index === selections[query.queryId]) ?? query.candidates[0];
@@ -408,7 +446,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
                       className="mr-4"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[16px] font-bold text-[var(--text-main)] truncate italic">{label}</p>
+                      <p className="text-[16px] font-bold text-[var(--text-main)] truncate">{label}</p>
                       <p className="text-[13px] text-[var(--text-muted)] truncate font-medium">{issuerLabel}</p>
                     </div>
                   </div>
@@ -418,10 +456,30 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
           </div>
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-5 pt-4 pb-10 bg-[var(--bg-ios)] z-40 border-t border-[var(--border-subtle)]">
-          <PrimaryButton onClick={handleShare}>
-            Confirm & Share
-          </PrimaryButton>
+        <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-5 pt-4 pb-10 bg-[var(--bg-ios)] z-40 border-t border-[var(--border-subtle)] space-y-2">
+          <button
+            onClick={handleShare}
+            className="w-full py-4 text-[16px] font-semibold text-white bg-[#5B4FE9] rounded-2xl active:opacity-80 transition-opacity"
+          >
+            Share information
+          </button>
+          {ceState.ceEnabled && ceState.ceApiKey && (
+            <button
+              onClick={handleAlwaysShare}
+              className="w-full py-4 text-[16px] font-semibold text-[#5B4FE9] bg-[#5B4FE9]/10 rounded-2xl active:opacity-80 transition-opacity"
+            >
+              Always share with {verifierName}
+            </button>
+          )}
+          <button
+            onClick={() => setStage(preview.queries.some(q => q.candidates.length > 1) ? 'select' : 'scan')}
+            className="w-full py-4 text-[16px] font-medium text-[#8e8e93] bg-[#F2F2F7] rounded-2xl active:opacity-80 transition-opacity"
+          >
+            Don't share
+          </button>
+          <p className="text-center text-[12px] text-[#8e8e93] pt-1">
+            You can always change these later in your Profile
+          </p>
         </div>
       </div>
     );
@@ -450,7 +508,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
               <path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
             </svg>
-            <p className="text-[13px] font-bold text-blue-700 italic">Policy active: Request routed directly.</p>
+            <p className="text-[13px] font-bold text-blue-700">Policy active: Request routed directly.</p>
           </div>
         </div>
       )}
@@ -458,14 +516,14 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
       <div className={`flex-1 overflow-y-auto px-5 space-y-5 ${showManual ? 'pb-28' : 'pb-6'}`}>
         <div className="flex bg-black/5 rounded-[var(--radius-2xl)] p-1 gap-1">
           <button
-            className={`flex-1 flex items-center justify-center gap-2 py-3 text-[14px] rounded-xl transition-all italic ${!showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[var(--text-muted)] font-medium'}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 text-[14px] rounded-xl transition-all ${!showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[var(--text-muted)] font-medium'}`}
             onClick={() => setShowManual(false)}
           >
             <IconCamera />
             Camera
           </button>
           <button
-            className={`flex-1 flex items-center justify-center gap-2 py-3 text-[14px] rounded-xl transition-all italic ${showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[var(--text-muted)] font-medium'}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 text-[14px] rounded-xl transition-all ${showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[var(--text-muted)] font-medium'}`}
             onClick={() => setShowManual(true)}
           >
             <IconPaste />
