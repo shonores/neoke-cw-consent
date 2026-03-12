@@ -6,6 +6,12 @@ import { listAuditEvents, listRules, createRule, updateRule } from '../api/conse
 import type { AuditEvent, ConsentRule, CreateRulePayload } from '../types/consentEngine';
 import type { ViewName } from '../types';
 
+function formatFieldName(field: string): string {
+  // "org.iso.23220.1:family_name" → "Family name"
+  const name = field.includes(':') ? field.split(':').pop()! : field;
+  return name.replace(/_/g, ' ').replace(/\b\w/, c => c.toUpperCase());
+}
+
 const variants = {
   initial: { opacity: 0, x: 32 },
   animate: { opacity: 1, x: 0, transition: { duration: 0.22, ease: 'easeOut' as const } },
@@ -224,7 +230,7 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
                         </svg>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[16px] font-semibold text-[#28272e] leading-6">{field}</p>
+                        <p className="text-[16px] font-semibold text-[#28272e] leading-6">{formatFieldName(field)}</p>
                         {lastEvent && (
                           <p className="text-[13px] text-[#6d6b7e] leading-5">
                             Last shared {formatDate(lastEvent.timestamp)}

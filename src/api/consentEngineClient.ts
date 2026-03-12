@@ -312,9 +312,22 @@ export async function listAuditEvents(
   if (opts?.order) params.set('order', opts.order);
   if (opts?.verifierDid) params.set('verifierDid', opts.verifierDid);
   const qs = params.toString() ? `?${params.toString()}` : '';
-  const result = await ceRequest<{ events?: AuditEvent[] } | AuditEvent[]>(`/audit${qs}`, apiKey);
-  if (Array.isArray(result)) return result;
-  return result.events ?? [];
+  const result = await ceRequest<any>(`/audit${qs}`, apiKey);
+  const raw = Array.isArray(result) ? result : (result.events ?? []);
+  // Transform raw API shape → AuditEvent type
+  return raw.map((e: any) => ({
+    ...e,
+    verifierDid: e.partyDid ?? e.verifierDid,
+    issuerDid: e.issuerDid ?? (e.requestType === 'issuance' ? e.partyDid : undefined),
+    linkType: e.linkType ?? (e.requestType === 'verification' ? 'vp_request' : e.requestType === 'issuance' ? 'credential_offer' : 'vp_request'),
+    requestedFields: (() => {
+      if (Array.isArray(e.requestedFields)) return e.requestedFields;
+      if (typeof e.requestedFieldsJson === 'string') {
+        try { return JSON.parse(e.requestedFieldsJson) as string[]; } catch { return []; }
+      }
+      return [];
+    })(),
+  }));
 }
 
 // ============================================================

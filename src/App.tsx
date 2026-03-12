@@ -194,6 +194,25 @@ function AppInner() {
   // URI that was CE-bypassed manually — should NOT be re-routed to CE intake
   const [ceBypassedUri, setCeBypassedUri] = useState<string | null>(null);
 
+  // Parse URL hash to restore view on load
+  const parseHash = (): { view: ViewName; serviceDid?: string; queueItemId?: string; ruleId?: string } => {
+    const hash = window.location.hash.slice(1); // remove #
+    const [path, qs] = hash.split('?');
+    const params = new URLSearchParams(qs ?? '');
+    const did = params.get('did');
+    const id = params.get('id');
+
+    switch (path) {
+      case 'account': return { view: 'account' };
+      case 'activity': return { view: 'audit_log' };
+      case 'inbox': return id ? { view: 'consent_queue_detail', queueItemId: id } : { view: 'consent_queue' };
+      case 'rules': return id !== null ? { view: 'consent_rule_editor', ruleId: id || undefined } : { view: 'consent_rules' };
+      case 'travel': return did ? { view: 'travel_service_detail', serviceDid: did } : { view: 'travel_services' };
+      case 'home':
+      default: return { view: 'dashboard' };
+    }
+  };
+
   const navigate = (
     view: ViewName,
     extra?: {
@@ -210,6 +229,24 @@ function AppInner() {
     if (extra && 'selectedQueueItemId' in extra) setSelectedQueueItemId(extra.selectedQueueItemId ?? null);
     if (extra && 'selectedServiceDid' in extra) setSelectedServiceDid(extra.selectedServiceDid ?? null);
     setCurrentView(view);
+
+    // Update URL hash
+    const updateHash = (v: ViewName, e?: { editingRuleId?: string | null; selectedQueueItemId?: string | null; selectedServiceDid?: string | null }) => {
+      let hash = '';
+      switch (v) {
+        case 'account': hash = '#account'; break;
+        case 'audit_log': hash = '#activity'; break;
+        case 'consent_queue': hash = '#inbox'; break;
+        case 'consent_queue_detail': hash = `#inbox?id=${e?.selectedQueueItemId ?? ''}`; break;
+        case 'consent_rules': hash = '#rules'; break;
+        case 'consent_rule_editor': hash = `#rules?id=${e?.editingRuleId ?? ''}`; break;
+        case 'travel_services': hash = '#travel'; break;
+        case 'travel_service_detail': hash = `#travel?did=${encodeURIComponent(e?.selectedServiceDid ?? '')}`; break;
+        default: hash = '#home'; break;
+      }
+      window.history.pushState(null, '', hash);
+    };
+    updateHash(view, extra);
   };
 
   // Auto-configure CE silently whenever a token is set and CE isn't yet configured
@@ -251,6 +288,19 @@ function AppInner() {
       refreshPendingCount();
     }
   }, [currentView, refreshPendingCount]);
+
+  // Restore view from URL hash on initial mount
+  useEffect(() => {
+    if (!state.token) return;
+    const parsed = parseHash();
+    if (parsed.view !== 'dashboard') {
+      navigate(parsed.view, {
+        selectedServiceDid: parsed.serviceDid,
+        selectedQueueItemId: parsed.queueItemId,
+        editingRuleId: parsed.ruleId,
+      });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Session expired → re-auth sheet ─────────────────────────────────────
   if (state.sessionExpired) {

@@ -6,6 +6,18 @@ import { listAuditEvents } from '../api/consentEngineClient';
 import type { AuditEvent, AuditAction } from '../types/consentEngine';
 import type { ViewName } from '../types';
 
+function formatCredentialType(type: string): string {
+  if (type === 'org.iso.23220.photoid.1') return 'mDoc Photo ID';
+  if (type.includes('ePassport')) return 'ePassport';
+  if (type.includes('photoid') || type.includes('PhotoID')) return 'Photo ID';
+  if (type.includes('passport')) return 'Passport';
+  if (type.includes('driverLicense') || type.includes('driving')) return 'Driver Licence';
+  // fallback: take last path segment
+  const parts = type.split(/[./:]/).filter(Boolean);
+  const last = parts[parts.length - 1] ?? type;
+  return last.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
 const variants = {
   initial: { opacity: 0, y: 16 },
   animate: { opacity: 1, y: 0, transition: { duration: 0.22, ease: 'easeOut' as const } },
@@ -56,7 +68,7 @@ function extractServiceName(did?: string): string {
 
 function getEventContent(event: AuditEvent): { title: string; description: string } {
   const service = extractServiceName(event.verifierDid ?? event.issuerDid);
-  const credType = event.credentialType ? ` (${event.credentialType})` : '';
+  const credType = event.credentialType ? ` (${formatCredentialType(event.credentialType)})` : '';
 
   switch (event.action) {
     case 'queued':

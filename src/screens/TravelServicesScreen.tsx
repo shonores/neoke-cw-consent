@@ -53,6 +53,7 @@ export default function TravelServicesScreen({ navigate }: Props) {
   const [error, setError] = useState('');
   const [services, setServices] = useState<Array<{ did: string; name: string; lastShared: string }>>([]);
   const [blockedRules, setBlockedRules] = useState<ConsentRule[]>([]);
+  const [globalRules, setGlobalRules] = useState<ConsentRule[]>([]);
   const [blockedOpen, setBlockedOpen] = useState(false);
 
   const load = useCallback(async () => {
@@ -96,6 +97,13 @@ export default function TravelServicesScreen({ navigate }: Props) {
         !r.enabled
       );
       setBlockedRules(blocked);
+
+      const globals = rules.filter(r =>
+        r.ruleType === 'verification' &&
+        r.party.matchType === 'any' &&
+        r.enabled
+      );
+      setGlobalRules(globals);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load services.');
     } finally {
@@ -156,6 +164,32 @@ export default function TravelServicesScreen({ navigate }: Props) {
           </div>
         ) : (
           <>
+            {globalRules.length > 0 && (
+              <div className="space-y-1">
+                <p className="text-[11px] font-semibold text-[#868496] uppercase tracking-wider px-1">Active for all requesters</p>
+                {globalRules.map(rule => (
+                  <button
+                    key={rule.id}
+                    className="w-full flex gap-3 items-center px-3 py-3 text-left bg-[#e9e7f9] border border-[#5843de]/20 rounded-[12px] active:opacity-80 transition-opacity"
+                    onClick={() => navigate('travel_service_detail', { selectedServiceDid: '__global__' + rule.id })}
+                  >
+                    <div className="w-11 h-11 rounded-full bg-[#5843de]/15 flex items-center justify-center flex-shrink-0">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="9" stroke="#5843de" strokeWidth="1.7"/>
+                        <path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round"/>
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[16px] font-semibold text-[#28272e] leading-6">{rule.label ?? 'All requesters'}</p>
+                      <p className="text-[14px] text-[#5843de] leading-5">Always share with everyone · Never expires</p>
+                    </div>
+                    <svg width="7" height="12" viewBox="0 0 7 12" fill="none" className="flex-shrink-0">
+                      <path d="M1 1l5 5-5 5" stroke="#5843de" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                ))}
+              </div>
+            )}
             <div className="bg-white rounded-[12px] border border-[#f1f1f3] overflow-hidden divide-y divide-[#f1f1f3]">
               {services.map(s => (
                 <button
