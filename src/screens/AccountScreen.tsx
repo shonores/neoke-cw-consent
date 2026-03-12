@@ -218,7 +218,7 @@ function ListItem({
 
 export default function AccountScreen({ navigate }: Props) {
   const { state, logout } = useAuth();
-  const { state: ceState, removeCe, refreshHealth } = useConsentEngine();
+  const { state: ceState, removeCe, refreshHealth, autoConfigureCe } = useConsentEngine();
   const [showDisconnectSheet, setShowDisconnectSheet] = useState(false);
   const [showDeleteSheet, setShowDeleteSheet] = useState(false);
 
@@ -277,10 +277,10 @@ export default function AccountScreen({ navigate }: Props) {
           <ListItem
             icon={<IconShield />}
             label="Consent Engine"
-            sublabel={ceState.isConnected ? 'Connected' : 'Not connected'}
+            sublabel={ceState.ceEnabled && ceState.isConnected ? 'Connected' : ceState.ceEnabled ? 'Not connected' : 'Not set up'}
             right={
               <div className="flex items-center gap-2">
-                {!ceState.isConnected && (
+                {ceState.ceEnabled && !ceState.isConnected && (
                   <button
                     onClick={e => { e.stopPropagation(); refreshHealth(); }}
                     className="text-[13px] font-medium text-orange-600 active:opacity-70"
@@ -288,13 +288,13 @@ export default function AccountScreen({ navigate }: Props) {
                     Retry
                   </button>
                 )}
-                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${ceState.isConnected ? 'bg-[#198e41]' : 'bg-orange-400'}`} />
+                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${ceState.ceEnabled && ceState.isConnected ? 'bg-[#198e41]' : 'bg-orange-400'}`} />
               </div>
             }
             onClick={() => {}}
           />
           {/* CE sub-actions */}
-          {ceState.ceEnabled && (
+          {ceState.ceEnabled ? (
             <div className="flex gap-1 px-2 pb-1">
               <button
                 onClick={() => navigate('consent_rules')}
@@ -318,6 +318,15 @@ export default function AccountScreen({ navigate }: Props) {
                 className="flex-1 py-2.5 text-[14px] font-medium text-[#aa281e] bg-[#fbeae9] rounded-[10px] active:opacity-70 transition-opacity"
               >
                 Disconnect
+              </button>
+            </div>
+          ) : (
+            <div className="px-2 pb-1">
+              <button
+                onClick={autoConfigureCe}
+                className="w-full py-2.5 text-[14px] font-medium text-[#5843de] bg-[#f4f3fc] rounded-[10px] active:opacity-70 transition-opacity"
+              >
+                Connect
               </button>
             </div>
           )}
