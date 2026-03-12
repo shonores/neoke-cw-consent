@@ -20,6 +20,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import CredentialThumbnail from '../components/CredentialThumbnail';
 import OptionCard from '../components/OptionCard';
+import ConsentRequestView from '../components/ConsentRequestView';
 import type { Credential, VPPreviewResponse, ViewName } from '../types';
 
 type Stage = 'scan' | 'loading' | 'select' | 'consent' | 'presenting' | 'success' | 'error';
@@ -390,6 +391,10 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
 
   if (stage === 'consent' && preview) {
     const verifierName = preview.verifier.name ?? parseIssuerLabel(preview.verifier.clientId);
+    const credentialRows = preview.queries
+      .map(q => q.candidates.find(c => c.index === selections[q.queryId]) ?? q.candidates[0])
+      .filter(Boolean)
+      .map(cand => ({ types: cand!.type, issuer: cand!.issuer }));
 
     return (
       <div className="flex flex-col min-h-screen bg-[var(--bg-ios)] overflow-x-hidden">
@@ -404,85 +409,16 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
           </button>
         </nav>
 
-        <div className="px-5 pb-6 flex-shrink-0">
-          <h2 className="text-[28px] font-bold text-[var(--text-main)] leading-tight">
-            <span className="text-[var(--primary)] font-black">{verifierName}</span><br />
-            requests some info
-          </h2>
-        </div>
-
-        <div className="px-5 flex-1 overflow-y-auto pb-44 space-y-6">
-          {preview.verifier.purpose && (
-            <div>
-              <p className="text-[12px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Purpose</p>
-              <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] px-5 py-5 shadow-[var(--shadow-sm)] border border-[var(--border-subtle)]">
-                <p className="text-[15px] font-bold text-[var(--text-main)] leading-relaxed">"{preview.verifier.purpose}"</p>
-              </div>
-            </div>
-          )}
-
-          <div>
-            <p className="text-[12px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Info to share</p>
-            <div className="space-y-3">
-              {preview.queries.map((query) => {
-                const cand = query.candidates.find((c) => c.index === selections[query.queryId]) ?? query.candidates[0];
-                if (!cand) return null;
-
-                const localCred = findLocalCred(cand.type, cand.issuer);
-                const { backgroundColor, textColor } = localCred
-                  ? getCardColor(localCred)
-                  : getCardColorForTypes(cand.type);
-                const logoUrl = localCred?.displayMetadata?.logoUrl;
-                const label = localCred ? getCredentialLabel(localCred) : getCandidateLabel(cand.type);
-                const issuerLabel = parseIssuerLabel(cand.issuer);
-
-                return (
-                  <div
-                    key={query.queryId}
-                    className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] flex items-center px-4 py-4 shadow-[var(--shadow-sm)] border border-[var(--border-subtle)]"
-                  >
-                    <CredentialThumbnail
-                      backgroundColor={backgroundColor}
-                      textColor={textColor}
-                      logoUrl={logoUrl}
-                      className="mr-4"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[16px] font-bold text-[var(--text-main)] truncate">{label}</p>
-                      <p className="text-[13px] text-[var(--text-muted)] truncate font-medium">{issuerLabel}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-5 pt-4 pb-10 bg-[var(--bg-ios)] z-40 border-t border-[var(--border-subtle)] space-y-2">
-          <button
-            onClick={handleShare}
-            className="w-full py-4 text-[16px] font-semibold text-white bg-[#5B4FE9] rounded-2xl active:opacity-80 transition-opacity"
-          >
-            Share information
-          </button>
-          {ceState.ceEnabled && ceState.ceApiKey && (
-            <button
-              onClick={handleAlwaysShare}
-              className="w-full py-4 text-[16px] font-semibold text-[#5B4FE9] bg-[#5B4FE9]/10 rounded-2xl active:opacity-80 transition-opacity"
-            >
-              Always share with {verifierName}
-            </button>
-          )}
-          <button
-            onClick={() => setStage(preview.queries.some(q => q.candidates.length > 1) ? 'select' : 'scan')}
-            className="w-full py-4 text-[16px] font-medium text-[#8e8e93] bg-[#F2F2F7] rounded-2xl active:opacity-80 transition-opacity"
-          >
-            Don't share
-          </button>
-          <p className="text-center text-[12px] text-[#8e8e93] pt-1">
-            You can always change these later in your Profile
-          </p>
-        </div>
+        <ConsentRequestView
+          serviceName={verifierName}
+          isVP={true}
+          purpose={preview.verifier.purpose}
+          credentialRows={credentialRows}
+          actionState="idle"
+          onShare={handleShare}
+          onAlwaysShare={ceState.ceEnabled && ceState.ceApiKey ? handleAlwaysShare : undefined}
+          onReject={() => setStage(preview.queries.some(q => q.candidates.length > 1) ? 'select' : 'scan')}
+        />
       </div>
     );
   }
