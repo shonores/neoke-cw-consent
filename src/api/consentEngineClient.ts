@@ -302,9 +302,10 @@ export async function deleteQueueItem(apiKey: string, requestId: string): Promis
 // ============================================================
 export async function listAuditEvents(
   apiKey: string,
-  opts?: { limit?: number; offset?: number; filter?: string }
+  opts?: { nodeId?: string; limit?: number; offset?: number; filter?: string }
 ): Promise<AuditEvent[]> {
   const params = new URLSearchParams();
+  if (opts?.nodeId) params.set('nodeId', opts.nodeId);
   if (opts?.limit !== undefined) params.set('limit', String(opts.limit));
   if (opts?.offset !== undefined) params.set('offset', String(opts.offset));
   if (opts?.filter) params.set('filter', opts.filter);

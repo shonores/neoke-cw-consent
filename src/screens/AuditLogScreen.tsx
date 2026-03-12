@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
+import { useAuth } from '../context/AuthContext';
 import { listAuditEvents } from '../api/consentEngineClient';
 import type { AuditEvent, AuditAction } from '../types/consentEngine';
 import type { ViewName } from '../types';
@@ -207,7 +208,9 @@ function ActivityItem({ event, onViewRequest }: { event: AuditEvent; onViewReque
 
 export default function AuditLogScreen({ navigate }: Props) {
   const { state } = useConsentEngine();
+  const { state: authState } = useAuth();
   const apiKey = state.ceApiKey ?? '';
+  const nodeId = authState.nodeIdentifier ?? '';
 
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -229,6 +232,7 @@ export default function AuditLogScreen({ navigate }: Props) {
 
     try {
       const data = await listAuditEvents(apiKey, {
+        nodeId,
         limit: PAGE_SIZE,
         offset: offsetRef.current,
       });
@@ -245,7 +249,7 @@ export default function AuditLogScreen({ navigate }: Props) {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [apiKey]);
+  }, [apiKey, nodeId]);
 
   useEffect(() => { loadEvents(true); }, [loadEvents]);
 
