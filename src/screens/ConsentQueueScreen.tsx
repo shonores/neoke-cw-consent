@@ -1,11 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
-import { listQueue, rejectQueueItem } from '../api/consentEngineClient';
+import { listQueue } from '../api/consentEngineClient';
 import IconButton from '../components/IconButton';
-import PrimaryButton from '../components/PrimaryButton';
-import SecondaryButton from '../components/SecondaryButton';
-import type { PendingRequest, RequestStatus } from '../types/consentEngine';
+import type { PendingRequest } from '../types/consentEngine';
 import type { ViewName } from '../types';
 
 const variants = {
@@ -18,155 +16,91 @@ interface Props {
   navigate: (view: ViewName, extra?: { selectedQueueItemId?: string | null }) => void;
 }
 
-type FilterTab = 'all' | RequestStatus;
-
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const secs = Math.floor(diff / 1000);
-  if (secs < 60) return `${secs}s ago`;
+  if (secs < 60) return 'Just now';
   const mins = Math.floor(secs / 60);
-  if (mins < 60) return `${mins} min ago`;
+  if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-function isExpiringSoon(expiresAt: string): boolean {
-  const diff = new Date(expiresAt).getTime() - Date.now();
-  return diff > 0 && diff < 3600_000; // < 1 hour
+function extractServiceName(did?: string, name?: string): string {
+  if (name) return name;
+  if (!did) return 'Unknown service';
+  const webMatch = did.match(/^did:web:([^#?/]+)/);
+  if (webMatch) return webMatch[1];
+  if (did.startsWith('did:')) {
+    const parts = did.split(':');
+    const last = parts[parts.length - 1];
+    return last.length > 16 ? last.slice(0, 8) + '…' + last.slice(-4) : last;
+  }
+  return did.length > 20 ? did.slice(0, 10) + '…' + did.slice(-6) : did;
 }
 
-function isExpired(expiresAt: string): boolean {
-  return new Date(expiresAt).getTime() < Date.now();
+function getItemTitle(item: PendingRequest): string {
+  if (item.linkType === 'vp_request') {
+    return extractServiceName(item.preview.verifier?.clientId, item.preview.verifier?.name);
+  }
+  return extractServiceName(item.preview.issuerDid);
 }
 
-interface RejectSheetProps {
-  item: PendingRequest;
-  onConfirm: () => void;
-  onCancel: () => void;
-  loading: boolean;
+function getItemMessage(item: PendingRequest): string {
+  if (item.linkType === 'vp_request') {
+    const service = extractServiceName(item.preview.verifier?.clientId, item.preview.verifier?.name);
+    const purpose = item.preview.verifier?.purpose;
+    if (purpose) return `${service} wants access to your info to ${purpose}.`;
+    return `${service} is requesting to verify your credentials.`;
+  }
+  const issuer = extractServiceName(item.preview.issuerDid);
+  const type = item.preview.credentialTypes?.[0];
+  return type
+    ? `${issuer} is offering you a ${type}.`
+    : `${issuer} is offering you a credential.`;
 }
 
-function RejectSheet({ item, onConfirm, onCancel, loading }: RejectSheetProps) {
-  const label = item.linkType === 'credential_offer' ? 'Credential Offer' : 'Verification Request';
+function ServiceAvatar() {
   return (
-    <div className="fixed inset-0 z-50" onClick={onCancel}>
-      <div className="absolute inset-0 bg-black/40" />
-      <div
-        className="fixed inset-x-0 bottom-0 bg-white rounded-t-3xl shadow-2xl p-6 z-50 border-t border-black/5"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="w-10 h-1 bg-[#c7c7cc] rounded-full mx-auto mb-5" />
-        <h3 className="text-[18px] font-bold text-[var(--text-main)] mb-2">Reject Request</h3>
-        <p className="text-[14px] text-[var(--text-muted)] mb-6">
-          Reject this {label}? This cannot be undone.
-        </p>
-        <div className="space-y-3">
-          <PrimaryButton
-            onClick={onConfirm}
-            loading={loading}
-            className="bg-[var(--text-error)]"
-          >
-            Reject Request
-          </PrimaryButton>
-          <SecondaryButton
-            onClick={onCancel}
-          >
-            Cancel
-          </SecondaryButton>
-        </div>
-      </div>
+    <div className="w-11 h-11 rounded-full bg-[#f4f3fc] flex items-center justify-center flex-shrink-0">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L4 6v6c0 5.25 3.5 9.74 8 11 4.5-1.26 8-5.75 8-11V6l-8-4z"
+          stroke="#5843de" strokeWidth="1.7" strokeLinejoin="round" />
+      </svg>
     </div>
   );
 }
 
-function QueueItemCard({
-  item,
-  onApprove,
-  onReject,
-}: {
-  item: PendingRequest;
-  onApprove: () => void;
-  onReject: () => void;
-}) {
-  const isVP = item.linkType === 'vp_request';
-  const borderColor = isVP ? 'var(--primary)' : '#059669';
-  const soon = item.status === 'pending' && isExpiringSoon(item.expiresAt);
-  const expired = isExpired(item.expiresAt);
-
-  const typeLabel = isVP ? 'Verification Request' : 'Credential Offer';
-  const partyLabel = isVP
-    ? (item.preview.verifier?.name ?? item.preview.verifier?.clientId ?? 'Unknown verifier')
-    : (item.preview.issuerDid ? item.preview.issuerDid.slice(0, 30) + '…' : 'Unknown issuer');
-
-  const actionLabel = item.status !== 'pending' ? (item.resolvedAction === 'approved' ? 'Approved' : item.resolvedAction === 'rejected' ? 'Rejected' : 'Expired') : null;
+function InboxItem({ item, onClick }: { item: PendingRequest; onClick: () => void }) {
+  const isPending = item.status === 'pending';
+  const title = getItemTitle(item);
+  const message = getItemMessage(item);
 
   return (
-    <div
-      className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] overflow-hidden border border-[var(--border-subtle)]"
-      style={{ borderLeft: `5px solid ${borderColor}` }}
+    <button
+      className="w-full text-left"
+      onClick={onClick}
     >
-      <div className="px-4 py-4">
-        {/* Header row */}
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-[11px] font-bold uppercase tracking-[0.05em] italic" style={{ color: borderColor }}>
-            {typeLabel}
-          </span>
-          {soon && (
-            <span className="text-[10px] font-bold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full uppercase tracking-tighter italic">
-              Soon
-            </span>
-          )}
-          {expired && item.status === 'pending' && (
-            <span className="text-[10px] font-bold bg-[#F2F2F7] text-[var(--text-muted)] px-2 py-0.5 rounded-full uppercase tracking-tighter italic">
-              Expired
-            </span>
-          )}
-          {actionLabel && (
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter italic ${item.resolvedAction === 'approved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
-              }`}>
-              {actionLabel}
-            </span>
-          )}
-          <span className="text-[12px] text-[var(--text-muted)] ml-auto font-bold italic">{timeAgo(item.createdAt)}</span>
+      <div className="flex gap-3 items-center px-4 py-3 relative active:bg-[#f7f6f8] transition-colors">
+        {/* Unread dot */}
+        {isPending && (
+          <div className="absolute left-4 top-6 w-3 h-3 rounded-full bg-[#aa281e] border-2 border-white z-10" />
+        )}
+        <ServiceAvatar />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2 w-full">
+            <p className={`text-[16px] leading-6 truncate ${isPending ? 'font-semibold text-[#28272e]' : 'font-normal text-[#6d6b7e]'}`}>
+              {title}
+            </p>
+            <span className="text-[12px] text-[#868496] flex-shrink-0 leading-6">{timeAgo(item.createdAt)}</span>
+          </div>
+          <p className={`text-[14px] leading-5 line-clamp-2 ${isPending ? 'text-[#28272e] font-semibold' : 'text-[#6d6b7e]'}`}>
+            {message}
+          </p>
         </div>
-
-        {/* Party */}
-        <p className="text-[16px] font-bold text-[var(--text-main)] mb-1 truncate italic">{partyLabel}</p>
-
-        {/* What they want */}
-        {isVP && item.preview.requestedFields && item.preview.requestedFields.length > 0 && (
-          <p className="text-[13px] text-[var(--text-muted)] truncate font-medium">
-            Requesting: {item.preview.requestedFields.slice(0, 4).join(', ')}
-            {item.preview.requestedFields.length > 4 ? ` +${item.preview.requestedFields.length - 4} more` : ''}
-          </p>
-        )}
-        {!isVP && item.preview.credentialTypes && item.preview.credentialTypes.length > 0 && (
-          <p className="text-[13px] text-[var(--text-muted)] truncate font-medium">
-            Offering: {item.preview.credentialTypes.slice(0, 2).join(', ')}
-          </p>
-        )}
       </div>
-
-      {/* Actions — only for pending items */}
-      {item.status === 'pending' && !expired && (
-        <div className="flex border-t border-[var(--border-subtle)]">
-          <button
-            onClick={onReject}
-            className="flex-1 py-3.5 text-[14px] font-bold text-[var(--text-error)] border-r border-[var(--border-subtle)] active:bg-red-50 transition-colors italic"
-          >
-            Reject
-          </button>
-          <button
-            onClick={onApprove}
-            className="flex-1 py-3.5 text-[14px] font-bold active:bg-[var(--primary-bg)] transition-colors italic"
-            style={{ color: borderColor }}
-          >
-            {isVP ? 'Review' : 'Accept'}
-          </button>
-        </div>
-      )}
-    </div>
+    </button>
   );
 }
 
@@ -177,9 +111,6 @@ export default function ConsentQueueScreen({ navigate }: Props) {
   const [items, setItems] = useState<PendingRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filter, setFilter] = useState<FilterTab>('all');
-  const [rejectingItem, setRejectingItem] = useState<PendingRequest | null>(null);
-  const [rejectLoading, setRejectLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -187,58 +118,26 @@ export default function ConsentQueueScreen({ navigate }: Props) {
     try {
       const data = await listQueue(apiKey);
       setItems(data);
+      await refreshPendingCount();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not load queue.');
+      setError(err instanceof Error ? err.message : 'Could not load inbox.');
     } finally {
       setLoading(false);
     }
-  }, [apiKey]);
+  }, [apiKey, refreshPendingCount]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
 
-  const filtered = filter === 'all' ? items : items.filter(i => i.status === filter);
-
-  const handleReject = async () => {
-    if (!rejectingItem) return;
-    setRejectLoading(true);
-    try {
-      await rejectQueueItem(apiKey, rejectingItem.id);
-      setItems(prev => prev.map(i => i.id === rejectingItem.id
-        ? { ...i, status: 'rejected', resolvedAction: 'rejected' }
-        : i
-      ));
-      setRejectingItem(null);
-      await refreshPendingCount();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not reject request.');
-      setRejectingItem(null);
-    } finally {
-      setRejectLoading(false);
-    }
-  };
-
-  const pendingCount = items.filter(i => i.status === 'pending').length;
+  const pendingItems = items.filter(i => i.status === 'pending');
+  const resolvedItems = items.filter(i => i.status !== 'pending');
 
   return (
-    <motion.div variants={variants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col bg-[var(--bg-ios)] min-h-screen">
-      {/* Minimalist Top Nav */}
-      <nav className="px-5 pt-14 pb-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate('account')}
-            className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-          </button>
-          <h1 className="text-[20px] font-bold text-[var(--text-main)]">
-            Approval Queue
-          </h1>
-        </div>
+    <motion.div variants={variants} initial="initial" animate="animate" exit="exit"
+      className="flex-1 flex flex-col bg-[#f7f6f8] min-h-screen">
 
+      {/* Nav */}
+      <nav className="px-5 pt-14 pb-2 flex items-center justify-between">
+        <h1 className="text-[28px] font-bold text-[#28272e] leading-8">Inbox</h1>
         <IconButton onClick={load} aria-label="Refresh">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
             <path d="M21 12a9 9 0 11-9-9 9 9 0 019 9z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -247,81 +146,69 @@ export default function ConsentQueueScreen({ navigate }: Props) {
         </IconButton>
       </nav>
 
-      {pendingCount > 0 && (
-        <div className="px-5 mb-2">
-          <p className="text-[12px] text-[var(--text-muted)] font-bold uppercase tracking-wider italic">{pendingCount} pending items</p>
-        </div>
-      )}
-
-      {/* Filter tabs */}
-      <div className="px-5 mb-4">
-        <div className="flex bg-black/5 rounded-xl p-1 gap-1">
-          {(['all', 'pending', 'approved', 'rejected'] as const).map(tab => (
-            <button
-              key={tab}
-              onClick={() => setFilter(tab)}
-              className={`flex-1 py-2 text-[12px] font-bold rounded-lg transition-all capitalize italic ${filter === tab ? 'bg-white text-[var(--text-main)] shadow-sm' : 'text-[var(--text-muted)]'}`}
-            >
-              {tab === 'all' ? 'All' : tab}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <main className="flex-1 px-5 pb-28 space-y-3">
+      <main className="flex-1 px-4 pb-28 space-y-3 pt-2">
         {loading ? (
-          <>
+          <div className="bg-white rounded-[12px] border border-[#f1f1f3]">
             {[1, 2, 3].map(i => (
-              <div key={i} className="animate-pulse bg-white rounded-2xl h-28 w-full shadow-sm" />
+              <div key={i} className="flex gap-3 px-4 py-3 animate-pulse border-b border-[#f1f1f3] last:border-0">
+                <div className="w-11 h-11 rounded-full bg-[#f4f3fc] flex-shrink-0" />
+                <div className="flex-1 space-y-2 pt-1">
+                  <div className="h-4 bg-[#f1f1f3] rounded w-1/2" />
+                  <div className="h-3 bg-[#f1f1f3] rounded w-full" />
+                  <div className="h-3 bg-[#f1f1f3] rounded w-3/4" />
+                </div>
+              </div>
             ))}
-          </>
-        ) : error ? (
-          <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-4">
-            <p className="text-[14px] text-red-600 mb-3 font-medium">{error}</p>
-            <button onClick={load} className="text-[14px] font-bold text-[var(--primary)] italic">Try again</button>
           </div>
-        ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center pt-16 text-center px-4">
-            <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mb-4">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" fill="#059669" fillOpacity="0.12" />
-                <path d="M8 12l3 3 5-5" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        ) : error ? (
+          <div className="bg-red-50 border border-red-200 rounded-[12px] px-4 py-4">
+            <p className="text-[14px] text-[#aa281e] mb-3 font-medium">{error}</p>
+            <button onClick={load} className="text-[14px] font-semibold text-[#5843de]">Try again</button>
+          </div>
+        ) : items.length === 0 ? (
+          <div className="bg-white rounded-[12px] border border-[#f1f1f3] p-8 flex flex-col items-center text-center">
+            <div className="w-16 h-16 bg-[#f4f3fc] rounded-full flex items-center justify-center mb-4">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
-            <p className="text-[17px] font-bold text-[#1c1c1e] mb-2 italic">All caught up</p>
-            <p className="text-[14px] text-[#8e8e93] font-medium">
-              {filter === 'pending' ? 'No pending requests.' : 'No requests in this category.'}
+            <p className="text-[17px] font-bold text-[#28272e] mb-2">All caught up</p>
+            <p className="text-[14px] text-[#868496] leading-relaxed">
+              No requests in your inbox.
             </p>
           </div>
         ) : (
-          <AnimatePresence>
-            {filtered.map(item => (
-              <motion.div
-                key={item.id}
-                layout
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-              >
-                <QueueItemCard
-                  item={item}
-                  onApprove={() => navigate('consent_queue_detail', { selectedQueueItemId: item.id })}
-                  onReject={() => setRejectingItem(item)}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
+          <>
+            {pendingItems.length > 0 && (
+              <div className="bg-white rounded-[12px] border border-[#f1f1f3] overflow-hidden divide-y divide-[#f1f1f3]">
+                {pendingItems.map(item => (
+                  <InboxItem
+                    key={item.id}
+                    item={item}
+                    onClick={() => navigate('consent_queue_detail', { selectedQueueItemId: item.id })}
+                  />
+                ))}
+              </div>
+            )}
+            {resolvedItems.length > 0 && (
+              <>
+                {pendingItems.length > 0 && (
+                  <p className="text-[11px] font-semibold text-[#868496] uppercase tracking-wider px-1">Earlier</p>
+                )}
+                <div className="bg-white rounded-[12px] border border-[#f1f1f3] overflow-hidden divide-y divide-[#f1f1f3]">
+                  {resolvedItems.map(item => (
+                    <InboxItem
+                      key={item.id}
+                      item={item}
+                      onClick={() => navigate('consent_queue_detail', { selectedQueueItemId: item.id })}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </>
         )}
       </main>
-
-      {rejectingItem && (
-        <RejectSheet
-          item={rejectingItem}
-          onConfirm={handleReject}
-          onCancel={() => setRejectingItem(null)}
-          loading={rejectLoading}
-        />
-      )}
     </motion.div>
   );
 }
