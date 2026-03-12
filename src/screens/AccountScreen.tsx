@@ -293,34 +293,8 @@ export default function AccountScreen({ navigate }: Props) {
             }
             onClick={() => {}}
           />
-          {/* CE sub-actions */}
-          {ceState.ceEnabled ? (
-            <div className="flex gap-1 px-2 pb-1">
-              <button
-                onClick={() => navigate('consent_rules')}
-                className="flex-1 py-2.5 text-[14px] font-medium text-[#5843de] bg-[#f4f3fc] rounded-[10px] active:opacity-70 transition-opacity"
-              >
-                Rules
-              </button>
-              <button
-                onClick={() => navigate('consent_queue')}
-                className="flex-1 py-2.5 text-[14px] font-medium text-[#5843de] bg-[#f4f3fc] rounded-[10px] active:opacity-70 transition-opacity relative"
-              >
-                Queue
-                {ceState.pendingCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-[#FF3B30] text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
-                    {ceState.pendingCount > 9 ? '9+' : ceState.pendingCount}
-                  </span>
-                )}
-              </button>
-              <button
-                onClick={() => setShowDisconnectSheet(true)}
-                className="flex-1 py-2.5 text-[14px] font-medium text-[#aa281e] bg-[#fbeae9] rounded-[10px] active:opacity-70 transition-opacity"
-              >
-                Disconnect
-              </button>
-            </div>
-          ) : (
+          {/* CE connect button (only when not enabled) */}
+          {!ceState.ceEnabled && (
             <div className="px-2 pb-1">
               <button
                 onClick={autoConfigureCe}

@@ -84,22 +84,30 @@ function TabBar({
         <span className="text-[10px] font-medium">Scan QR Code</span>
       </button>
 
-      {/* Consent (conditional) */}
+      {/* Inbox (consent queue) */}
       {ceEnabled && (
         <button
           className={`flex-1 flex flex-col items-center gap-1 pt-3 pb-3 transition-colors relative ${consentActive ? 'text-[#5B4FE9]' : 'text-[#8e8e93]'}`}
           onClick={() => onNavigate('consent_queue')}
-          aria-label="Consent"
+          aria-label="Inbox"
         >
           <div className="relative">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path
-                d="M12 2L4 6v6c0 5.25 3.5 9.74 8 11 4.5-1.26 8-5.75 8-11V6l-8-4z"
+                d="M2 12h4l2 3h8l2-3h4"
                 stroke="currentColor"
                 strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
                 strokeLinejoin="round"
                 fill={consentActive ? 'currentColor' : 'none'}
-                fillOpacity={consentActive ? 0.12 : 0}
+                fillOpacity={consentActive ? 0.08 : 0}
               />
             </svg>
             {pendingCount > 0 && (
@@ -108,32 +116,33 @@ function TabBar({
               </span>
             )}
           </div>
-          <span className="text-[10px] font-medium">Consent</span>
+          <span className="text-[10px] font-medium">Inbox</span>
         </button>
       )}
 
-      {/* Account */}
+      {/* Profile */}
       <button
         className={`flex-1 flex flex-col items-center gap-1 pt-3 pb-3 transition-colors ${accountActive ? 'text-[#5B4FE9]' : 'text-[#8e8e93]'}`}
         onClick={() => onNavigate('account')}
-        aria-label="Account"
+        aria-label="Profile"
       >
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
           <circle
-            cx="12" cy="8" r="4"
+            cx="8" cy="8" r="3.5"
             stroke="currentColor"
             strokeWidth="1.7"
             fill={accountActive ? 'currentColor' : 'none'}
             fillOpacity={accountActive ? 0.12 : 0}
           />
           <path
-            d="M4 20c0-4 3.6-7 8-7s8 3 8 7"
+            d="M2 20c0-3.31 2.69-6 6-6s6 2.69 6 6"
             stroke="currentColor"
             strokeWidth="1.7"
             strokeLinecap="round"
           />
+          <path d="M16 6h6M16 10h4M16 14h5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
         </svg>
-        <span className="text-[10px] font-medium">Account</span>
+        <span className="text-[10px] font-medium">Profile</span>
       </button>
     </div>
   );

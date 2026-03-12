@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   getCardColor,
@@ -11,11 +11,14 @@ import {
 } from '../utils/credentialHelpers';
 import { deleteLocalCredential } from '../store/localCredentials';
 import { deleteCredential } from '../api/client';
+import { listAuditEvents } from '../api/consentEngineClient';
 import { useAuth } from '../context/AuthContext';
+import { useConsentEngine } from '../context/ConsentEngineContext';
 import StatusBadge from '../components/StatusBadge';
 import CredentialCardFace from '../components/CredentialCardFace';
 import IconButton from '../components/IconButton';
 import type { Credential } from '../types';
+import type { AuditEvent } from '../types/consentEngine';
 
 interface CredentialDetailScreenProps {
   credential: Credential;
@@ -23,11 +26,99 @@ interface CredentialDetailScreenProps {
   onCredentialDeleted?: () => void;
 }
 
+type Tab = 'details' | 'activity';
+
 const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}/;
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function serviceNameFromDid(did?: string): string {
+  if (!did) return 'Unknown';
+  if (did.startsWith('did:web:')) {
+    const domain = did.slice('did:web:'.length).split(':')[0];
+    const first = domain.split('.')[0];
+    return first.charAt(0).toUpperCase() + first.slice(1);
+  }
+  const parts = did.split(':');
+  const last = parts[parts.length - 1];
+  return last.charAt(0).toUpperCase() + last.slice(1);
+}
+
+function initialsFromName(name: string): string {
+  const words = name.split(/[\s\-_]+/).filter(Boolean);
+  if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+}
+
+function actionLabel(event: AuditEvent): string {
+  switch (event.action) {
+    case 'auto_presented':
+      return 'Shared automatically';
+    case 'manually_approved':
+      return 'Shared successfully';
+    case 'auto_received':
+      return 'Received automatically';
+    case 'manually_rejected':
+    case 'rejected':
+      return 'Request declined';
+    case 'queued':
+      return 'Awaiting approval';
+    case 'expired':
+      return 'Request expired';
+    default:
+      return 'Activity recorded';
+  }
+}
+
+function relativeTime(isoTs: string): string {
+  const diff = Date.now() - new Date(isoTs).getTime();
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  return formatDate(isoTs);
+}
+
+function monthLabel(isoTs: string): string {
+  const d = new Date(isoTs);
+  return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
+
+function groupByMonth(events: AuditEvent[]): Array<{ month: string; events: AuditEvent[] }> {
+  const groups: Map<string, AuditEvent[]> = new Map();
+  for (const e of events) {
+    const m = monthLabel(e.timestamp);
+    if (!groups.has(m)) groups.set(m, []);
+    groups.get(m)!.push(e);
+  }
+  return Array.from(groups.entries()).map(([month, evts]) => ({ month, events: evts }));
+}
+
+// ── Avatar ───────────────────────────────────────────────────────────────────
+
+const AVATAR_COLORS = [
+  '#5843de', '#e44b4b', '#2da35e', '#d97706', '#7c3aed',
+  '#0891b2', '#be185d', '#059669',
+];
+
+function avatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 export default function CredentialDetailScreen({ credential, onBack, onCredentialDeleted }: CredentialDetailScreenProps) {
   const { state } = useAuth();
+  const { state: ceState } = useConsentEngine();
   const [deleting, setDeleting] = useState(false);
+  const [tab, setTab] = useState<Tab>('details');
+  const [events, setEvents] = useState<AuditEvent[]>([]);
+  const [loadingActivity, setLoadingActivity] = useState(false);
 
   const { backgroundColor: bgColor, textColor } = getCardColor(credential);
   const label = getCredentialLabel(credential);
@@ -37,6 +128,23 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
 
   const namespaceGroups = getNamespaceGroups(credential);
   const genericFields = namespaceGroups.length === 0 ? extractFields(credential) : [];
+
+  // Fetch activity when the tab is opened
+  useEffect(() => {
+    if (tab !== 'activity' || !ceState.ceEnabled || !ceState.ceApiKey) return;
+    setLoadingActivity(true);
+    const credTypes = (credential.type ?? []).filter((t) => t !== 'VerifiableCredential');
+    listAuditEvents(ceState.ceApiKey, { limit: 200, order: 'desc' })
+      .then((all) => {
+        const filtered = all.filter((e) => {
+          if (!e.credentialType) return false;
+          return credTypes.some((t) => e.credentialType!.includes(t) || t.includes(e.credentialType!));
+        });
+        setEvents(filtered);
+      })
+      .catch(() => setEvents([]))
+      .finally(() => setLoadingActivity(false));
+  }, [tab, ceState.ceEnabled, ceState.ceApiKey, credential.type]);
 
   const handleDelete = async () => {
     if (deleting) return;
@@ -56,6 +164,8 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
       setDeleting(false);
     }
   };
+
+  const groups = groupByMonth(events);
 
   return (
     <motion.div
@@ -127,34 +237,115 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
           )}
         </div>
 
-        {/* Fields */}
-        <div className="flex-1 px-5 pt-3 pb-10">
-          {(namespaceGroups.length > 0 || genericFields.length > 0) && (
-            <div className="space-y-0">
-              {namespaceGroups.length > 0
-                ? namespaceGroups.flatMap((group, gi) =>
-                  group.fields.map((field, fi) => (
-                    <PlainFieldRow
-                      key={`${gi}-${fi}`}
-                      label={field.label}
-                      value={field.value}
-                    />
-                  ))
-                )
-                : genericFields.map((field, i) => (
-                  <PlainFieldRow key={i} label={field.label} value={field.value} />
-                ))}
+        {/* Segmented control — only show Activity tab if CE is enabled */}
+        {ceState.ceEnabled && (
+          <div className="px-5 pt-4 pb-1 flex-shrink-0">
+            <div className="flex bg-[#f2f2f7] rounded-[10px] p-0.5 h-9">
+              {(['details', 'activity'] as Tab[]).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  className={`flex-1 text-[13px] font-medium rounded-[8px] transition-all duration-150 capitalize ${
+                    tab === t
+                      ? 'bg-white shadow-sm text-[var(--text-main)]'
+                      : 'text-[var(--text-muted)]'
+                  }`}
+                >
+                  {t.charAt(0).toUpperCase() + t.slice(1)}
+                </button>
+              ))}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Issuer */}
-          {credential.issuer && (
-            <div className="mt-2">
-              <p className="text-xs text-[#8e8e93] mb-0.5">Issuer</p>
-              <p className="text-[13px] font-mono text-[#3c3c3e] break-all">{credential.issuer}</p>
-            </div>
-          )}
-        </div>
+        {/* Tab content */}
+        {tab === 'details' ? (
+          <div className="flex-1 px-5 pt-3 pb-10">
+            {(namespaceGroups.length > 0 || genericFields.length > 0) && (
+              <div className="space-y-0">
+                {namespaceGroups.length > 0
+                  ? namespaceGroups.flatMap((group, gi) =>
+                    group.fields.map((field, fi) => (
+                      <PlainFieldRow
+                        key={`${gi}-${fi}`}
+                        label={field.label}
+                        value={field.value}
+                      />
+                    ))
+                  )
+                  : genericFields.map((field, i) => (
+                    <PlainFieldRow key={i} label={field.label} value={field.value} />
+                  ))}
+              </div>
+            )}
+
+            {/* Issuer */}
+            {credential.issuer && (
+              <div className="mt-2">
+                <p className="text-xs text-[#8e8e93] mb-0.5">Issuer</p>
+                <p className="text-[13px] font-mono text-[#3c3c3e] break-all">{credential.issuer}</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex-1 pb-10">
+            {loadingActivity ? (
+              <div className="flex justify-center items-center pt-16">
+                <div className="w-6 h-6 border-2 border-[#5843de]/20 border-t-[#5843de] rounded-full animate-spin" />
+              </div>
+            ) : groups.length === 0 ? (
+              <div className="flex flex-col items-center justify-center pt-16 px-8 text-center">
+                <div className="w-14 h-14 rounded-full bg-[#f4f3fc] flex items-center justify-center mb-4">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5843de" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                </div>
+                <p className="text-[15px] font-semibold text-[var(--text-main)] mb-1">No activity yet</p>
+                <p className="text-[13px] text-[var(--text-muted)]">Sharing events for this credential will appear here.</p>
+              </div>
+            ) : (
+              <div className="pt-2">
+                {groups.map(({ month, events: monthEvents }) => (
+                  <div key={month}>
+                    <p className="px-5 pt-4 pb-1 text-[12px] font-semibold text-[var(--text-muted)] uppercase tracking-wide">
+                      {month}
+                    </p>
+                    <div>
+                      {monthEvents.map((e) => {
+                        const serviceName = serviceNameFromDid(e.verifierDid ?? e.issuerDid);
+                        const initials = initialsFromName(serviceName);
+                        const color = avatarColor(serviceName);
+                        const label = actionLabel(e);
+                        const time = relativeTime(e.timestamp);
+                        return (
+                          <div
+                            key={e.id}
+                            className="flex items-center gap-3 px-5 py-3 border-b border-[var(--border-subtle)] last:border-0"
+                          >
+                            {/* Avatar */}
+                            <div
+                              className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-white text-[13px] font-bold"
+                              style={{ backgroundColor: color }}
+                            >
+                              {initials}
+                            </div>
+                            {/* Info */}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[14px] font-semibold text-[var(--text-main)] truncate">{serviceName}</p>
+                              <p className="text-[12px] text-[var(--text-muted)] mt-0.5">{label}</p>
+                            </div>
+                            {/* Time */}
+                            <p className="text-[12px] text-[var(--text-muted)] flex-shrink-0">{time}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </motion.div>
   );
