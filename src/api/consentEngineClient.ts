@@ -303,7 +303,7 @@ export async function deleteQueueItem(apiKey: string, requestId: string): Promis
 // ============================================================
 export async function listAuditEvents(
   apiKey: string,
-  opts?: { nodeId?: string; limit?: number; offset?: number; filter?: string; order?: 'asc' | 'desc'; verifierDid?: string }
+  opts?: { nodeId?: string; limit?: number; offset?: number; filter?: string; order?: 'asc' | 'desc'; verifierDid?: string; credentialType?: string }
 ): Promise<AuditEvent[]> {
   const params = new URLSearchParams();
   if (opts?.nodeId) params.set('nodeId', opts.nodeId);
@@ -312,6 +312,7 @@ export async function listAuditEvents(
   if (opts?.filter) params.set('filter', opts.filter);
   if (opts?.order) params.set('order', opts.order);
   if (opts?.verifierDid) params.set('verifierDid', opts.verifierDid);
+  if (opts?.credentialType) params.set('credentialType', opts.credentialType);
   const qs = params.toString() ? `?${params.toString()}` : '';
   const result = await ceRequest<any>(`/audit${qs}`, apiKey);
   const raw = Array.isArray(result) ? result : (result.events ?? []);

@@ -129,38 +129,31 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
   const namespaceGroups = getNamespaceGroups(credential);
   const genericFields = namespaceGroups.length === 0 ? extractFields(credential) : [];
 
+  // Resolve the canonical credentialType string to pass to CE:
+  // mDoc → docType (e.g. "org.iso.23220.photoid.1")
+  // SD-JWT VC → vct field
+  // VC → first non-base type string
+  const credentialTypeParam: string | undefined = (() => {
+    if (credential.docType) return credential.docType as string;
+    if (credential.vct && typeof credential.vct === 'string') return credential.vct;
+    const types = (credential.type ?? []).filter((t) => t !== 'VerifiableCredential');
+    return types[0];
+  })();
+
   // Fetch activity when the tab is opened
   useEffect(() => {
     if (tab !== 'activity' || !ceState.ceEnabled || !ceState.ceApiKey) return;
     setLoadingActivity(true);
-    const credTypes = (credential.type ?? []).filter((t) => t !== 'VerifiableCredential');
-    const docType = credential.docType as string | undefined;
-    listAuditEvents(ceState.ceApiKey, { limit: 200, order: 'desc' })
-      .then((all) => {
-        // Log a sample event so we know what fields CE actually sends
-        if (all.length > 0) console.debug('[Activity] sample event:', all[0]);
-
-        const anyHaveType = all.some((e) => !!e.credentialType);
-
-        let filtered: AuditEvent[];
-        if (!anyHaveType) {
-          // CE doesn't populate credentialType yet — show all events as fallback
-          filtered = all;
-        } else {
-          filtered = all.filter((e) => {
-            if (!e.credentialType) return true; // include untyped events
-            const ct = e.credentialType.toLowerCase();
-            if (docType && ct.includes(docType.toLowerCase())) return true;
-            return credTypes.some((t) =>
-              ct.includes(t.toLowerCase()) || t.toLowerCase().includes(ct)
-            );
-          });
-        }
-        setEvents(filtered);
-      })
+    listAuditEvents(ceState.ceApiKey, {
+      nodeId: state.nodeIdentifier ?? undefined,
+      credentialType: credentialTypeParam,
+      limit: 200,
+      order: 'desc',
+    })
+      .then(setEvents)
       .catch(() => setEvents([]))
       .finally(() => setLoadingActivity(false));
-  }, [tab, ceState.ceEnabled, ceState.ceApiKey, credential.type]);
+  }, [tab, ceState.ceEnabled, ceState.ceApiKey, credentialTypeParam, state.nodeIdentifier]);
 
   const handleDelete = async () => {
     if (deleting) return;
