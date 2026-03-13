@@ -288,11 +288,23 @@ export function serviceNameFromRuleLabel(label?: string | null): string | null {
 
 /**
  * Best-effort service name from an audit event.
- * Prefers the rule label (which contains the human-readable name set at rule creation),
- * then falls back to extractVerifierName on the raw DID.
+ * Priority:
+ *   1. ruleLabel  — set at approval time, contains the human-readable name
+ *   2. verifierName — CE-supplied field (populated from client_metadata.client_name in VP JWT)
+ *   3. extractVerifierName(verifierDid) — works for did:web / x509_san_dns; returns
+ *      'Unknown service' for opaque x509_hash identifiers
  */
-export function serviceNameFromEvent(event: { ruleLabel?: string | null; verifierDid?: string | null; issuerDid?: string | null }): string {
-  return serviceNameFromRuleLabel(event.ruleLabel) ?? extractVerifierName(event.verifierDid ?? event.issuerDid ?? undefined);
+export function serviceNameFromEvent(event: {
+  ruleLabel?: string | null;
+  verifierName?: string | null;
+  verifierDid?: string | null;
+  issuerDid?: string | null;
+}): string {
+  return (
+    serviceNameFromRuleLabel(event.ruleLabel) ??
+    (event.verifierName?.trim() || null) ??
+    extractVerifierName(event.verifierDid ?? event.issuerDid ?? undefined)
+  );
 }
 
 // ============================================================

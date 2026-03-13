@@ -330,7 +330,7 @@ function EventDetailSheet({
               }}
               className="w-full flex items-center justify-between bg-[#f7f6f8] rounded-[12px] px-4 py-3.5 active:opacity-70 transition-opacity"
             >
-              <span className="text-[15px] font-semibold text-[#5843de]">Open {service} in Travel Services</span>
+              <span className="text-[15px] font-semibold text-[#5843de]">Open {service} in Consent Rules</span>
               <svg width="7" height="12" viewBox="0 0 7 12" fill="none">
                 <path d="M1 1l5 5-5 5" stroke="#5843de" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>

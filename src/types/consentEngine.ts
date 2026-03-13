@@ -123,6 +123,8 @@ export interface AuditEvent {
   ruleId?: string;
   ruleLabel?: string;
   verifierDid?: string;
+  /** Human-readable verifier name — populated by CE from client_metadata.client_name */
+  verifierName?: string | null;
   issuerDid?: string;
   credentialType?: string;
   requestedFields?: string[];
