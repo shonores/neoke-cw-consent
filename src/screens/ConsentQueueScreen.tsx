@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
 import { useAuth } from '../context/AuthContext';
 import { listQueue, deleteQueueItem, clearQueueItems } from '../api/consentEngineClient';
-import IconButton from '../components/IconButton';
+import RefreshButton from '../components/RefreshButton';
 import type { PendingRequest } from '../types/consentEngine';
 import type { ViewName } from '../types';
 
@@ -309,12 +309,7 @@ export default function ConsentQueueScreen({ navigate }: Props) {
               Clear all
             </button>
           )}
-          <IconButton onClick={() => load()} aria-label="Refresh">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M21 12a9 9 0 11-9-9 9 9 0 019 9z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              <path d="M21 3v9h-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </IconButton>
+          <RefreshButton onClick={() => load()} />
         </div>
       </nav>
 

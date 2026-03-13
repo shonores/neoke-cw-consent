@@ -116,6 +116,8 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
   // Use refs for stable callbacks in effects
   const stateRef = useRef(state);
   stateRef.current = state;
+  const authStateRef = useRef(authState);
+  authStateRef.current = authState;
 
   const refreshHealth = useCallback(async () => {
     if (!isCeConfigured()) return;
@@ -176,10 +178,17 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
     const controller = new AbortController();
     sseAbortRef.current = controller;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-    let attempt = 0;
-    const MAX_SSE_ATTEMPTS = 10;
+    let heartbeatTimer: ReturnType<typeof setTimeout> | null = null;
+    // Updated from SSE `retry:` field; default 30s to match CE's guidance
+    let retryDelay = 30_000;
+    const HEARTBEAT_DEADLINE_MS = 90_000; // 3 missed heartbeats
+
+    const clearHeartbeat = () => {
+      if (heartbeatTimer) { clearTimeout(heartbeatTimer); heartbeatTimer = null; }
+    };
 
     const connect = async () => {
+      let shouldReconnect = true;
       try {
         const response = await fetch(`${ceUrl}/sse/${encodeURIComponent(nodeId)}`, {
           headers: { Authorization: `ApiKey ${ceApiKey}` },
@@ -187,13 +196,17 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
         });
         if (!response.ok || !response.body) throw new Error(`SSE ${response.status}`);
 
-        // B3: reset backoff counter on successful connection
-        attempt = 0;
-
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
         let eventType = 'message';
+
+        // Start heartbeat deadline — reset on each heartbeat event
+        const resetHeartbeat = () => {
+          clearHeartbeat();
+          heartbeatTimer = setTimeout(() => { reader.cancel(); }, HEARTBEAT_DEADLINE_MS);
+        };
+        resetHeartbeat();
 
         while (true) {
           const { done, value } = await reader.read();
@@ -202,14 +215,34 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
           const lines = buffer.split('\n');
           buffer = lines.pop() ?? '';
           for (const line of lines) {
-            if (line.startsWith('event: ')) {
+            if (line.startsWith('retry: ')) {
+              const ms = parseInt(line.slice(7).trim(), 10);
+              if (!isNaN(ms)) retryDelay = ms;
+            } else if (line.startsWith('event: ')) {
               eventType = line.slice(7).trim();
             } else if (line.startsWith('data: ')) {
-              if (eventType === 'queue.item.created' || eventType === 'queue.item.resolved') {
+              if (eventType === 'heartbeat') {
+                resetHeartbeat();
+              } else if (eventType === 'auth.error') {
+                clearHeartbeat();
+                dispatch({ type: 'RESET' });
+                // Re-register node with CE so the next reconnect will succeed
+                const { ceApiKey: key } = stateRef.current;
+                const { nodeIdentifier, baseUrl } = authStateRef.current;
+                if (key && nodeIdentifier && baseUrl) {
+                  const cleanUrl = baseUrl.replace(/\/:$/, '');
+                  const nodeApiKey = localStorage.getItem('neoke_node_apikey') ?? '';
+                  lastRegisteredRef.current = ''; // allow re-registration on next attempt
+                  connectNode(key, nodeIdentifier, cleanUrl, nodeApiKey)
+                    .then(() => refreshHealth())
+                    .catch(() => {});
+                }
+                shouldReconnect = true; // reconnect after re-registration
+                break;
+              } else if (eventType === 'queue.item.created' || eventType === 'queue.item.resolved') {
                 dispatch({ type: 'SSE_QUEUE' });
                 refreshPendingCount();
-              }
-              if (eventType === 'audit.event.created') {
+              } else if (eventType === 'audit.event.created') {
                 dispatch({ type: 'SSE_AUDIT' });
               }
               eventType = 'message';
@@ -219,12 +252,12 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
           }
         }
       } catch {
-        if (controller.signal.aborted) return;
-        // B3: exponential backoff — 5s, 10s, 20s, 40s, 60s cap; give up after MAX attempts
-        if (attempt >= MAX_SSE_ATTEMPTS) return;
-        const delay = Math.min(5_000 * Math.pow(2, attempt), 60_000);
-        attempt++;
-        reconnectTimer = setTimeout(connect, delay);
+        /* fall through to reconnect */
+      } finally {
+        clearHeartbeat();
+      }
+      if (!controller.signal.aborted && shouldReconnect) {
+        reconnectTimer = setTimeout(connect, retryDelay);
       }
     };
 
@@ -232,8 +265,9 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
     return () => {
       controller.abort();
       if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (heartbeatTimer) clearTimeout(heartbeatTimer);
     };
-  }, [state.ceUrl, state.ceEnabled, state.ceApiKey, authState.nodeIdentifier, refreshPendingCount]);
+  }, [state.ceUrl, state.ceEnabled, state.ceApiKey, authState.nodeIdentifier, refreshPendingCount, refreshHealth]);
 
   // Fallback polling every 30s (in case SSE drops silently)
   useEffect(() => {
