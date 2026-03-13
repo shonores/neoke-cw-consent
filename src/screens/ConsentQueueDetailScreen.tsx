@@ -96,10 +96,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
               value: item.preview.credentialType,
             },
             allowedFields: {
-              matchType: ((item.preview.requestedFields ?? []).length > 0 ? 'explicit' : 'any') as 'explicit' | 'any',
-              fields: (item.preview.requestedFields ?? []).length > 0
-                ? item.preview.requestedFields
-                : undefined,
+              matchType: 'any' as const,
             },
             expiry: { type: 'never' as const },
           };
@@ -304,7 +301,10 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
         onShare={() => handleShareClick(false)}
         onAlwaysShare={isVP ? () => handleShareClick(true) : undefined}
         onReject={handleReject}
-        onCredentialClick={matchedGroups.length > 0 ? (idx) => setCredPickerType(matchedGroups[idx]?.typeKey ?? null) : undefined}
+        onCredentialClick={matchedGroups.some(g => g.candidates.length > 1) ? (idx) => {
+          const g = matchedGroups[idx];
+          if (g && g.candidates.length > 1) setCredPickerType(g.typeKey ?? null);
+        } : undefined}
         extras={
           <>
             {item.status === 'pending' && isExpired && (

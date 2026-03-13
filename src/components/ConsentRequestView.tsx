@@ -6,6 +6,7 @@ import {
   getCredentialLabel,
   getCandidateLabel,
   parseIssuerLabel,
+  parseDisclosedClaim,
 } from '../utils/credentialHelpers';
 import CredentialThumbnail from './CredentialThumbnail';
 import type { Credential } from '../types';
@@ -78,7 +79,7 @@ function CredentialCardRow({
         <p className="text-[16px] font-bold text-[#28272e] truncate">{label}</p>
         <p className="text-[13px] text-[#868496] truncate font-medium">{issuerLabel}</p>
         {fields && fields.length > 0 && (
-          <p className="text-[12px] text-[#868496] truncate mt-0.5">{fields.join(', ')}</p>
+          <p className="text-[12px] text-[#868496] truncate mt-0.5">{fields.map(parseDisclosedClaim).join(', ')}</p>
         )}
       </div>
       {onClick && (
