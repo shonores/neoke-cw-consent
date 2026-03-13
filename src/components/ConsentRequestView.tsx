@@ -284,13 +284,13 @@ export default function ConsentRequestView({
         <button
           onClick={onReject}
           disabled={sharing}
-          className="w-full text-[#5843de] text-[16px] font-medium py-4 active:opacity-60 transition-opacity disabled:opacity-40"
+          className="w-full text-[#5843de] text-[16px] font-medium py-3.5 rounded-2xl border border-[#5843de]/25 active:opacity-60 transition-opacity disabled:opacity-40"
         >
           Don't share
         </button>
 
-        <p className="text-[12px] text-[#868496] text-center leading-4 pt-1">
-          You can always change these later in your{' '}
+        <p className="text-[11px] text-[#868496] text-center leading-4">
+          You can always change these in{' '}
           <span className="text-[#5843de] font-medium">Profile</span>
         </p>
       </div>

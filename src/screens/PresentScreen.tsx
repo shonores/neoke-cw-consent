@@ -463,11 +463,22 @@ if (stage === 'error') {
           <div className="fixed inset-0 z-[60]" onClick={() => setCredSheet(null)}>
             <div className="absolute inset-0 bg-black/40" />
             <div
-              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[512px] bg-white rounded-t-[24px]"
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[512px] bg-white rounded-t-[24px] relative"
               style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}
               onClick={e => e.stopPropagation()}
             >
-              <div className="w-9 h-1 bg-[#d7d6dc] rounded-full mx-auto mt-3 mb-2" />
+              <div className="flex items-center justify-between px-4 pt-3 pb-1">
+                <div className="w-9 h-1 bg-[#d7d6dc] rounded-full mx-auto" />
+                <button
+                  onClick={() => setCredSheet(null)}
+                  className="absolute right-4 top-3 w-8 h-8 rounded-full bg-black/[0.06] flex items-center justify-center active:bg-black/10 transition-colors"
+                  aria-label="Close"
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M1 1l12 12M13 1L1 13" stroke="#868496" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              </div>
 
               {credSheet.view === 'options' ? (
                 /* ── Options: view details / change ── */
