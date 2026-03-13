@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { previewPresentationWithRetry, respondPresentationWithRetry, resolveVerificationLink, ApiError } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useConsentEngine } from '../context/ConsentEngineContext';
-import { isCeConfigured, createRule } from '../api/consentEngineClient';
+import { isCeConfigured, createRule, listRules } from '../api/consentEngineClient';
 import type { CreateRulePayload } from '../types/consentEngine';
 import { detectUriType, isVerificationLink } from '../utils/uriRouter';
 import {
@@ -321,7 +321,19 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
             : { matchType: 'any' },
           expiry: { type: 'never' },
         };
-        await createRule(apiKey, payload);
+        // Skip if an identical rule already exists
+        const existing = await listRules(apiKey).catch(() => []);
+        const credTypeValue = payload.credentialType.matchType === 'exact' ? payload.credentialType.value : null;
+        const alreadyExists = existing.some(r =>
+          r.enabled &&
+          r.party.matchType === 'did' &&
+          r.party.value === payload.party.value &&
+          r.credentialType.matchType === 'exact' &&
+          r.credentialType.value === credTypeValue
+        );
+        if (!alreadyExists) {
+          await createRule(apiKey, payload);
+        }
       } catch {
         // rule creation failure is non-fatal — proceed to share anyway
       }
@@ -606,7 +618,7 @@ if (stage === 'error') {
 
   return (
     <div className="flex flex-col min-h-screen bg-[var(--bg-ios)]">
-      <nav className="px-5 pt-14 pb-4 flex items-center gap-3">
+      <nav className="sticky top-0 z-10 bg-[var(--bg-ios)] px-5 pt-14 pb-4 flex items-center gap-3">
         <button
           onClick={() => navigate('dashboard')}
           className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"

@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import RefreshButton from '../components/RefreshButton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
 import { useAuth } from '../context/AuthContext';
@@ -499,7 +498,7 @@ export default function AuditLogScreen({ navigate }: Props) {
       className="flex-1 flex flex-col bg-[#f7f6f8] min-h-screen"
     >
       {/* Nav */}
-      <nav className="px-5 pt-14 pb-4 flex items-center gap-3">
+      <nav className="sticky top-0 z-10 bg-[#f7f6f8] px-5 pt-14 pb-4 flex items-center gap-3">
         <button
           onClick={() => navigate('account')}
           className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"
@@ -518,7 +517,6 @@ export default function AuditLogScreen({ navigate }: Props) {
             Clear all
           </button>
         )}
-        <RefreshButton onClick={() => loadEvents(true)} />
       </nav>
 
       <main className="flex-1 px-4 pb-28 space-y-4">

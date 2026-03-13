@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
 import { useAuth } from '../context/AuthContext';
 import { listQueue, deleteQueueItem, clearQueueItems } from '../api/consentEngineClient';
-import RefreshButton from '../components/RefreshButton';
 import type { PendingRequest } from '../types/consentEngine';
 import type { ViewName } from '../types';
 
@@ -299,7 +298,7 @@ export default function ConsentQueueScreen({ navigate }: Props) {
       className="flex-1 flex flex-col bg-[#f7f6f8] min-h-screen">
 
       {/* Nav */}
-      <nav className="px-5 pt-14 pb-2 flex items-center justify-between">
+      <nav className="sticky top-0 z-10 bg-[#f7f6f8] px-5 pt-14 pb-2 flex items-center justify-between">
         <h1 className="text-[28px] font-bold text-[#28272e] leading-8">Inbox</h1>
         <div className="flex items-center gap-2">
           {items.length > 0 && (
@@ -311,7 +310,6 @@ export default function ConsentQueueScreen({ navigate }: Props) {
               Clear all
             </button>
           )}
-          <RefreshButton onClick={() => load()} />
         </div>
       </nav>
 

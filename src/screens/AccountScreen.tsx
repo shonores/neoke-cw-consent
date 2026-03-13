@@ -371,7 +371,7 @@ export default function AccountScreen({ navigate }: Props) {
               </button>
             </div>
           )}
-          <ListItem icon={<IconBuildings />} label="Services" onClick={() => navigate('travel_services')} />
+          <ListItem icon={<IconBuildings />} label="Consent Rules" onClick={() => navigate('travel_services')} />
           <ListItem icon={<IconActivity />} label="Activity" onClick={() => navigate('audit_log')} />
         </ListCard>
 

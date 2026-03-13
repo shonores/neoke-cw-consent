@@ -78,11 +78,14 @@ export default function TravelServicesScreen({ navigate }: Props) {
           r.enabled &&
           !auditDids.has(r.party.value)
         )
-        .map(r => ({
-          did: r.party.value!,
-          name: extractServiceName(r.party.value),
-          lastShared: r.createdAt,
-        }));
+        .map(r => {
+          // Prefer the rule label as service name (strip "Always share with " prefix)
+          const labelName = r.label?.replace(/^Always\s+share\s+with\s+/i, '').replace(/^Always:\s+/i, '').trim();
+          const name = (labelName && !labelName.startsWith('x509_') && !labelName.startsWith('did:'))
+            ? labelName
+            : extractServiceName(r.party.value);
+          return { did: r.party.value!, name, lastShared: r.createdAt };
+        });
 
       const serviceList = [...auditServices, ...ruleServices]
         .sort((a, b) => b.lastShared.localeCompare(a.lastShared));
@@ -121,7 +124,7 @@ export default function TravelServicesScreen({ navigate }: Props) {
   return (
     <motion.div variants={variants} initial="initial" animate="animate" exit="exit"
       className="flex-1 flex flex-col bg-[#f7f6f8] min-h-screen">
-      <nav className="px-5 pt-14 pb-4 flex items-center gap-3">
+      <nav className="sticky top-0 z-10 bg-[#f7f6f8] px-5 pt-14 pb-4 flex items-center gap-3">
         <button
           onClick={() => navigate('account')}
           className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"
@@ -130,12 +133,12 @@ export default function TravelServicesScreen({ navigate }: Props) {
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
-        <h1 className="text-[28px] font-bold text-[#28272e] leading-8">Travel Services</h1>
+        <h1 className="text-[28px] font-bold text-[#28272e] leading-8">Consent Rules</h1>
       </nav>
 
       <main className="flex-1 px-4 pb-28 space-y-3">
         <p className="text-[16px] text-[#28272e] leading-6 px-1 pb-1">
-          Services you've shared your information with.
+          Services you've configured consent rules for.
         </p>
 
         {loading ? (

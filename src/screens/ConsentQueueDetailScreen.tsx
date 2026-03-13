@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
-import { getQueueItem, approveQueueItem, rejectQueueItem, createRule } from '../api/consentEngineClient';
+import { getQueueItem, approveQueueItem, rejectQueueItem, createRule, listRules } from '../api/consentEngineClient';
 import ConsentRequestView from '../components/ConsentRequestView';
 import CredentialCardFace from '../components/CredentialCardFace';
 import { getLocalCredentials } from '../store/localCredentials';
@@ -89,27 +89,38 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
     try {
       if (alwaysRule && item.linkType === 'vp_request') {
         try {
-          await createRule(apiKey, {
+            const rulePayload = {
             nodeId: item.nodeId,
-            ruleType: 'verification',
+            ruleType: 'verification' as const,
             enabled: true,
             label: `Always: ${item.preview.verifier?.name ?? extractServiceName(item.preview.verifier?.clientId)}`,
             party: {
-              matchType: item.preview.verifier?.clientId ? 'did' : 'any',
+              matchType: (item.preview.verifier?.clientId ? 'did' : 'any') as 'did' | 'any',
               value: item.preview.verifier?.clientId,
             },
             credentialType: {
-              matchType: item.preview.credentialType ? 'exact' : 'any',
+              matchType: (item.preview.credentialType ? 'exact' : 'any') as 'exact' | 'any',
               value: item.preview.credentialType,
             },
             allowedFields: {
-              matchType: (item.preview.requestedFields ?? []).length > 0 ? 'explicit' : 'any',
+              matchType: ((item.preview.requestedFields ?? []).length > 0 ? 'explicit' : 'any') as 'explicit' | 'any',
               fields: (item.preview.requestedFields ?? []).length > 0
                 ? item.preview.requestedFields
                 : undefined,
             },
-            expiry: { type: 'never' },
-          });
+            expiry: { type: 'never' as const },
+          };
+          const existing = await listRules(apiKey).catch(() => []);
+          const alreadyExists = existing.some(r =>
+            r.enabled &&
+            r.party.matchType === rulePayload.party.matchType &&
+            r.party.value === rulePayload.party.value &&
+            r.credentialType.matchType === rulePayload.credentialType.matchType &&
+            r.credentialType.value === rulePayload.credentialType.value
+          );
+          if (!alreadyExists) {
+            await createRule(apiKey, rulePayload);
+          }
         } catch { /* rule creation failure is non-fatal; still approve */ }
       }
 

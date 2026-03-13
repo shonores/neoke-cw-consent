@@ -170,7 +170,7 @@ export default function ConsentRulesScreen({ navigate }: Props) {
   return (
     <motion.div variants={variants} initial="initial" animate="animate" exit="exit" className="flex-1 flex flex-col bg-[var(--bg-ios)] min-h-screen">
       {/* Minimalist Top Nav */}
-      <nav className="px-5 pt-14 pb-4 flex items-center justify-between">
+      <nav className="sticky top-0 z-10 bg-[var(--bg-ios)] px-5 pt-14 pb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('account')}
