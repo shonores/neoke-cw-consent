@@ -9,6 +9,7 @@ import {
 import type { AuditEvent, ConsentRule, CreateRulePayload } from '../types/consentEngine';
 import type { ViewName } from '../types';
 import ScreenNav from '../components/ScreenNav';
+import { extractVerifierName } from '../utils/credentialHelpers';
 
 type ShareMode = 'always' | 'ask' | 'never';
 
@@ -28,15 +29,16 @@ interface Props {
   verifierDid: string;
 }
 
-function extractServiceName(did: string): string {
-  const webMatch = did.match(/^did:web:([^#?/]+)/);
-  if (webMatch) return webMatch[1];
-  if (did.startsWith('did:')) {
-    const parts = did.split(':');
-    const last = parts[parts.length - 1];
-    return last.length > 16 ? last.slice(0, 8) + '…' + last.slice(-4) : last;
-  }
-  return did.length > 20 ? did.slice(0, 10) + '…' + did.slice(-6) : did;
+function serviceNameFromRuleLabel(label?: string): string | null {
+  if (!label) return null;
+  const stripped = label
+    .replace(/^Always\s+share\s+with\s+/i, '')
+    .replace(/^Always:\s+/i, '')
+    .replace(/^Block\s+/i, '')
+    .trim();
+  // Reject if it's still a raw DID or x509 identifier
+  if (stripped.startsWith('did:') || stripped.startsWith('x509_')) return null;
+  return stripped || null;
 }
 
 function formatDate(dateStr: string): string {
@@ -107,7 +109,6 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
 
   const isGlobalRule = verifierDid.startsWith('__global__');
   const globalRuleId = isGlobalRule ? verifierDid.slice('__global__'.length) : null;
-  const serviceName = isGlobalRule ? 'All requesters' : extractServiceName(verifierDid);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -124,19 +125,32 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
              r.party.value === verifierDid
       ) ?? null);
 
+  const serviceName = isGlobalRule
+    ? 'All requesters'
+    : (serviceNameFromRuleLabel(serviceRule?.label) ?? extractVerifierName(verifierDid));
+
   const mode: ShareMode = !serviceRule
     ? 'ask'
     : serviceRule.enabled
       ? 'always'
       : 'never';
 
-  const allFields: string[] = Array.from(new Set(
-    events.flatMap(e => (e.allowedFields && e.allowedFields.length > 0) ? e.allowedFields : (e.requestedFields ?? []))
-  ));
+  const ruleExplicitFields: string[] = serviceRule?.allowedFields?.matchType === 'explicit'
+    ? (serviceRule.allowedFields.fields ?? [])
+    : [];
+
+  const allFields: string[] = Array.from(new Set([
+    ...events.flatMap(e => (e.allowedFields && e.allowedFields.length > 0) ? e.allowedFields : (e.requestedFields ?? [])),
+    ...ruleExplicitFields,
+  ]));
 
   const allowedFields: string[] = serviceRule?.allowedFields?.matchType === 'explicit'
-    ? (serviceRule.allowedFields.fields ?? [])
+    ? ruleExplicitFields
     : allFields;
+
+  const ruleCredType: string | null = serviceRule?.credentialType?.matchType === 'exact'
+    ? (serviceRule.credentialType.value ?? null)
+    : null;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -351,6 +365,22 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
                   </p>
                 </div>
                 <Toggle checked={serviceRule.enabled} onChange={toggleEnabled} disabled={saving} />
+              </div>
+            </div>
+          )}
+
+          {/* Credential type */}
+          {ruleCredType && (
+            <div className="bg-white rounded-[12px] border border-[#f1f1f3] px-4 py-3 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-[#f4f3fc] flex items-center justify-center flex-shrink-0">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <rect x="2" y="5" width="20" height="14" rx="2" stroke="#5843de" strokeWidth="1.7"/>
+                  <path d="M2 10h20" stroke="#5843de" strokeWidth="1.7"/>
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] font-semibold uppercase tracking-wider text-[#868496]">Credential type</p>
+                <p className="text-[14px] font-medium text-[#28272e] truncate">{ruleCredType.split('.').pop() ?? ruleCredType}</p>
               </div>
             </div>
           )}
