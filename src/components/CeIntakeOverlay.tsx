@@ -46,8 +46,8 @@ export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback
           setShowSuccess(true);
           setTimeout(() => { if (!cancelled) { setShowSuccess(false); onDismiss(); } }, 1800);
         } else {
-          // rejected — silent
-          onDismiss();
+          // rejected (e.g. preview_failed) — fall back to manual consent flow
+          onFallback(rawLink, detectLinkType(rawLink));
         }
       } catch {
         if (cancelled) return;
