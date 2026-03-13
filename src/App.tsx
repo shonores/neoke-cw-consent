@@ -210,6 +210,7 @@ function AppInner() {
       case 'inbox': return id ? { view: 'consent_queue_detail', queueItemId: id } : { view: 'consent_queue' };
       case 'rules': return id !== null ? { view: 'consent_rule_editor', ruleId: id || undefined } : { view: 'consent_rules' };
       case 'travel': return did ? { view: 'travel_service_detail', serviceDid: did } : { view: 'travel_services' };
+      case 'scan': return { view: 'receive' };
       case 'home':
       default: return { view: 'dashboard' };
     }
@@ -244,6 +245,13 @@ function AppInner() {
         case 'consent_rule_editor': hash = `#rules?id=${e?.editingRuleId ?? ''}`; break;
         case 'travel_services': hash = '#travel'; break;
         case 'travel_service_detail': hash = `#travel?did=${encodeURIComponent(e?.selectedServiceDid ?? '')}`; break;
+        case 'receive': hash = '#scan'; break;
+        case 'present': hash = '#present'; break;
+        case 'detail': hash = '#credential'; break;
+        case 'profile_dietary': hash = '#profile?pref=dietary'; break;
+        case 'profile_cuisines': hash = '#profile?pref=cuisines'; break;
+        case 'profile_accessibility': hash = '#profile?pref=accessibility'; break;
+        case 'profile_seat': hash = '#profile?pref=seat'; break;
         default: hash = '#home'; break;
       }
       window.history.pushState(null, '', hash);

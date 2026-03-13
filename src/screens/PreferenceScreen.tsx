@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import ScreenNav from '../components/ScreenNav';
 import type { ViewName } from '../types';
 
 const variants = {
@@ -143,25 +144,14 @@ export default function PreferenceScreen({ prefKey, navigate }: Props) {
   return (
     <motion.div
       variants={variants} initial="initial" animate="animate" exit="exit"
-      className="flex-1 flex flex-col bg-white min-h-screen"
+      className="flex-1 flex flex-col bg-[#f7f6f8] min-h-screen"
     >
-      {/* Nav */}
-      <nav className="px-4 pt-14 pb-2 flex items-center gap-3">
-        <button
-          onClick={handleCancel}
-          className="w-10 h-10 rounded-full bg-[#f4f3fc] flex items-center justify-center active:scale-95 transition-transform"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5843de" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </button>
-      </nav>
+      <ScreenNav title={config.title} onBack={handleCancel} />
 
       {/* Content */}
-      <main className="flex-1 overflow-y-auto pb-40 px-4">
-        {/* Title block */}
-        <div className="pt-1 pb-4">
-          <h1 className="text-[28px] font-bold text-[#28272e] leading-8 mb-2">{config.title}</h1>
+      <main className="flex-1 overflow-y-auto pb-40 px-5">
+        {/* Subtitle */}
+        <div className="pb-6">
           <p className="text-[16px] text-[#6d6b7e] leading-6">{config.subtitle}</p>
         </div>
 
@@ -197,7 +187,7 @@ export default function PreferenceScreen({ prefKey, navigate }: Props) {
 
       {/* Footer buttons */}
       <div
-        className="fixed bottom-0 left-0 right-0 max-w-[512px] mx-auto flex gap-3 px-4 pb-4 pt-3 bg-white border-t border-[#f1f1f3]"
+        className="fixed bottom-0 left-0 right-0 max-w-[512px] mx-auto flex gap-3 px-5 pt-3 bg-white border-t border-[#f1f1f3]"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 16px)' }}
       >
         <button

@@ -17,6 +17,7 @@ import SecondaryButton from '../components/SecondaryButton';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import CredentialThumbnail from '../components/CredentialThumbnail';
+import ScreenNav from '../components/ScreenNav';
 import type { Credential, ViewName } from '../types';
 
 type Stage = 'scan' | 'loading' | 'consent' | 'success' | 'error';
@@ -215,17 +216,7 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
   if (stage === 'error') {
     return (
       <div className="flex-1 flex flex-col min-h-screen bg-[var(--bg-ios)]">
-        <nav className="px-5 pt-14 pb-4 flex items-center gap-3">
-          <button
-            onClick={() => navigate('dashboard')}
-            className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-          </button>
-          <h1 className="text-[28px] font-bold text-[#28272e]">Error</h1>
-        </nav>
+        <ScreenNav title="Error" onBack={() => navigate('dashboard')} />
         <div className="flex-1 flex flex-col items-center justify-center px-6 space-y-6">
           <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
@@ -275,17 +266,7 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
 
     return (
       <div className="flex flex-col min-h-screen bg-[var(--bg-ios)]">
-        <nav className="px-5 pt-14 pb-4 flex items-center gap-3">
-          <button
-            onClick={() => navigate('dashboard')}
-            className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-          </button>
-          <h1 className="text-[28px] font-bold text-[#28272e]">Save Credential</h1>
-        </nav>
+        <ScreenNav title="Save Credential" onBack={() => navigate('dashboard')} />
 
         {/* Title */}
         <div className="px-5 pb-6 flex-shrink-0">
@@ -330,17 +311,10 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
   // ── Scan ──
   return (
     <div className="flex flex-col min-h-screen bg-[var(--bg-ios)]">
-      <nav className="px-5 pt-14 pb-4 flex items-center gap-3">
-        <button
-          onClick={() => navigate('dashboard')}
-          className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </button>
-        <h1 className="text-[28px] font-bold text-[#28272e]">Scan QR</h1>
-      </nav>
+      <ScreenNav
+        title="Scan QR Code"
+        onBack={initialUri ? () => navigate('dashboard') : undefined}
+      />
 
       {/* CE bypass notice */}
       {ceBypassed && (

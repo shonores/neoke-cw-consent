@@ -8,6 +8,7 @@ import {
 } from '../api/consentEngineClient';
 import type { AuditEvent, ConsentRule, CreateRulePayload } from '../types/consentEngine';
 import type { ViewName } from '../types';
+import ScreenNav from '../components/ScreenNav';
 
 type ShareMode = 'always' | 'ask' | 'never';
 
@@ -300,17 +301,7 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
     <motion.div variants={variants} initial="initial" animate="animate" exit="exit"
       className="flex-1 flex flex-col bg-[#f7f6f8] min-h-screen">
 
-      <nav className="px-5 pt-14 pb-4 flex items-center gap-3">
-        <button
-          onClick={() => navigate('travel_services')}
-          className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </button>
-        <h1 className="text-[20px] font-semibold text-[#28272e]">{serviceName}</h1>
-      </nav>
+      <ScreenNav title={serviceName} onBack={() => navigate('travel_services')} />
 
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
