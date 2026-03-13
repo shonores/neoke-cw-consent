@@ -44,7 +44,7 @@ export default function OnboardingStep3Screen({ onComplete, onSkip }: Props) {
   };
 
   return (
-    <motion.div variants={variants} initial="initial" animate="animate" exit="exit" className="flex flex-col min-h-screen bg-[#F2F2F7] max-w-lg mx-auto">
+    <motion.div variants={variants} initial="initial" animate="animate" exit="exit" className="flex flex-col min-h-screen bg-[#f7f6f8] max-w-lg mx-auto">
       <div className="flex-1 flex flex-col px-6 pt-14 pb-10">
         {/* Icon */}
         <div className="flex items-center gap-3 mb-6">
@@ -53,16 +53,16 @@ export default function OnboardingStep3Screen({ onComplete, onSkip }: Props) {
               <path d="M12 2L4 6v6c0 5.25 3.5 9.74 8 11 4.5-1.26 8-5.75 8-11V6l-8-4z" stroke="white" strokeWidth="1.7" strokeLinejoin="round" fill="rgba(255,255,255,0.15)" />
             </svg>
           </div>
-          <h1 className="text-[28px] font-bold text-[#1c1c1e]">Automate Consent</h1>
+          <h1 className="text-[28px] font-bold text-[#28272e]">Automate Consent</h1>
         </div>
 
-        <p className="text-[16px] text-[#8e8e93] leading-relaxed mb-8">
+        <p className="text-[16px] text-[#6d6b7e] leading-relaxed mb-8">
           Connect a Consent Engine to automatically handle credential requests using rules you define — without being present.
         </p>
 
         <div className="space-y-4">
           <div>
-            <label className="text-[13px] font-semibold text-[#8e8e93] uppercase tracking-wide mb-2 block">
+            <label className="text-[13px] font-semibold text-[#868496] uppercase tracking-wide mb-2 block">
               Consent Engine URL
             </label>
             <input
@@ -71,13 +71,13 @@ export default function OnboardingStep3Screen({ onComplete, onSkip }: Props) {
               onChange={(e) => { setCeUrl(e.target.value); setError(''); }}
               onKeyDown={(e) => e.key === 'Enter' && handleConnect()}
               placeholder="https://consent.example.com"
-              className="w-full bg-white border border-black/[0.08] rounded-2xl px-4 py-4 text-[16px] text-[#1c1c1e] placeholder-[#c7c7cc] focus:outline-none focus:border-[#5843de] shadow-sm transition-colors"
+              className="w-full bg-white border border-black/[0.08] rounded-2xl px-4 py-4 text-[16px] text-[#28272e] placeholder-[#c7c7cc] focus:outline-none focus:border-[#5843de] shadow-sm transition-colors"
               disabled={loading}
             />
           </div>
 
           <div className="bg-white rounded-2xl px-4 py-3.5 shadow-sm">
-            <p className="text-[14px] text-[#8e8e93]">
+            <p className="text-[14px] text-[#6d6b7e]">
               Your API Key will be used to connect — the same key you just entered.
             </p>
           </div>
@@ -93,11 +93,11 @@ export default function OnboardingStep3Screen({ onComplete, onSkip }: Props) {
           </PrimaryButton>
           <button
             onClick={handleSkip}
-            className="w-full py-3.5 text-[16px] font-medium text-[#8e8e93] transition-colors"
+            className="w-full py-3.5 text-[16px] font-medium text-[#868496] transition-colors"
           >
             Skip for now
           </button>
-          <p className="text-center text-[13px] text-[#8e8e93]">
+          <p className="text-center text-[13px] text-[#868496]">
             You can set this up later in Account.
           </p>
         </div>

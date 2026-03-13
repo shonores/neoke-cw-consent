@@ -18,8 +18,8 @@ export default function NodeStatusChip({ host, label, className = '' }: NodeStat
   return (
     <div className={`inline-flex items-center gap-2 bg-black/5 px-3 py-1.5 rounded-full ${className}`}>
       <span className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0" aria-hidden />
-      <span className="text-[13px] font-medium text-[#1c1c1e]">{host}</span>
-      {label && <span className="text-[11px] text-[#8e8e93]">{label}</span>}
+      <span className="text-[13px] font-medium text-[#28272e]">{host}</span>
+      {label && <span className="text-[11px] text-[#868496]">{label}</span>}
     </div>
   );
 }

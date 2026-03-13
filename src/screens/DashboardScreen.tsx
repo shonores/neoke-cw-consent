@@ -134,7 +134,7 @@ export default function DashboardScreen({ navigate, refreshSignal }: DashboardSc
                   <path d="M7 18c0-2.5 2-4.5 5-4.5s5 2 5 4.5" stroke="var(--primary)" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
               </div>
-              <h2 className="text-[22px] font-bold text-[var(--text-main)] mb-2 italic">
+              <h2 className="text-[22px] font-bold text-[var(--text-main)] mb-2">
                 Empty Wallet
               </h2>
               <p className="text-[15px] text-[var(--text-muted)] mb-8 leading-relaxed font-medium">

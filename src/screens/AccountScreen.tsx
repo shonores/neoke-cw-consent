@@ -165,16 +165,16 @@ function IconChevron() {
 
 function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div className="pt-6 pb-3 px-4">
-      <p className="text-[16px] font-semibold text-[#28272e] leading-6">{title}</p>
-      {subtitle && <p className="text-[14px] text-[#6d6b7e] leading-5 mt-0.5">{subtitle}</p>}
+    <div className="pt-5 pb-1.5 px-5">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-[#868496]">{title}</p>
+      {subtitle && <p className="text-[12px] text-[#868496] leading-4 mt-0.5">{subtitle}</p>}
     </div>
   );
 }
 
 function ListCard({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mx-4 bg-white rounded-[16px] p-1 flex flex-col gap-1">
+    <div className="mx-4 bg-white rounded-[24px] p-1 flex flex-col gap-1">
       {children}
     </div>
   );

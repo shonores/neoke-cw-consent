@@ -218,13 +218,13 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
         <nav className="px-5 pt-14 pb-4 flex items-center gap-3">
           <button
             onClick={() => navigate('dashboard')}
-            className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
+            className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 18l-6-6 6-6" />
             </svg>
           </button>
-          <h1 className="text-[20px] font-bold text-[var(--text-main)]">Error</h1>
+          <h1 className="text-[28px] font-bold text-[#28272e]">Error</h1>
         </nav>
         <div className="flex-1 flex flex-col items-center justify-center px-6 space-y-6">
           <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center">
@@ -278,13 +278,13 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
         <nav className="px-5 pt-14 pb-4 flex items-center gap-3">
           <button
             onClick={() => navigate('dashboard')}
-            className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
+            className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 18l-6-6 6-6" />
             </svg>
           </button>
-          <h1 className="text-[20px] font-bold text-[var(--text-main)]">Save Credential</h1>
+          <h1 className="text-[28px] font-bold text-[#28272e]">Save Credential</h1>
         </nav>
 
         {/* Title */}
@@ -306,7 +306,7 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
               className="mr-4"
             />
             <div className="flex-1 min-w-0">
-              <p className="text-[15px] font-bold text-[var(--text-main)] truncate italic">{label}</p>
+              <p className="text-[15px] font-semibold text-[var(--text-main)] truncate">{label}</p>
               {description && (
                 <p className="text-[13px] text-[var(--text-muted)] truncate font-medium">{description}</p>
               )}
@@ -333,13 +333,13 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
       <nav className="px-5 pt-14 pb-4 flex items-center gap-3">
         <button
           onClick={() => navigate('dashboard')}
-          className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
+          className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
-        <h1 className="text-[20px] font-bold text-[var(--text-main)]">Scan QR</h1>
+        <h1 className="text-[28px] font-bold text-[#28272e]">Scan QR</h1>
       </nav>
 
       {/* CE bypass notice */}

@@ -508,13 +508,13 @@ export default function AuditLogScreen({ navigate }: Props) {
       <nav className="px-5 pt-14 pb-4 flex items-center gap-3">
         <button
           onClick={() => navigate('account')}
-          className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
+          className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
-        <h1 className="flex-1 text-[26px] font-bold text-[#28272e] leading-8">Activity</h1>
+        <h1 className="flex-1 text-[28px] font-bold text-[#28272e] leading-8">Activity</h1>
         {events.length > 0 && (
           <button
             onClick={handleClearAll}
@@ -526,7 +526,7 @@ export default function AuditLogScreen({ navigate }: Props) {
         )}
         <button
           onClick={() => loadEvents(true)}
-          className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
+          className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"
           aria-label="Refresh"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -256,13 +256,13 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
         <nav className="px-5 pt-14 pb-4 flex items-center gap-3">
           <button
             onClick={() => navigate('dashboard')}
-            className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
+            className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 18l-6-6 6-6" />
             </svg>
           </button>
-          <h1 className="text-[20px] font-bold text-[var(--text-main)]">
+          <h1 className="text-[28px] font-bold text-[#28272e]">
             {multipleGroups ? 'Multiple Credentials' : 'Select Credential'}
           </h1>
         </nav>
@@ -334,7 +334,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
         <nav className="px-5 pt-14 pb-4">
           <button
             onClick={() => navigate('dashboard')}
-            className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
+            className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 18l-6-6 6-6" />
@@ -373,7 +373,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
           </motion.div>
           <div>
             <h2 className="text-[var(--text-main)] font-bold text-[32px] leading-tight">Shared!</h2>
-            <p className="text-[var(--text-muted)] text-[16px] mt-2 font-bold">The verifier has received your information.</p>
+            <p className="text-[var(--text-muted)] text-[16px] mt-2">The verifier has received your information.</p>
           </div>
           {successResult?.redirectUri && (
             <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] p-5 text-left shadow-[var(--shadow-sm)] border border-[var(--border-subtle)]">
@@ -401,7 +401,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
         <nav className="px-5 pt-14 pb-4">
           <button
             onClick={() => setStage(preview.queries.some(q => q.candidates.length > 1) ? 'select' : 'scan')}
-            className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
+            className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 18l-6-6 6-6" />
@@ -428,13 +428,13 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
       <nav className="px-5 pt-14 pb-4 flex items-center gap-3">
         <button
           onClick={() => navigate('dashboard')}
-          className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
+          className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
-        <h1 className="text-[20px] font-bold text-[var(--text-main)]">
+        <h1 className="text-[28px] font-bold text-[#28272e]">
           Present
         </h1>
       </nav>

@@ -174,13 +174,13 @@ export default function ConsentRulesScreen({ navigate }: Props) {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('account')}
-            className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
+            className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 18l-6-6 6-6" />
             </svg>
           </button>
-          <h1 className="text-[20px] font-bold text-[var(--text-main)]">
+          <h1 className="text-[28px] font-bold text-[#28272e]">
             Consent Rules
           </h1>
         </div>
@@ -199,7 +199,7 @@ export default function ConsentRulesScreen({ navigate }: Props) {
             <button
               key={tab}
               onClick={() => setFilter(tab)}
-              className={`flex-1 py-2 text-[13px] font-medium rounded-lg transition-colors capitalize ${filter === tab ? 'bg-white text-[#1c1c1e] shadow-sm' : 'text-[#8e8e93]'}`}
+              className={`flex-1 py-2 text-[13px] font-medium rounded-lg transition-colors capitalize ${filter === tab ? 'bg-white text-[#28272e] shadow-sm' : 'text-[#868496]'}`}
             >
               {tab === 'all' ? 'All' : tab === 'verification' ? 'Verification' : 'Issuance'}
             </button>
@@ -232,10 +232,10 @@ export default function ConsentRulesScreen({ navigate }: Props) {
                   stroke="#5843de" strokeWidth="1.7" strokeLinejoin="round" fill="#5843de" fillOpacity="0.12" />
               </svg>
             </div>
-            <p className="text-[17px] font-bold text-[#1c1c1e] mb-2">
+            <p className="text-[17px] font-bold text-[#28272e] mb-2">
               {filter === 'all' ? 'No consent rules yet' : `No ${filter} rules`}
             </p>
-            <p className="text-[14px] text-[#8e8e93] mb-6 leading-relaxed">
+            <p className="text-[14px] text-[#6d6b7e] mb-6 leading-relaxed">
               {filter === 'all'
                 ? 'Create rules to automatically handle credential requests without manual approval.'
                 : `Create a ${filter} rule to automate processing.`}
@@ -262,10 +262,10 @@ export default function ConsentRulesScreen({ navigate }: Props) {
                   {/* Top row: dot + label + badge + toggle */}
                   <div className="flex items-center gap-2 mb-2">
                     <span className={`w-2 h-2 rounded-full flex-shrink-0 ${rule.enabled ? 'bg-green-500' : 'bg-[#c7c7cc]'}`} />
-                    <span className="text-[15px] font-semibold text-[#1c1c1e] flex-1 truncate italic">
+                    <span className="text-[15px] font-semibold text-[#28272e] flex-1 truncate">
                       {rule.label ?? 'Unnamed rule'}
                     </span>
-                    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${rule.enabled ? 'bg-green-100 text-green-700' : 'bg-[#F2F2F7] text-[#8e8e93]'}`}>
+                    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${rule.enabled ? 'bg-green-100 text-green-700' : 'bg-[#f1f1f3] text-[#868496]'}`}>
                       {rule.enabled ? 'Enabled' : 'Disabled'}
                     </span>
                     <Toggle
@@ -278,12 +278,12 @@ export default function ConsentRulesScreen({ navigate }: Props) {
                   </div>
 
                   {/* Info row */}
-                  <p className="text-[13px] text-[#8e8e93] mb-1 font-medium">
-                    <span className="capitalize font-bold text-[#1c1c1e] italic">{rule.ruleType}</span>
+                  <p className="text-[13px] text-[#868496] mb-1 font-medium">
+                    <span className="capitalize font-semibold text-[#28272e]">{rule.ruleType}</span>
                     {' · '}{rule.credentialType.matchType === 'exact' ? (rule.credentialType.value ?? 'Any credential') : 'Any credential'}
                     {' · '}{partyLabel(rule)}
                   </p>
-                  <p className="text-[12px] text-[#8e8e93] font-medium">
+                  <p className="text-[12px] text-[#868496] font-medium">
                     {expiryLabel(rule)}
                     {(rule.expiry.usedCount ?? 0) > 0 && (
                       <span className="ml-2">· {rule.expiry.usedCount} uses</span>

@@ -113,13 +113,13 @@ export default function TravelServicesScreen({ navigate }: Props) {
       <nav className="px-5 pt-14 pb-4 flex items-center gap-3">
         <button
           onClick={() => navigate('account')}
-          className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
+          className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
-        <h1 className="text-[26px] font-bold text-[#28272e] leading-8">Travel Services</h1>
+        <h1 className="text-[28px] font-bold text-[#28272e] leading-8">Travel Services</h1>
       </nav>
 
       <main className="flex-1 px-4 pb-28 space-y-3">

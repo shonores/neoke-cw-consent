@@ -102,8 +102,8 @@ export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback
                 </div>
               </div>
               <div className="text-center">
-                <p className="text-[17px] font-semibold text-[#1c1c1e]">Checking your consent rules...</p>
-                <p className="text-[14px] text-[#8e8e93] mt-1">Processing this request automatically</p>
+                <p className="text-[17px] font-semibold text-[#28272e]">Checking your consent rules...</p>
+                <p className="text-[14px] text-[#6d6b7e] mt-1">Processing this request automatically</p>
               </div>
             </motion.div>
           )}
@@ -121,8 +121,8 @@ export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback
                 </svg>
               </div>
               <div className="text-center">
-                <p className="text-[17px] font-semibold text-[#1c1c1e]">Handled automatically</p>
-                <p className="text-[14px] text-[#8e8e93] mt-1">Your consent rules approved and processed this request automatically.</p>
+                <p className="text-[17px] font-semibold text-[#28272e]">Handled automatically</p>
+                <p className="text-[14px] text-[#6d6b7e] mt-1">Your consent rules approved and processed this request automatically.</p>
               </div>
               <div className="flex gap-3 w-full pt-2">
                 <button
@@ -133,7 +133,7 @@ export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback
                 </button>
                 <button
                   onClick={() => { clearAutoDismiss(); onDismiss(); }}
-                  className="flex-1 py-3 text-[15px] font-medium text-[#8e8e93] bg-[#F2F2F7] rounded-2xl transition-colors"
+                  className="flex-1 py-3 text-[15px] font-medium text-[#868496] bg-[#f1f1f3] rounded-2xl transition-colors"
                 >
                   Close
                 </button>
@@ -154,8 +154,8 @@ export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback
                 </svg>
               </div>
               <div className="text-center">
-                <p className="text-[17px] font-semibold text-[#1c1c1e]">Waiting for your approval</p>
-                <p className="text-[14px] text-[#8e8e93] mt-1">No rule matched this request. It has been added to your approval queue.</p>
+                <p className="text-[17px] font-semibold text-[#28272e]">Waiting for your approval</p>
+                <p className="text-[14px] text-[#6d6b7e] mt-1">No rule matched this request. It has been added to your approval queue.</p>
               </div>
               <div className="flex gap-3 w-full pt-2">
                 <button
@@ -166,7 +166,7 @@ export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback
                 </button>
                 <button
                   onClick={onDismiss}
-                  className="flex-1 py-3 text-[15px] font-medium text-[#8e8e93] bg-[#F2F2F7] rounded-2xl"
+                  className="flex-1 py-3 text-[15px] font-medium text-[#868496] bg-[#f1f1f3] rounded-2xl"
                 >
                   Later
                 </button>
@@ -187,12 +187,12 @@ export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback
                 </svg>
               </div>
               <div className="text-center">
-                <p className="text-[17px] font-semibold text-[#1c1c1e]">Request declined</p>
-                {reason && <p className="text-[14px] text-[#8e8e93] mt-1">{reason}</p>}
+                <p className="text-[17px] font-semibold text-[#28272e]">Request declined</p>
+                {reason && <p className="text-[14px] text-[#6d6b7e] mt-1">{reason}</p>}
               </div>
               <button
                 onClick={onDismiss}
-                className="w-full py-3.5 text-[15px] font-medium text-[#8e8e93] bg-[#F2F2F7] rounded-2xl"
+                className="w-full py-3.5 text-[15px] font-medium text-[#868496] bg-[#f1f1f3] rounded-2xl"
               >
                 Close
               </button>
@@ -213,8 +213,8 @@ export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback
                 </svg>
               </div>
               <div className="text-center">
-                <p className="text-[17px] font-semibold text-[#1c1c1e]">Routing manually…</p>
-                <p className="text-[14px] text-[#8e8e93] mt-1">Consent Engine unreachable. Processing your request directly.</p>
+                <p className="text-[17px] font-semibold text-[#28272e]">Routing manually…</p>
+                <p className="text-[14px] text-[#6d6b7e] mt-1">Consent Engine unreachable. Processing your request directly.</p>
               </div>
             </motion.div>
           )}

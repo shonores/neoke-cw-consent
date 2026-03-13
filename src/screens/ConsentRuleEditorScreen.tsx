@@ -217,13 +217,13 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
       <nav className="px-5 pt-14 pb-4 flex items-center gap-3">
         <button
           onClick={goBack}
-          className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
+          className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
-        <h1 className="text-[20px] font-bold text-[var(--text-main)]">
+        <h1 className="text-[28px] font-bold text-[#28272e]">
           {editingRuleId ? 'Edit Rule' : 'New Rule'}
         </h1>
       </nav>
@@ -236,14 +236,14 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
             style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
           />
         </div>
-        <p className="text-[12px] text-[var(--text-muted)] mt-1.5 font-bold tracking-tight italic">Step {step} of {TOTAL_STEPS}</p>
+        <p className="text-[12px] text-[var(--text-muted)] mt-1.5 tracking-tight">Step {step} of {TOTAL_STEPS}</p>
       </div>
 
       <div className="flex-1 px-5 pb-36 space-y-4 overflow-y-auto">
         {step === 1 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-[22px] font-bold text-[var(--text-main)] mb-1 italic">Rule Type</h2>
+              <h2 className="text-[22px] font-bold text-[#28272e] mb-1">Rule Type</h2>
               <p className="text-[14px] text-[var(--text-muted)] font-medium">What kind of requests should this rule handle?</p>
             </div>
             <OptionCard
@@ -264,7 +264,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
         {step === 2 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-[22px] font-bold text-[var(--text-main)] mb-1 italic">Credential Type</h2>
+              <h2 className="text-[22px] font-bold text-[#28272e] mb-1">Credential Type</h2>
               <p className="text-[14px] text-[var(--text-muted)] font-medium">Which credential type does this rule apply to?</p>
             </div>
             <OptionCard
@@ -299,7 +299,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
                     value={credentialType}
                     onChange={e => setCredentialType(e.target.value)}
                     placeholder="e.g. org.iso.18013.5.1.mDL"
-                    className="w-full bg-white border border-black/8 rounded-2xl px-4 py-4 text-[15px] text-[var(--text-main)] font-medium placeholder-[#c7c7cc] focus:outline-none focus:border-[var(--primary)] shadow-sm italic"
+                    className="w-full bg-white border border-black/[0.08] rounded-2xl px-4 py-4 text-[15px] text-[var(--text-main)] font-medium placeholder-[#c7c7cc] focus:outline-none focus:border-[var(--primary)] shadow-sm italic"
                   />
                 )}
               </div>
@@ -310,7 +310,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
         {step === 3 && ruleType === 'verification' && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-[22px] font-bold text-[var(--text-main)] mb-1 italic">Requesting Party</h2>
+              <h2 className="text-[22px] font-bold text-[#28272e] mb-1">Requesting Party</h2>
               <p className="text-[14px] text-[var(--text-muted)] font-medium">Who is allowed to trigger this rule?</p>
             </div>
             <OptionCard
@@ -347,7 +347,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
                     : partyMatchType === 'domain' ? 'verifier.example.com'
                       : 'example.com'
                 }
-                className="w-full bg-white border border-black/8 rounded-2xl px-4 py-4 text-[15px] text-[var(--text-main)] font-medium placeholder-[#c7c7cc] focus:outline-none focus:border-[var(--primary)] shadow-sm italic"
+                className="w-full bg-white border border-black/[0.08] rounded-2xl px-4 py-4 text-[15px] text-[var(--text-main)] font-medium placeholder-[#c7c7cc] focus:outline-none focus:border-[var(--primary)] shadow-sm italic"
               />
             )}
           </div>
@@ -356,7 +356,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
         {step === 3 && ruleType === 'issuance' && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-[22px] font-bold text-[var(--text-main)] mb-1 italic">Trusted Issuer</h2>
+              <h2 className="text-[22px] font-bold text-[#28272e] mb-1">Trusted Issuer</h2>
               <p className="text-[14px] text-[var(--text-muted)] font-medium">Which issuers should this rule trust?</p>
             </div>
             <OptionCard
@@ -377,7 +377,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
                 value={trustedIssuerDid}
                 onChange={e => setTrustedIssuerDid(e.target.value)}
                 placeholder="did:web:issuer.example.com"
-                className="w-full bg-white border border-black/8 rounded-2xl px-4 py-4 text-[15px] text-[var(--text-main)] font-medium placeholder-[#c7c7cc] focus:outline-none focus:border-[var(--primary)] shadow-sm italic"
+                className="w-full bg-white border border-black/[0.08] rounded-2xl px-4 py-4 text-[15px] text-[var(--text-main)] font-medium placeholder-[#c7c7cc] focus:outline-none focus:border-[var(--primary)] shadow-sm italic"
               />
             )}
           </div>
@@ -386,7 +386,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
         {step === 4 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-[22px] font-bold text-[var(--text-main)] mb-1 italic">Allowed Fields</h2>
+              <h2 className="text-[22px] font-bold text-[#28272e] mb-1">Allowed Fields</h2>
               <p className="text-[14px] text-[var(--text-muted)] font-medium">{ruleType === 'verification' ? 'Which credential fields can be shared?' : 'Which fields should be auto-accepted?'}</p>
             </div>
             <OptionCard
@@ -478,7 +478,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
         {step === 5 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-[22px] font-bold text-[var(--text-main)] mb-1 italic">Conditions</h2>
+              <h2 className="text-[22px] font-bold text-[#28272e] mb-1">Conditions</h2>
               <p className="text-[14px] text-[var(--text-muted)] font-medium">Add optional conditions that must be met.</p>
             </div>
 
@@ -562,7 +562,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
         {step === 6 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-[22px] font-bold text-[var(--text-main)] mb-1 italic">Rule Expiry</h2>
+              <h2 className="text-[22px] font-bold text-[#28272e] mb-1">Rule Expiry</h2>
               <p className="text-[14px] text-[var(--text-muted)] font-medium">When should this rule stop being active?</p>
             </div>
             <OptionCard
@@ -578,7 +578,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
               description="Rule stops after a specific date"
             />
             {expiryType === 'date' && (
-              <input type="date" value={expiresAt.slice(0, 10)} onChange={e => setExpiresAt(new Date(e.target.value).toISOString())} className="w-full bg-white border border-black/8 rounded-2xl px-4 py-4 text-[15px] text-[var(--text-main)] font-medium focus:outline-none focus:border-[var(--primary)] shadow-sm italic" />
+              <input type="date" value={expiresAt.slice(0, 10)} onChange={e => setExpiresAt(new Date(e.target.value).toISOString())} className="w-full bg-white border border-black/[0.08] rounded-2xl px-4 py-4 text-[15px] text-[var(--text-main)] font-medium focus:outline-none focus:border-[var(--primary)] shadow-sm italic" />
             )}
             <OptionCard
               selected={expiryType === 'uses'}
@@ -589,7 +589,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
             {expiryType === 'uses' && (
               <div>
                 <label className="text-[11px] text-[var(--text-muted)] uppercase tracking-wide font-bold mb-2 block">Max uses</label>
-                <input type="number" min={1} value={maxUses} onChange={e => setMaxUses(Number(e.target.value))} className="w-full bg-white border border-black/8 rounded-2xl px-4 py-4 text-[15px] text-[var(--text-main)] font-bold focus:outline-none focus:border-[var(--primary)] shadow-sm" />
+                <input type="number" min={1} value={maxUses} onChange={e => setMaxUses(Number(e.target.value))} className="w-full bg-white border border-black/[0.08] rounded-2xl px-4 py-4 text-[15px] text-[var(--text-main)] font-bold focus:outline-none focus:border-[var(--primary)] shadow-sm" />
               </div>
             )}
           </div>
@@ -598,13 +598,13 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
         {step === 7 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-[22px] font-bold text-[var(--text-main)] mb-1 italic">Label & Review</h2>
+              <h2 className="text-[22px] font-bold text-[#28272e] mb-1">Label & Review</h2>
               <p className="text-[14px] text-[var(--text-muted)] font-medium">Review settings before saving.</p>
             </div>
 
             <div>
               <label className="text-[11px] text-[var(--text-muted)] uppercase tracking-wide font-bold mb-2 block">Rule name (optional)</label>
-              <input type="text" value={label} onChange={e => setLabel(e.target.value)} placeholder="e.g. Share driving licence" className="w-full bg-white border border-black/8 rounded-2xl px-4 py-4 text-[15px] text-[var(--text-main)] font-medium placeholder-[#c7c7cc] focus:outline-none focus:border-[var(--primary)] shadow-sm italic" />
+              <input type="text" value={label} onChange={e => setLabel(e.target.value)} placeholder="e.g. Share driving licence" className="w-full bg-white border border-black/[0.08] rounded-2xl px-4 py-4 text-[15px] text-[var(--text-main)] font-medium placeholder-[#c7c7cc] focus:outline-none focus:border-[var(--primary)] shadow-sm italic" />
             </div>
 
             <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] overflow-hidden border border-[var(--border-subtle)]">

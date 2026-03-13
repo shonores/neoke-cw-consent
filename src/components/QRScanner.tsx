@@ -105,7 +105,7 @@ export default function QRScanner({ onScan, onError }: QRScannerProps) {
       {/* Error state */}
       {cameraError && (
         <div className="flex flex-col items-center gap-3 p-5 bg-black/5 rounded-2xl text-center">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden className="text-[#8e8e93]">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden className="text-[#868496]">
             <path
               d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"
               stroke="currentColor"
@@ -115,7 +115,7 @@ export default function QRScanner({ onScan, onError }: QRScannerProps) {
             />
             <circle cx="12" cy="13" r="4" stroke="currentColor" strokeWidth="1.7" />
           </svg>
-          <p className="text-sm text-[#8e8e93] leading-relaxed">{cameraError}</p>
+          <p className="text-sm text-[#868496] leading-relaxed">{cameraError}</p>
         </div>
       )}
     </div>

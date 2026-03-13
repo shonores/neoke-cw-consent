@@ -191,7 +191,7 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
           <div className="flex items-center gap-3">
             <button
               onClick={onBack}
-              className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-black/5 active:scale-95 transition-transform"
+              className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M15 18l-6-6 6-6" />
@@ -291,7 +291,7 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
             {/* Issuer */}
             {credential.issuer && (
               <div className="mt-2">
-                <p className="text-xs text-[#8e8e93] mb-0.5">Issuer</p>
+                <p className="text-xs text-[#868496] mb-0.5">Issuer</p>
                 <p className="text-[13px] font-mono text-[#3c3c3e] break-all">{credential.issuer}</p>
               </div>
             )}
@@ -388,7 +388,7 @@ function PlainFieldRow({ label, value }: PlainFieldRowProps) {
     }
     return (
       <div className="py-3">
-        <p className="text-xs text-[#8e8e93] mb-1.5">{label}</p>
+        <p className="text-xs text-[#868496] mb-1.5">{label}</p>
         <img
           src={src}
           alt={label}
