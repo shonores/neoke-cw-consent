@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { getLocalCredentials } from '../store/localCredentials';
 import {
   getCardColor,
@@ -16,6 +16,8 @@ export interface ConsentCredentialRow {
   types: string[];
   issuer: string;
   fields?: string[];
+  /** Number of available candidates for this query — enables "Change credential" */
+  candidateCount?: number;
 }
 
 export interface ConsentRequestViewProps {
@@ -36,6 +38,12 @@ export interface ConsentRequestViewProps {
   onReject: () => void;
   /** Extra content rendered at the top (e.g. expiry or resolved banners) */
   extras?: ReactNode;
+  /** Verifier logo URL (from client_metadata.logo_uri) */
+  logoUri?: string;
+  /** Transaction data strings (from transaction_data in VP request JWT) */
+  transactionData?: string[];
+  /** Called when user taps a credential row — idx is position in credentialRows */
+  onCredentialClick?: (idx: number) => void;
 }
 
 // ── Credential card row ───────────────────────────────────────────────────────
@@ -44,8 +52,10 @@ function CredentialCardRow({
   types,
   issuer,
   fields,
+  candidateCount,
   localCreds,
-}: ConsentCredentialRow & { localCreds: Credential[] }) {
+  onClick,
+}: ConsentCredentialRow & { localCreds: Credential[]; onClick?: () => void }) {
   const localCred =
     localCreds.find(lc => types.some(t => lc.type?.includes(t)) && lc.issuer === issuer) ??
     localCreds.find(lc => types.some(t => lc.type?.includes(t)));
@@ -57,8 +67,8 @@ function CredentialCardRow({
   const label = localCred ? getCredentialLabel(localCred) : getCandidateLabel(types);
   const issuerLabel = parseIssuerLabel(issuer);
 
-  return (
-    <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] flex items-center px-4 py-4 shadow-[var(--shadow-sm)] border border-[var(--border-subtle)]">
+  const inner = (
+    <>
       <CredentialThumbnail
         backgroundColor={backgroundColor}
         textColor={textColor}
@@ -66,13 +76,45 @@ function CredentialCardRow({
         className="mr-4"
       />
       <div className="flex-1 min-w-0">
-        <p className="text-[16px] font-bold text-[var(--text-main)] truncate">{label}</p>
-        <p className="text-[13px] text-[var(--text-muted)] truncate font-medium">{issuerLabel}</p>
+        <p className="text-[16px] font-bold text-[#28272e] truncate">{label}</p>
+        <p className="text-[13px] text-[#6d6b7e] truncate font-medium">{issuerLabel}</p>
         {fields && fields.length > 0 && (
-          <p className="text-[12px] text-[var(--text-muted)] truncate mt-0.5">{fields.join(', ')}</p>
+          <p className="text-[12px] text-[#868496] truncate mt-0.5">{fields.join(', ')}</p>
         )}
       </div>
+      {onClick && (
+        <svg width="7" height="12" viewBox="0 0 7 12" fill="none" className="ml-2 flex-shrink-0">
+          <path d="M1 1l5 5-5 5" stroke="#c7c7cc" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        onClick={onClick}
+        className="w-full bg-white rounded-[16px] flex items-center px-4 py-4 border border-[#f1f1f3] shadow-sm active:bg-[#f7f6f8] transition-colors text-left"
+      >
+        {inner}
+      </button>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-[16px] flex items-center px-4 py-4 border border-[#f1f1f3] shadow-sm">
+      {inner}
     </div>
+  );
+}
+
+// ── Section label ─────────────────────────────────────────────────────────────
+
+function SectionLabel({ children }: { children: ReactNode }) {
+  return (
+    <p className="text-[11px] font-semibold uppercase tracking-wider text-[#868496] px-1 mb-2">
+      {children}
+    </p>
   );
 }
 
@@ -92,45 +134,82 @@ export default function ConsentRequestView({
   onAlwaysShare,
   onReject,
   extras,
+  logoUri,
+  transactionData,
+  onCredentialClick,
 }: ConsentRequestViewProps) {
   const localCreds = getLocalCredentials();
   const sharing = actionState === 'sharing';
 
   return (
     <>
-      <main className="flex-1 px-5 pb-52 overflow-y-auto space-y-6">
+      <main className="flex-1 px-5 pb-52 overflow-y-auto space-y-5">
         {extras}
 
-        {/* Header */}
-        <div className="pb-2">
-          <h2 className="text-[28px] font-bold text-[var(--text-main)] leading-tight">
-            <span className="text-[var(--primary)] font-black">{serviceName}</span>
-            <br />
-            {isVP ? 'requests some info' : 'is offering you a credential'}
-          </h2>
-          {purpose && (
-            <p className="text-[15px] text-[var(--text-muted)] leading-5 mt-2">{purpose}</p>
+        {/* ── Verifier header ──────────────────────────────────── */}
+        <div className="pb-1">
+          {logoUri && (
+            <div className="w-12 h-12 rounded-[14px] bg-white border border-[#f1f1f3] shadow-sm flex items-center justify-center overflow-hidden mb-3">
+              <img src={logoUri} alt="" className="w-10 h-10 object-contain" />
+            </div>
           )}
+          <h2 className="text-[24px] font-semibold text-[#28272e] leading-[28px]">
+            <span className="text-[#5843de]">{serviceName}</span>
+            {' '}
+            {isVP
+              ? 'wants you to share the following credentials'
+              : 'is offering you a credential'}
+          </h2>
         </div>
 
-        {/* Credential cards */}
+        {/* ── Reason ───────────────────────────────────────────── */}
+        {purpose && (
+          <div>
+            <SectionLabel>Reason</SectionLabel>
+            <div className="bg-white rounded-[16px] px-4 py-4 border border-[#f1f1f3]">
+              <p className="text-[15px] text-[#28272e] leading-6">{purpose}</p>
+            </div>
+          </div>
+        )}
+
+        {/* ── Transaction data ─────────────────────────────────── */}
+        {transactionData && transactionData.length > 0 && (
+          <div>
+            <SectionLabel>Transaction</SectionLabel>
+            <div className="bg-white rounded-[16px] overflow-hidden border border-[#f1f1f3]">
+              {transactionData.map((item, i) => (
+                <div
+                  key={i}
+                  className={`px-4 py-3 ${i < transactionData.length - 1 ? 'border-b border-[#f1f1f3]' : ''}`}
+                >
+                  <p className="text-[15px] text-[#28272e] leading-5">{item}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Credentials ──────────────────────────────────────── */}
         {credentialRows.length > 0 ? (
           <div>
-            <p className="text-[12px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-3">
-              {isVP ? 'Info to share' : 'Credential offered'}
-            </p>
+            <SectionLabel>
+              {isVP ? 'Credentials to share' : 'Credential offered'}
+            </SectionLabel>
             <div className="space-y-3">
               {credentialRows.map((row, i) => (
-                <CredentialCardRow key={i} {...row} localCreds={localCreds} />
+                <CredentialCardRow
+                  key={i}
+                  {...row}
+                  localCreds={localCreds}
+                  onClick={onCredentialClick ? () => onCredentialClick(i) : undefined}
+                />
               ))}
             </div>
           </div>
         ) : isVP ? (
           <div>
-            <p className="text-[12px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-3">
-              Info to share
-            </p>
-            <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] flex items-center px-4 py-4 shadow-[var(--shadow-sm)] border border-[var(--border-subtle)]">
+            <SectionLabel>Credentials to share</SectionLabel>
+            <div className="bg-white rounded-[16px] flex items-center px-4 py-4 border border-[#f1f1f3] shadow-sm">
               <div className="mr-4 w-10 h-10 bg-[#f4f3fc] rounded-full flex items-center justify-center flex-shrink-0">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                   <path d="M12 2L4 6v6c0 5.25 3.5 9.74 8 11 4.5-1.26 8-5.75 8-11V6l-8-4z"
@@ -138,25 +217,25 @@ export default function ConsentRequestView({
                 </svg>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[16px] font-bold text-[var(--text-main)]">Identity credential</p>
-                <p className="text-[13px] text-[var(--text-muted)]">Credential details not included in request</p>
+                <p className="text-[16px] font-bold text-[#28272e]">Identity credential</p>
+                <p className="text-[13px] text-[#868496]">Credential details not included in request</p>
               </div>
             </div>
           </div>
         ) : null}
 
-        {/* Verified domain */}
+        {/* ── Verified domain ───────────────────────────────────── */}
         {isVP && linkedDomains && linkedDomains.length > 0 && (
           <div className="flex items-center gap-2 px-1">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="12" r="10" stroke="#198e41" strokeWidth="2" fill="#19a34110" />
               <path d="M9 12l2 2 4-4" stroke="#198e41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <span className="text-[12px] text-[var(--text-muted)]">Verified: {linkedDomains[0]}</span>
+            <span className="text-[12px] text-[#868496]">Verified: {linkedDomains[0]}</span>
           </div>
         )}
 
-        {/* PIN required */}
+        {/* ── PIN required ──────────────────────────────────────── */}
         {needsPin && (
           <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-[12px] px-4 py-3">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="flex-shrink-0">
@@ -174,8 +253,8 @@ export default function ConsentRequestView({
         )}
       </main>
 
-      {/* Action buttons */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-5 pt-4 pb-10 bg-[var(--bg-ios)]/90 backdrop-blur-[4px] z-40 space-y-2 border-t border-[var(--border-subtle)]">
+      {/* ── Action buttons ────────────────────────────────────────── */}
+      <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-5 pt-4 pb-10 bg-[var(--bg-ios)]/90 backdrop-blur-[4px] z-40 space-y-2 border-t border-[#f1f1f3]">
         <button
           onClick={onShare}
           disabled={sharing || actionsDisabled}
@@ -211,7 +290,7 @@ export default function ConsentRequestView({
           Don't share
         </button>
 
-        <p className="text-[12px] text-[var(--text-muted)] text-center leading-4 pt-1">
+        <p className="text-[12px] text-[#868496] text-center leading-4 pt-1">
           You can always change these later in your{' '}
           <span className="text-[#5843de] font-medium">Profile</span>
         </p>

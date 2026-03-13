@@ -11,7 +11,10 @@ import {
   getCardColor,
   getCardColorForTypes,
   getCredentialLabel,
+  getCredentialDescription,
   parseIssuerLabel,
+  getClaimLabel,
+  humanizeLabel,
 } from '../utils/credentialHelpers';
 import { getLocalCredentials } from '../store/localCredentials';
 import QRScanner from '../components/QRScanner';
@@ -19,9 +22,10 @@ import PrimaryButton from '../components/PrimaryButton';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import CredentialThumbnail from '../components/CredentialThumbnail';
+import CredentialCardFace from '../components/CredentialCardFace';
 import OptionCard from '../components/OptionCard';
 import ConsentRequestView from '../components/ConsentRequestView';
-import type { Credential, VPPreviewResponse, ViewName } from '../types';
+import type { Credential, VPPreviewResponse, VPCandidate, ViewName } from '../types';
 
 type Stage = 'scan' | 'loading' | 'select' | 'consent' | 'presenting' | 'success' | 'error';
 
@@ -30,6 +34,71 @@ interface PresentScreenProps {
   initialUri?: string;
   onPresented?: () => void;
   onRouteToCe?: (uri: string) => void;
+}
+
+interface VpExtras {
+  logoUri?: string;
+  clientName?: string;
+  clientPurpose?: string;
+  transactionData?: string[];
+}
+
+/** Extract client_metadata and transaction_data from an inline VP request JWT */
+function parseVpExtras(uri: string): VpExtras {
+  try {
+    const rawUri = uri.replace(/^openid[^:]*:\/\//, 'https://x/');
+    const url = new URL(rawUri);
+    const jwt = url.searchParams.get('request');
+    if (!jwt) return {};
+    const parts = jwt.split('.');
+    if (parts.length < 2) return {};
+    const pad = (s: string) => s + '='.repeat((4 - s.length % 4) % 4);
+    const payload = JSON.parse(atob(pad(parts[1].replace(/-/g, '+').replace(/_/g, '/'))));
+    const meta = (payload.client_metadata ?? {}) as Record<string, unknown>;
+    return {
+      logoUri: typeof meta.logo_uri === 'string' ? meta.logo_uri : undefined,
+      clientName: typeof meta.client_name === 'string' ? meta.client_name : undefined,
+      clientPurpose: typeof meta.client_purpose === 'string' ? meta.client_purpose : undefined,
+      transactionData: Array.isArray(payload.transaction_data)
+        ? (payload.transaction_data as unknown[]).filter((x): x is string => typeof x === 'string')
+        : undefined,
+    };
+  } catch {
+    return {};
+  }
+}
+
+/** Extract field values from a local credential matching the disclosed field names */
+function getRequestedFields(cred: Credential, disclosedFields: string[]): Array<{ label: string; value: string }> {
+  const result: Array<{ label: string; value: string }> = [];
+  for (const field of disclosedFields) {
+    const colonIdx = field.indexOf(':');
+    const ns = colonIdx >= 0 ? field.slice(0, colonIdx) : '';
+    const key = colonIdx >= 0 ? field.slice(colonIdx + 1) : field;
+    const label = getClaimLabel(ns, key) || humanizeLabel(key);
+    // Try namespaced lookup
+    if (ns && cred.namespaces?.[ns] !== undefined) {
+      const val = (cred.namespaces[ns] as Record<string, unknown>)[key];
+      if (val !== undefined) { result.push({ label, value: String(val) }); continue; }
+    }
+    // Try any namespace
+    if (cred.namespaces) {
+      let found = false;
+      for (const [nsKey, nsData] of Object.entries(cred.namespaces)) {
+        const val = (nsData as Record<string, unknown>)[key];
+        if (val !== undefined) {
+          result.push({ label: getClaimLabel(nsKey, key) || humanizeLabel(key), value: String(val) });
+          found = true; break;
+        }
+      }
+      if (found) continue;
+    }
+    // Try credentialSubject
+    if (cred.credentialSubject?.[key] !== undefined) {
+      result.push({ label, value: String(cred.credentialSubject[key]) });
+    }
+  }
+  return result;
 }
 
 function IconCamera() {
@@ -85,10 +154,13 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
   const [showManual, setShowManual] = useState(!!initialUri);
   const [currentRequestUri, setCurrentRequestUri] = useState(initialUri ?? '');
   const [preview, setPreview] = useState<VPPreviewResponse | null>(null);
+  const [vpExtras, setVpExtras] = useState<VpExtras>({});
   const [error, setError] = useState('');
   const [skippedX509, setSkippedX509] = useState(false);
   const [selections, setSelections] = useState<Record<string, number>>({});
   const [successResult, setSuccessResult] = useState<{ redirectUri?: string } | null>(null);
+  /** null = closed; view='options' = pick action; view='details' = show credential fields */
+  const [credSheet, setCredSheet] = useState<{ queryIdx: number; view: 'options' | 'details' } | null>(null);
 
   const localCreds = getLocalCredentials();
   const findLocalCred = (candTypes: string[], candIssuer: string) => {
@@ -137,7 +209,9 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
     setError('');
     setSkippedX509(false);
     setSelections({});
+    setCredSheet(null);
     setCurrentRequestUri(trimmed);
+    setVpExtras(parseVpExtras(trimmed));
 
     try {
       const { data, skippedX509: usedSkip } = await previewPresentationWithRetry(state.token, trimmed);
@@ -390,17 +464,37 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
   }
 
   if (stage === 'consent' && preview) {
-    const verifierName = preview.verifier.name ?? parseIssuerLabel(preview.verifier.clientId);
-    const credentialRows = preview.queries
-      .map(q => q.candidates.find(c => c.index === selections[q.queryId]) ?? q.candidates[0])
-      .filter(Boolean)
-      .map(cand => ({ types: cand!.type, issuer: cand!.issuer }));
+    const verifierName = vpExtras.clientName ?? preview.verifier.name ?? parseIssuerLabel(preview.verifier.clientId);
+    const purpose = vpExtras.clientPurpose ?? preview.verifier.purpose;
+    const hasMultiSelect = preview.queries.some(q => q.candidates.length > 1);
+
+    const credentialRows = preview.queries.map(q => {
+      const cand = q.candidates.find(c => c.index === selections[q.queryId]) ?? q.candidates[0];
+      return cand
+        ? { types: cand.type, issuer: cand.issuer, candidateCount: q.candidates.length }
+        : null;
+    }).filter((r): r is NonNullable<typeof r> => r !== null);
+
+    // Credential sheet helpers
+    const getSheetCandidate = (queryIdx: number) => {
+      const query = preview.queries[queryIdx];
+      if (!query) return { cred: undefined, candidate: undefined };
+      const candidate = query.candidates.find(c => c.index === selections[query.queryId]) ?? query.candidates[0];
+      const cred = candidate ? findLocalCred(candidate.type, candidate.issuer) : undefined;
+      return { cred, candidate };
+    };
+
+    const handleCredentialClick = (idx: number) => {
+      const query = preview.queries[idx];
+      if (!query) return;
+      setCredSheet({ queryIdx: idx, view: query.candidates.length > 1 ? 'options' : 'details' });
+    };
 
     return (
       <div className="flex flex-col min-h-screen bg-[var(--bg-ios)] overflow-x-hidden">
         <nav className="px-5 pt-14 pb-4">
           <button
-            onClick={() => setStage(preview.queries.some(q => q.candidates.length > 1) ? 'select' : 'scan')}
+            onClick={() => setStage(hasMultiSelect ? 'select' : 'scan')}
             className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -412,13 +506,116 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
         <ConsentRequestView
           serviceName={verifierName}
           isVP={true}
-          purpose={preview.verifier.purpose}
+          purpose={purpose}
           credentialRows={credentialRows}
           actionState="idle"
           onShare={handleShare}
           onAlwaysShare={ceState.ceEnabled && ceState.ceApiKey ? handleAlwaysShare : undefined}
-          onReject={() => setStage(preview.queries.some(q => q.candidates.length > 1) ? 'select' : 'scan')}
+          onReject={() => setStage(hasMultiSelect ? 'select' : 'scan')}
+          logoUri={vpExtras.logoUri}
+          transactionData={vpExtras.transactionData}
+          onCredentialClick={handleCredentialClick}
         />
+
+        {/* ── Credential detail / options sheet ──────────────────── */}
+        {credSheet && (
+          <div className="fixed inset-0 z-[60]" onClick={() => setCredSheet(null)}>
+            <div className="absolute inset-0 bg-black/40" />
+            <div
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[512px] bg-white rounded-t-[24px]"
+              style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="w-9 h-1 bg-[#d7d6dc] rounded-full mx-auto mt-3 mb-2" />
+
+              {credSheet.view === 'options' ? (
+                /* ── Options: view details / change ── */
+                <div className="px-5 pt-3 pb-2">
+                  <h3 className="text-[20px] font-bold text-[#28272e] mb-4">Select option</h3>
+                  <div className="bg-[#f7f6f8] rounded-[16px] overflow-hidden">
+                    <button
+                      onClick={() => setCredSheet({ queryIdx: credSheet.queryIdx, view: 'details' })}
+                      className="w-full flex items-center gap-4 px-4 py-4 border-b border-[#f1f1f3] active:bg-[#eeecf8] transition-colors"
+                    >
+                      <div className="w-11 h-11 bg-[#f4f3fc] rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12z" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+                          <circle cx="12" cy="12" r="3" stroke="#5843de" strokeWidth="1.7"/>
+                        </svg>
+                      </div>
+                      <span className="flex-1 text-left text-[16px] font-medium text-[#28272e]">View details</span>
+                      <svg width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M1 1l5 5-5 5" stroke="#c7c7cc" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </button>
+                    <button
+                      onClick={() => { setCredSheet(null); setStage('select'); }}
+                      className="w-full flex items-center gap-4 px-4 py-4 active:bg-[#eeecf8] transition-colors"
+                    >
+                      <div className="w-11 h-11 bg-[#f4f3fc] rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <path d="M17 1l4 4-4 4M7 23l-4-4 4-4" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M3 5h7a4 4 0 014 4v1M21 19h-7a4 4 0 01-4-4v-1" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
+                      <span className="flex-1 text-left text-[16px] font-medium text-[#28272e]">Change credential</span>
+                      <svg width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M1 1l5 5-5 5" stroke="#c7c7cc" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </button>
+                  </div>
+                </div>
+              ) : (() => {
+                /* ── Details: credential card + requested fields ── */
+                const { cred, candidate } = getSheetCandidate(credSheet.queryIdx);
+                const { backgroundColor, textColor } = cred
+                  ? getCardColor(cred)
+                  : candidate ? getCardColorForTypes(candidate.type) : { backgroundColor: '#5843de', textColor: '#ffffff' };
+                const label = cred ? getCredentialLabel(cred) : getCandidateLabel(candidate?.type ?? []);
+                const description = cred?.displayMetadata?.description;
+                const logoUrl = cred?.displayMetadata?.logoUrl;
+                const fields = cred && candidate?.claims?.disclosed?.length
+                  ? getRequestedFields(cred, candidate.claims.disclosed)
+                  : [];
+
+                return (
+                  <div className="px-5 pt-3 pb-2">
+                    <h3 className="text-[20px] font-bold text-[#28272e] mb-4">{label}</h3>
+                    {/* Full credential card */}
+                    <div className="rounded-[16px] overflow-hidden mb-4">
+                      <CredentialCardFace
+                        label={label}
+                        description={description}
+                        bgColor={backgroundColor}
+                        textColor={textColor}
+                        logoUrl={logoUrl}
+                      />
+                    </div>
+                    {/* Requested fields */}
+                    {fields.length > 0 ? (
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-[#868496] px-1 mb-2">
+                          Requested fields
+                        </p>
+                        <div className="bg-[#f7f6f8] rounded-[16px] overflow-hidden">
+                          {fields.map((f, i) => (
+                            <div
+                              key={i}
+                              className={`flex justify-between items-start px-4 py-3 ${i < fields.length - 1 ? 'border-b border-[#f1f1f3]' : ''}`}
+                            >
+                              <p className="text-[14px] text-[#868496] font-medium">{f.label}</p>
+                              <p className="text-[14px] text-[#28272e] font-medium text-right ml-4 max-w-[55%]">{f.value}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-[14px] text-[#868496] text-center py-2">
+                        {cred ? 'No field data available locally' : 'Credential not found in wallet'}
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
