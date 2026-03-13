@@ -359,7 +359,7 @@ function AppInner() {
   }
 
   // ── Authenticated — main wallet ──────────────────────────────────────────
-  const showTabBar = ['dashboard', 'account', 'consent_rules', 'consent_queue', 'audit_log', 'travel_services'].includes(currentView);
+  const showTabBar = ['dashboard', 'account', 'consent_rules', 'consent_queue', 'audit_log', 'travel_services', 'receive'].includes(currentView);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#f7f6f8] w-full max-w-lg mx-auto">

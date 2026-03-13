@@ -296,7 +296,7 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
         </div>
 
         {/* Pinned action buttons */}
-        <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-5 pt-4 pb-10 space-y-3 bg-[var(--bg-ios)] z-40 border-t border-black/5">
+        <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-5 pt-4 pb-24 space-y-3 bg-[var(--bg-ios)] z-40 border-t border-black/5">
           <PrimaryButton onClick={handleAccept} loading={processing}>
             Confirm & Save
           </PrimaryButton>
@@ -376,7 +376,7 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
 
       {/* Fixed bottom button — only shown in manual (paste URI) mode */}
       {showManual && (
-        <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-5 pt-3 pb-10 bg-[var(--bg-ios)] z-40 border-t border-[var(--border-subtle)]">
+        <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-5 pt-3 pb-24 bg-[var(--bg-ios)] z-40 border-t border-[var(--border-subtle)]">
           <PrimaryButton
             onClick={() => { if (manualUri.trim()) processOfferUri(manualUri.trim()); }}
             disabled={!manualUri.trim()}
