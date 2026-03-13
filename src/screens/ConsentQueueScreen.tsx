@@ -239,30 +239,32 @@ export default function ConsentQueueScreen({ navigate }: Props) {
     }
   }, [apiKey, refreshPendingCount]);
 
+  // Stable ref so SSE / count effects don't need 'load' as a dependency
+  const loadRef = useRef(load);
+  useEffect(() => { loadRef.current = load; });
+
   useEffect(() => {
     load();
     loadedOnceRef.current = true;
   }, [load]);
 
-  // React immediately to SSE queue events (before the health poll resolves)
-  const prevSseQueueRef = useRef(sseQueueCount);
+  // sseQueueCount increments on every queue.item.created / queue.item.resolved push.
+  // Only react to changes AFTER the component mounted (mountSseRef holds the initial value).
+  const mountSseRef = useRef(sseQueueCount);
   useEffect(() => {
-    if (!loadedOnceRef.current) return;
-    if (sseQueueCount !== prevSseQueueRef.current) {
-      prevSseQueueRef.current = sseQueueCount;
-      load(true);
+    if (sseQueueCount > mountSseRef.current) {
+      loadRef.current(true);
     }
-  }, [sseQueueCount, load]);
+  }, [sseQueueCount]);
 
-  // Also refresh on pendingCount changes (fallback poll / count drift)
+  // Fallback: also reload when pendingCount drifts (30s health poll)
   const prevCountRef = useRef(pendingCount);
   useEffect(() => {
-    if (!loadedOnceRef.current) return;
     if (pendingCount !== prevCountRef.current) {
       prevCountRef.current = pendingCount;
-      load(true);
+      if (loadedOnceRef.current) loadRef.current(true);
     }
-  }, [pendingCount, load]);
+  }, [pendingCount]);
 
   const handleDelete = async (id: string) => {
     setItems(prev => prev.filter(i => i.id !== id));

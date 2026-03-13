@@ -159,8 +159,8 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
   const [skippedX509, setSkippedX509] = useState(false);
   const [selections, setSelections] = useState<Record<string, number>>({});
   const [successResult, setSuccessResult] = useState<{ redirectUri?: string } | null>(null);
-  /** null = closed; view='options' = pick action; view='details' = show credential fields */
-  const [credSheet, setCredSheet] = useState<{ queryIdx: number; view: 'options' | 'details' } | null>(null);
+  /** null = closed; view='options' = pick action; view='details' = show fields; view='change' = pick alternative */
+  const [credSheet, setCredSheet] = useState<{ queryIdx: number; view: 'options' | 'details' | 'change' } | null>(null);
 
   const localCreds = getLocalCredentials();
   const findLocalCred = (candTypes: string[], candIssuer: string) => {
@@ -547,7 +547,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
                       <svg width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M1 1l5 5-5 5" stroke="#c7c7cc" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </button>
                     <button
-                      onClick={() => { setCredSheet(null); setStage('select'); }}
+                      onClick={() => setCredSheet({ queryIdx: credSheet.queryIdx, view: 'change' })}
                       className="w-full flex items-center gap-4 px-4 py-4 active:bg-[#eeecf8] transition-colors"
                     >
                       <div className="w-11 h-11 bg-[#f4f3fc] rounded-full flex items-center justify-center flex-shrink-0">
@@ -561,7 +561,62 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
                     </button>
                   </div>
                 </div>
-              ) : (() => {
+              ) : credSheet.view === 'change' ? (() => {
+                /* ── Change: horizontal snap-scroll of candidate cards ── */
+                const query = preview.queries[credSheet.queryIdx];
+                if (!query) return null;
+                const selectedIdx = selections[query.queryId] ?? query.candidates[0]?.index;
+                return (
+                  <div className="pt-3 pb-2">
+                    <h3 className="text-[20px] font-bold text-[#28272e] mb-1 px-5">Choose credential</h3>
+                    <p className="text-[13px] text-[#868496] px-5 mb-4">Select which credential to share</p>
+                    <div
+                      className="flex gap-3 px-5 pb-4 overflow-x-auto snap-x snap-mandatory"
+                      style={{ scrollbarWidth: 'none' }}
+                    >
+                      {query.candidates.map((cand) => {
+                        const isSelected = selectedIdx === cand.index;
+                        const lc = findLocalCred(cand.type, cand.issuer);
+                        const { backgroundColor, textColor } = lc
+                          ? getCardColor(lc)
+                          : getCardColorForTypes(cand.type);
+                        const label = lc ? getCredentialLabel(lc) : getCandidateLabel(cand.type);
+                        const description = lc ? (getCredentialDescription(lc) ?? parseIssuerLabel(cand.issuer)) : parseIssuerLabel(cand.issuer);
+                        const logoUrl = lc?.displayMetadata?.logoUrl;
+                        return (
+                          <button
+                            key={cand.index}
+                            onClick={() => {
+                              setSelections(prev => ({ ...prev, [query.queryId]: cand.index }));
+                              setCredSheet(null);
+                            }}
+                            className="flex-shrink-0 snap-start w-[220px] focus:outline-none"
+                          >
+                            <div
+                              className="rounded-[16px] overflow-hidden transition-all"
+                              style={{
+                                outline: isSelected ? '2px solid #5843de' : '2px solid transparent',
+                                outlineOffset: '2px',
+                              }}
+                            >
+                              <CredentialCardFace
+                                label={label}
+                                description={description}
+                                bgColor={backgroundColor}
+                                textColor={textColor}
+                                logoUrl={logoUrl}
+                              />
+                            </div>
+                            {isSelected && (
+                              <p className="text-[12px] font-semibold text-[#5843de] text-center mt-1.5">Selected</p>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })() : (() => {
                 /* ── Details: credential card + requested fields ── */
                 const { cred, candidate } = getSheetCandidate(credSheet.queryIdx);
                 const { backgroundColor, textColor } = cred
@@ -575,7 +630,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
                   : [];
 
                 return (
-                  <div className="px-5 pt-3 pb-2">
+                  <div className="px-5 pt-3 pb-2 max-h-[70vh] overflow-y-auto">
                     <h3 className="text-[20px] font-bold text-[#28272e] mb-4">{label}</h3>
                     {/* Full credential card */}
                     <div className="rounded-[16px] overflow-hidden mb-4">
