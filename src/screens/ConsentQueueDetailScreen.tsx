@@ -3,6 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
 import { getQueueItem, approveQueueItem, rejectQueueItem, createRule } from '../api/consentEngineClient';
 import ConsentRequestView from '../components/ConsentRequestView';
+import CredentialCardFace from '../components/CredentialCardFace';
+import { getLocalCredentials } from '../store/localCredentials';
+import { getCardColor, getCardColorForTypes, getCredentialLabel, getCredentialDescription, getCandidateLabel, extractVerifierName } from '../utils/credentialHelpers';
 import type { PendingRequest } from '../types/consentEngine';
 import type { ViewName } from '../types';
 
@@ -18,16 +21,7 @@ interface Props {
 }
 
 function extractServiceName(did?: string, name?: string): string {
-  if (name) return name;
-  if (!did) return 'Unknown service';
-  const webMatch = did.match(/^did:web:([^#?/]+)/);
-  if (webMatch) return webMatch[1];
-  if (did.startsWith('did:')) {
-    const parts = did.split(':');
-    const last = parts[parts.length - 1];
-    return last.length > 16 ? last.slice(0, 8) + '…' + last.slice(-4) : last;
-  }
-  return did.length > 20 ? did.slice(0, 10) + '…' + did.slice(-6) : did;
+  return extractVerifierName(did, name);
 }
 
 function timeUntil(dateStr: string): string {
@@ -50,6 +44,11 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
   const [showPinSheet, setShowPinSheet] = useState(false);
   const [pinValue, setPinValue] = useState('');
   const [pendingAction, setPendingAction] = useState<'once' | 'always' | null>(null);
+  // credSelections: typeKey → 0-based index within that type's candidate group
+  // Sent to CE as { credentialType: candidateIndex } e.g. { "org.iso.23220.photoid.1": "1" }
+  const [credSelections, setCredSelections] = useState<Record<string, number>>({});
+  // credPickerType: the typeKey whose picker sheet is open
+  const [credPickerType, setCredPickerType] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -63,6 +62,21 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
       }
     })();
   }, [apiKey, queueItemId]);
+
+  // Initialise credential selections when item loads
+  useEffect(() => {
+    if (!item?.preview.matchedCredentials?.length) return;
+    const initial: Record<string, number> = {};
+    item.preview.matchedCredentials.forEach(c => {
+      const rawType = c.type as unknown;
+      const types = Array.isArray(rawType)
+        ? (rawType as string[]).filter(t => t !== 'VerifiableCredential')
+        : [c.type as string];
+      const typeKey = types[0] ?? '';
+      if (typeKey && !(typeKey in initial)) initial[typeKey] = 0;
+    });
+    setCredSelections(initial);
+  }, [item]);
 
   const needsPin = !!(item?.reason === 'needs_tx_code' || item?.preview.requiresPin);
 
@@ -99,7 +113,11 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
         } catch { /* rule creation failure is non-fatal; still approve */ }
       }
 
-      await approveQueueItem(apiKey, item.id, txCode);
+      // Convert { typeKey: index } → { typeKey: "index" } as CE expects string values
+      const credSelectionsParam = Object.keys(credSelections).length > 0
+        ? Object.fromEntries(Object.entries(credSelections).map(([k, v]) => [k, String(v)]))
+        : undefined;
+      await approveQueueItem(apiKey, item.id, txCode, credSelectionsParam);
       await refreshPendingCount();
       setActionState('done');
       setTimeout(() => navigate('dashboard'), 1800);
@@ -199,36 +217,62 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
     ? extractServiceName(item.preview.verifier?.clientId, item.preview.verifier?.name)
     : extractServiceName(item.preview.issuerDid);
 
-  // Build credential rows for ConsentRequestView
-  const credentialRows: { types: string[]; issuer: string; fields?: string[] }[] = [];
-  if (isVP) {
-    if (item.preview.matchedCredentials && item.preview.matchedCredentials.length > 0) {
-      item.preview.matchedCredentials.forEach(c => {
-        // CE may return type as a string or string[]
-        const rawType = c.type as unknown;
-        const types = Array.isArray(rawType)
-          ? (rawType as string[]).filter(t => t !== 'VerifiableCredential')
-          : [c.type as string];
-        credentialRows.push({ types, issuer: c.issuer, fields: item.preview.requestedFields });
-      });
-    } else if (item.preview.credentialType) {
-      credentialRows.push({
-        types: [item.preview.credentialType],
-        issuer: item.preview.verifier?.clientId ?? '',
-        fields: item.preview.requestedFields,
-      });
-    } else if (item.preview.requestedFields && item.preview.requestedFields.length > 0) {
-      credentialRows.push({
-        types: [],
-        issuer: item.preview.verifier?.clientId ?? '',
-        fields: item.preview.requestedFields,
-      });
-    }
-  } else {
-    (item.preview.credentialTypes ?? []).forEach(ct =>
-      credentialRows.push({ types: [ct], issuer: item.preview.issuerDid ?? '' })
-    );
+  // Build credential rows for ConsentRequestView — deduplicated by type
+  // For VP requests with matchedCredentials, group by primary type so the user
+  // sees one row per type (with a picker if there are multiple candidates).
+  interface MatchedGroup {
+    types: string[];
+    typeKey: string;
+    candidates: Array<{ id: string; type: string; issuer: string }>;
   }
+  const matchedGroups: MatchedGroup[] = [];
+
+  if (isVP && item.preview.matchedCredentials && item.preview.matchedCredentials.length > 0) {
+    const seen = new Set<string>();
+    item.preview.matchedCredentials.forEach(c => {
+      const rawType = c.type as unknown;
+      const types = Array.isArray(rawType)
+        ? (rawType as string[]).filter(t => t !== 'VerifiableCredential')
+        : [c.type as string];
+      const typeKey = types[0] ?? '';
+      if (!seen.has(typeKey)) {
+        seen.add(typeKey);
+        const candidates = item.preview.matchedCredentials!.filter(mc => {
+          const mcRaw = mc.type as unknown;
+          const mcTypes = Array.isArray(mcRaw)
+            ? (mcRaw as string[]).filter(t => t !== 'VerifiableCredential')
+            : [mc.type as string];
+          return (mcTypes[0] ?? '') === typeKey;
+        });
+        matchedGroups.push({ types, typeKey, candidates });
+      }
+    });
+  }
+
+  const localCreds = getLocalCredentials();
+
+  const credentialRows = isVP
+    ? matchedGroups.length > 0
+      ? matchedGroups.map(g => {
+          // Show the currently selected candidate's issuer if we can resolve it
+          const selIdx = credSelections[g.typeKey] ?? 0;
+          const selCand = g.candidates[selIdx] ?? g.candidates[0];
+          return {
+            types: g.types,
+            issuer: selCand?.issuer ?? '',
+            fields: item.preview.requestedFields,
+            candidateCount: g.candidates.length,
+          };
+        })
+      : item.preview.credentialType
+        ? [{ types: [item.preview.credentialType], issuer: item.preview.verifier?.clientId ?? '', fields: item.preview.requestedFields }]
+        : item.preview.requestedFields?.length
+          ? [{ types: [], issuer: item.preview.verifier?.clientId ?? '', fields: item.preview.requestedFields }]
+          : []
+    : (item.preview.credentialTypes ?? []).map(ct => ({ types: [ct], issuer: item.preview.issuerDid ?? '' }));
+
+  // Candidates for the currently open picker (matched by typeKey)
+  const pickerGroup = credPickerType ? matchedGroups.find(g => g.typeKey === credPickerType) : null;
 
   return (
     <motion.div variants={variants} initial="initial" animate="animate" exit="exit"
@@ -256,6 +300,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
         onShare={() => handleShareClick(false)}
         onAlwaysShare={isVP ? () => handleShareClick(true) : undefined}
         onReject={handleReject}
+        onCredentialClick={matchedGroups.length > 0 ? (idx) => setCredPickerType(matchedGroups[idx]?.typeKey ?? null) : undefined}
         extras={
           <>
             {item.status === 'pending' && isExpired && (
@@ -288,6 +333,68 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
           </>
         }
       />
+
+      {/* Credential picker sheet */}
+      <AnimatePresence>
+        {credPickerType && pickerGroup && (
+          <div className="fixed inset-0 z-[60]" onClick={() => setCredPickerType(null)}>
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+            <div
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[512px] bg-white rounded-t-[32px] shadow-2xl pb-8"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="w-10 h-1 bg-[#c7c7cc] rounded-full mx-auto mt-4 mb-5" />
+              <h3 className="text-[20px] font-bold text-[#28272e] px-5 mb-1">Choose credential</h3>
+              <p className="text-[14px] text-[#868496] px-5 mb-4">Select which credential to share</p>
+              <div
+                className="flex gap-3 px-5 pb-2 overflow-x-auto snap-x snap-mandatory"
+                style={{ scrollbarWidth: 'none' }}
+              >
+                {pickerGroup.candidates.map(cand => {
+                  const localCred = localCreds.find(lc => lc.id === cand.id);
+                  const { backgroundColor, textColor } = localCred
+                    ? getCardColor(localCred)
+                    : getCardColorForTypes(pickerGroup.types);
+                  const label = localCred ? getCredentialLabel(localCred) : getCandidateLabel(pickerGroup.types);
+                  const description = localCred ? getCredentialDescription(localCred) : undefined;
+                  const logoUrl = localCred?.displayMetadata?.logoUrl;
+                  const candIdx = pickerGroup.candidates.indexOf(cand);
+                  const isSelected = credSelections[credPickerType] === candIdx;
+                  return (
+                    <button
+                      key={cand.id}
+                      onClick={() => {
+                        setCredSelections(prev => ({ ...prev, [credPickerType]: candIdx }));
+                        setCredPickerType(null);
+                      }}
+                      className="flex-shrink-0 snap-start w-[220px] focus:outline-none"
+                    >
+                      <div
+                        className="rounded-[16px] overflow-hidden transition-all"
+                        style={{
+                          outline: isSelected ? '2px solid #5843de' : '2px solid transparent',
+                          outlineOffset: '2px',
+                        }}
+                      >
+                        <CredentialCardFace
+                          label={label}
+                          description={description}
+                          bgColor={backgroundColor}
+                          textColor={textColor}
+                          logoUrl={logoUrl}
+                        />
+                      </div>
+                      {isSelected && (
+                        <p className="text-[12px] font-semibold text-[#5843de] text-center mt-1.5">Selected</p>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* PIN sheet */}
       <AnimatePresence>

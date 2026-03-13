@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
 import { useAuth } from '../context/AuthContext';
 import { listAuditSummary, listRules } from '../api/consentEngineClient';
+import { extractVerifierName } from '../utils/credentialHelpers';
 import type { ConsentRule } from '../types/consentEngine';
 import type { ViewName } from '../types';
 
@@ -19,15 +20,7 @@ interface Props {
 }
 
 function extractServiceName(did?: string): string {
-  if (!did) return 'Unknown service';
-  const webMatch = did.match(/^did:web:([^#?/]+)/);
-  if (webMatch) return webMatch[1];
-  if (did.startsWith('did:')) {
-    const parts = did.split(':');
-    const last = parts[parts.length - 1];
-    return last.length > 16 ? last.slice(0, 8) + '…' + last.slice(-4) : last;
-  }
-  return did.length > 20 ? did.slice(0, 10) + '…' + did.slice(-6) : did;
+  return extractVerifierName(did);
 }
 
 function formatDate(dateStr: string): string {
@@ -67,13 +60,31 @@ export default function TravelServicesScreen({ navigate }: Props) {
         listRules(apiKey),
       ]);
 
-      const serviceList = summary
+      const auditServices = summary
         .filter(e => e.verifierDid)
         .map(e => ({
           did: e.verifierDid,
           name: extractServiceName(e.verifierDid),
           lastShared: e.lastSharedAt,
-        }))
+        }));
+
+      // Also surface enabled DID-specific rules that haven't produced audit events yet
+      const auditDids = new Set(auditServices.map(s => s.did));
+      const ruleServices = rules
+        .filter(r =>
+          r.ruleType === 'verification' &&
+          r.party.matchType === 'did' &&
+          r.party.value &&
+          r.enabled &&
+          !auditDids.has(r.party.value)
+        )
+        .map(r => ({
+          did: r.party.value!,
+          name: extractServiceName(r.party.value),
+          lastShared: r.createdAt,
+        }));
+
+      const serviceList = [...auditServices, ...ruleServices]
         .sort((a, b) => b.lastShared.localeCompare(a.lastShared));
 
       setServices(serviceList);

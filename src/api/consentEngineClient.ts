@@ -282,10 +282,20 @@ export async function getQueueItem(apiKey: string, requestId: string): Promise<P
   return ceRequest<PendingRequest>(`/queue/${requestId}`, apiKey);
 }
 
-export async function approveQueueItem(apiKey: string, requestId: string, txCode?: string): Promise<PendingRequest> {
+export async function approveQueueItem(
+  apiKey: string,
+  requestId: string,
+  txCode?: string,
+  credentialSelections?: Record<string, string>,
+): Promise<PendingRequest> {
+  const body: Record<string, unknown> = {};
+  if (txCode) body.txCode = txCode;
+  if (credentialSelections && Object.keys(credentialSelections).length > 0) {
+    body.credentialSelections = credentialSelections;
+  }
   return ceRequest<PendingRequest>(`/queue/${requestId}/approve`, apiKey, {
     method: 'POST',
-    body: JSON.stringify(txCode ? { txCode } : {}),
+    body: JSON.stringify(body),
   });
 }
 

@@ -306,7 +306,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
         });
         const uniqueFields = [...new Set(allFields)];
 
-        const verifierName = preview.verifier.name || preview.verifier.clientId;
+        const verifierName = vpExtras.clientName ?? preview.verifier.name ?? parseIssuerLabel(preview.verifier.clientId);
         const payload: CreateRulePayload = {
           nodeId: state.nodeIdentifier ?? '',
           label: `Always share with ${verifierName}`,

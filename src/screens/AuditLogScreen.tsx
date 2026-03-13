@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
 import { useAuth } from '../context/AuthContext';
 import { listAuditEvents, deleteAuditEvent, clearAuditEvents } from '../api/consentEngineClient';
+import { extractVerifierName } from '../utils/credentialHelpers';
 import type { AuditEvent, AuditAction } from '../types/consentEngine';
 import type { ViewName } from '../types';
 
@@ -64,15 +65,7 @@ function formatDateCaption(dateStr: string): string {
 }
 
 function extractServiceName(did?: string): string {
-  if (!did) return 'Unknown service';
-  const webMatch = did.match(/^did:web:([^#?/]+)/);
-  if (webMatch) return webMatch[1];
-  if (did.startsWith('did:')) {
-    const parts = did.split(':');
-    const last = parts[parts.length - 1];
-    return last.length > 16 ? last.slice(0, 8) + '…' + last.slice(-4) : last;
-  }
-  return did.length > 20 ? did.slice(0, 10) + '…' + did.slice(-6) : did;
+  return extractVerifierName(did);
 }
 
 function getEventContent(event: AuditEvent): { title: string; description: string } {

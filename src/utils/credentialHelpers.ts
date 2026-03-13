@@ -243,6 +243,31 @@ export function getIssuerDisplay(credential: Credential): string {
   return parseIssuerLabel(credential.issuer ?? '');
 }
 
+/**
+ * Extract a human-readable display name from a verifier/party identifier.
+ * Prefers an explicit `name` when provided, then handles all common client_id formats:
+ *   x509_san_dns:hostname  →  hostname
+ *   x509_san_uri:https://…  →  hostname
+ *   did:web:domain  →  domain
+ *   other DIDs  →  truncated last segment
+ */
+export function extractVerifierName(clientId?: string, name?: string): string {
+  if (name) return name;
+  if (!clientId) return 'Unknown service';
+  const x509Dns = clientId.match(/^x509_san_dns:([^/?#]+)/);
+  if (x509Dns) return x509Dns[1];
+  const x509Uri = clientId.match(/^x509_san_uri:(https?:\/\/[^/?#]+)/);
+  if (x509Uri) { try { return new URL(x509Uri[1]).hostname; } catch { return x509Uri[1]; } }
+  const webMatch = clientId.match(/^did:web:([^#?/:]+)/);
+  if (webMatch) return webMatch[1];
+  if (clientId.startsWith('did:')) {
+    const parts = clientId.split(':');
+    const last = parts[parts.length - 1];
+    return last.length > 16 ? last.slice(0, 8) + '…' + last.slice(-4) : last;
+  }
+  return clientId.length > 20 ? clientId.slice(0, 10) + '…' + clientId.slice(-6) : clientId;
+}
+
 // ============================================================
 // Card gradient (deterministic per credential)
 // ============================================================
