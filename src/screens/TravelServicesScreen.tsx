@@ -42,7 +42,6 @@ export default function TravelServicesScreen({ navigate }: Props) {
   const { state } = useConsentEngine();
   const { state: authState } = useAuth();
   const apiKey = state.ceApiKey ?? '';
-  const nodeId = authState.nodeIdentifier ?? '';
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -211,7 +210,7 @@ export default function TravelServicesScreen({ navigate }: Props) {
                 {blockedOpen && (
                   <div className="bg-white rounded-[12px] border border-[#f1f1f3] overflow-hidden divide-y divide-[#f1f1f3]">
                     {blockedRules.map(r => {
-                      const name = bestNameForDid(r.party.value!, allRules);
+                      const name = nameForRule(r);
                       return (
                         <button
                           key={r.id}
