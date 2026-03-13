@@ -84,7 +84,7 @@ export default function DashboardScreen({ navigate, refreshSignal }: DashboardSc
     <div className="flex-1 flex flex-col bg-[var(--bg-ios)] min-h-screen">
       {/* Minimalist Top Nav Replacement for Header */}
       <nav className="px-5 pt-14 pb-4 flex items-center justify-between">
-        <h1 className="text-[32px] font-bold text-[var(--text-main)]">
+        <h1 className="text-[28px] font-bold text-[var(--text-main)] leading-8">
           Neoke Wallet
         </h1>
         <div className="flex items-center gap-3">
