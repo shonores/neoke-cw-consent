@@ -1,6 +1,21 @@
 import type { Credential } from '../types';
 
 const STORAGE_KEY = 'neoke_credentials';
+const COUNT_KEY = 'neoke_credentials_count';
+
+/** Last known credential count — survives cache clears, used for skeleton sizing */
+export function getLocalCredentialCount(): number {
+  try {
+    const n = parseInt(localStorage.getItem(COUNT_KEY) ?? '0', 10);
+    return Number.isFinite(n) && n > 0 ? n : getLocalCredentials().length;
+  } catch {
+    return 0;
+  }
+}
+
+function persistCount(creds: Credential[]): void {
+  try { localStorage.setItem(COUNT_KEY, String(creds.length)); } catch { /* noop */ }
+}
 
 export function getLocalCredentials(): Credential[] {
   try {
@@ -15,6 +30,7 @@ export function saveLocalCredential(credential: Credential): void {
   const existing = getLocalCredentials();
   const updated = [credential, ...existing.filter((c) => c.id !== credential.id)];
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  persistCount(updated);
 }
 
 export function deleteLocalCredential(id: string): void {
@@ -64,5 +80,6 @@ export function mergeWithLocalCredentials(serverCreds: Credential[]): Credential
 
   // Write back so localStorage mirrors the server exactly
   localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+  persistCount(merged);
   return merged;
 }

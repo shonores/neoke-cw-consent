@@ -41,29 +41,52 @@ interface VpExtras {
   transactionData?: string[];
 }
 
-/** Extract client_metadata and transaction_data from an inline VP request JWT */
-function parseVpExtras(uri: string): VpExtras {
+/** Decode a raw JWT string into VpExtras (client_metadata + transaction_data) */
+function decodeJwtExtras(jwt: string): VpExtras {
+  const parts = jwt.trim().split('.');
+  if (parts.length < 2) return {};
+  const pad = (s: string) => s + '='.repeat((4 - s.length % 4) % 4);
+  const payload = JSON.parse(atob(pad(parts[1].replace(/-/g, '+').replace(/_/g, '/'))));
+  const meta = (payload.client_metadata ?? {}) as Record<string, unknown>;
+  return {
+    logoUri: typeof meta.logo_uri === 'string' ? meta.logo_uri : undefined,
+    clientName: typeof meta.client_name === 'string' ? meta.client_name : undefined,
+    clientPurpose: typeof meta.client_purpose === 'string' ? meta.client_purpose : undefined,
+    transactionData: Array.isArray(payload.transaction_data)
+      ? (payload.transaction_data as unknown[]).filter((x): x is string => typeof x === 'string')
+      : undefined,
+  };
+}
+
+/** Extract client_metadata and transaction_data from a VP request URI.
+ *  Handles both inline (?request=JWT) and remote (?request_uri=URL) flows. */
+async function parseVpExtras(uri: string): Promise<VpExtras> {
   try {
     const rawUri = uri.replace(/^openid[^:]*:\/\//, 'https://x/');
     const url = new URL(rawUri);
-    const jwt = url.searchParams.get('request');
-    if (!jwt) return {};
-    const parts = jwt.split('.');
-    if (parts.length < 2) return {};
-    const pad = (s: string) => s + '='.repeat((4 - s.length % 4) % 4);
-    const payload = JSON.parse(atob(pad(parts[1].replace(/-/g, '+').replace(/_/g, '/'))));
-    const meta = (payload.client_metadata ?? {}) as Record<string, unknown>;
-    return {
-      logoUri: typeof meta.logo_uri === 'string' ? meta.logo_uri : undefined,
-      clientName: typeof meta.client_name === 'string' ? meta.client_name : undefined,
-      clientPurpose: typeof meta.client_purpose === 'string' ? meta.client_purpose : undefined,
-      transactionData: Array.isArray(payload.transaction_data)
-        ? (payload.transaction_data as unknown[]).filter((x): x is string => typeof x === 'string')
-        : undefined,
-    };
+
+    // Inline JWT
+    const inlineJwt = url.searchParams.get('request');
+    if (inlineJwt) return decodeJwtExtras(inlineJwt);
+
+    // Remote JWT — try fetching client-side (may fail due to CORS; that's fine)
+    const requestUri = url.searchParams.get('request_uri');
+    if (requestUri) {
+      const method = (url.searchParams.get('request_uri_method') ?? 'get').toUpperCase();
+      const res = await fetch(requestUri, {
+        method,
+        headers: { Accept: 'application/oauth-authz-req+jwt, application/jwt, */*' },
+        ...(method === 'POST' ? { body: new URLSearchParams() } : {}),
+      });
+      if (res.ok) {
+        const text = await res.text();
+        return decodeJwtExtras(text);
+      }
+    }
   } catch {
-    return {};
+    // CORS or parse failure — fall through
   }
+  return {};
 }
 
 /** Extract field values from a local credential matching the disclosed field names */
@@ -211,7 +234,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
     setSelections({});
     setCredSheet(null);
     setCurrentRequestUri(trimmed);
-    setVpExtras(parseVpExtras(trimmed));
+    parseVpExtras(trimmed).then(extras => setVpExtras(extras));
 
     try {
       const { data, skippedX509: usedSkip } = await previewPresentationWithRetry(state.token, trimmed);

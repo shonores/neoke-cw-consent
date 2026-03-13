@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { discoverWalletCredentials, ApiError } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { getLocalCredentials, mergeWithLocalCredentials, clearLocalCredentials } from '../store/localCredentials';
+import { getLocalCredentials, getLocalCredentialCount, mergeWithLocalCredentials, clearLocalCredentials } from '../store/localCredentials';
 import CredentialStack from '../components/CredentialStack';
 import ErrorMessage from '../components/ErrorMessage';
 import type { Credential, ViewName } from '../types';
@@ -109,7 +109,7 @@ export default function DashboardScreen({ navigate, refreshSignal }: DashboardSc
         {loading ? (
           // Skeleton cards — one per known credential (min 1)
           <div className="pt-2 px-4">
-            {Array.from({ length: Math.max(1, credentials.length) }).map((_, i, arr) => (
+            {Array.from({ length: Math.max(1, credentials.length || getLocalCredentialCount()) }).map((_, i, arr) => (
               <div
                 key={i}
                 className="relative bg-white border border-[#f1f1f3] rounded-[16px] overflow-hidden"
