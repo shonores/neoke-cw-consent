@@ -25,7 +25,7 @@ import CredentialThumbnail from '../components/CredentialThumbnail';
 import CredentialCardFace from '../components/CredentialCardFace';
 import OptionCard from '../components/OptionCard';
 import ConsentRequestView from '../components/ConsentRequestView';
-import type { Credential, VPPreviewResponse, VPCandidate, ViewName } from '../types';
+import type { Credential, VPPreviewResponse, ViewName } from '../types';
 
 type Stage = 'scan' | 'loading' | 'select' | 'consent' | 'presenting' | 'success' | 'error';
 
@@ -149,7 +149,6 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
   const { state, markExpired } = useAuth();
   const { state: ceState } = useConsentEngine();
   const [stage, setStage] = useState<Stage>(initialUri ? 'loading' : 'scan');
-  const [ceBypassed, setCeBypassed] = useState(false);
   const [manualUri, setManualUri] = useState(initialUri ?? '');
   const [showManual, setShowManual] = useState(!!initialUri);
   const [currentRequestUri, setCurrentRequestUri] = useState(initialUri ?? '');
@@ -158,7 +157,13 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
   const [error, setError] = useState('');
   const [skippedX509, setSkippedX509] = useState(false);
   const [selections, setSelections] = useState<Record<string, number>>({});
-  const [successResult, setSuccessResult] = useState<{ redirectUri?: string } | null>(null);
+
+  // Auto-navigate to dashboard after success
+  useEffect(() => {
+    if (stage !== 'success') return;
+    const t = setTimeout(() => { onPresented?.(); navigate('dashboard'); }, 1800);
+    return () => clearTimeout(t);
+  }, [stage, onPresented, navigate]);
   /** null = closed; view='options' = pick action; view='details' = show fields; view='change' = pick alternative */
   const [credSheet, setCredSheet] = useState<{ queryIdx: number; view: 'options' | 'details' | 'change' } | null>(null);
 
@@ -189,9 +194,6 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
     if (onRouteToCe && isCeConfigured() && ceState.ceEnabled && ceState.ceApiKey) {
       onRouteToCe(trimmed);
       return;
-    }
-    if (isCeConfigured() && ceState.ceEnabled) {
-      setCeBypassed(true);
     }
 
     const uriType = detectUriType(trimmed);
@@ -252,8 +254,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
     setStage('presenting');
     const activeSelections = Object.keys(selections).length > 0 ? selections : undefined;
     try {
-      const result = await respondPresentationWithRetry(state.token, currentRequestUri, activeSelections, skippedX509);
-      setSuccessResult({ redirectUri: result.redirectUri });
+      await respondPresentationWithRetry(state.token, currentRequestUri, activeSelections, skippedX509);
       setStage('success');
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
@@ -437,28 +438,19 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
   if (stage === 'success') {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 min-h-screen bg-[var(--bg-ios)] text-center">
-        <div className="space-y-8 w-full max-w-sm">
-          <motion.div
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="w-24 h-24 bg-green-50 border border-green-100 rounded-full flex items-center justify-center mx-auto"
-          >
+        <motion.div
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="flex flex-col items-center gap-6"
+        >
+          <div className="w-24 h-24 bg-green-50 border border-green-100 rounded-full flex items-center justify-center">
             <IconCheckCircle />
-          </motion.div>
-          <div>
-            <h2 className="text-[var(--text-main)] font-bold text-[32px] leading-tight">Shared!</h2>
-            <p className="text-[var(--text-muted)] text-[16px] mt-2">The verifier has received your information.</p>
           </div>
-          {successResult?.redirectUri && (
-            <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] p-5 text-left shadow-[var(--shadow-sm)] border border-[var(--border-subtle)]">
-              <p className="text-[11px] text-[var(--text-muted)] font-bold uppercase tracking-wider mb-2">Redirecting to</p>
-              <p className="text-[13px] font-mono text-[var(--text-main)] break-all font-bold">{successResult.redirectUri}</p>
-            </div>
-          )}
-          <PrimaryButton onClick={() => { onPresented?.(); navigate('dashboard'); }}>
-            Done
-          </PrimaryButton>
-        </div>
+          <div>
+            <h2 className="text-[#28272e] font-bold text-[28px] leading-tight">Information shared</h2>
+            <p className="text-[#868496] text-[17px] mt-2">Returning to Home…</p>
+          </div>
+        </motion.div>
       </div>
     );
   }
@@ -691,19 +683,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
         </h1>
       </nav>
 
-      {ceBypassed && (
-        <div className="px-5 pb-2">
-          <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-[var(--radius-xl)] px-4 py-3">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-blue-600 flex-shrink-0">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-              <path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-            </svg>
-            <p className="text-[13px] font-bold text-blue-700">Policy active: Request routed directly.</p>
-          </div>
-        </div>
-      )}
-
-      <div className={`flex-1 overflow-y-auto px-5 space-y-5 ${showManual ? 'pb-28' : 'pb-6'}`}>
+<div className={`flex-1 overflow-y-auto px-5 space-y-5 ${showManual ? 'pb-28' : 'pb-6'}`}>
         <div className="flex bg-black/5 rounded-[var(--radius-2xl)] p-1 gap-1">
           <button
             className={`flex-1 flex items-center justify-center gap-2 py-3 text-[14px] rounded-xl transition-all ${!showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[var(--text-muted)] font-medium'}`}
