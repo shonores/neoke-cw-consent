@@ -52,7 +52,6 @@ function CredentialCardRow({
   types,
   issuer,
   fields,
-  candidateCount,
   localCreds,
   onClick,
 }: ConsentCredentialRow & { localCreds: Credential[]; onClick?: () => void }) {
