@@ -50,6 +50,7 @@ export default function TravelServicesScreen({ navigate }: Props) {
   const [services, setServices] = useState<Array<{ did: string; name: string; lastShared: string }>>([]);
   const [blockedRules, setBlockedRules] = useState<ConsentRule[]>([]);
   const [globalRules, setGlobalRules] = useState<ConsentRule[]>([]);
+  const [allRules, setAllRules] = useState<ConsentRule[]>([]);
   const [blockedOpen, setBlockedOpen] = useState(false);
 
   const load = useCallback(async () => {
@@ -106,6 +107,7 @@ export default function TravelServicesScreen({ navigate }: Props) {
         r.enabled
       );
       setGlobalRules(globals);
+      setAllRules(rules);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load services.');
     } finally {
@@ -231,7 +233,7 @@ export default function TravelServicesScreen({ navigate }: Props) {
                 {blockedOpen && (
                   <div className="bg-white rounded-[12px] border border-[#f1f1f3] overflow-hidden divide-y divide-[#f1f1f3]">
                     {blockedRules.map(r => {
-                      const name = bestNameForDid(r.party.value!, rules);
+                      const name = bestNameForDid(r.party.value!, allRules);
                       return (
                         <button
                           key={r.id}
