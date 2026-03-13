@@ -3,8 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
 import { useAuth } from '../context/AuthContext';
 import {
-  listAuditEvents, listRules, createRule, updateRule, deleteRule,
-  enableRule, disableRule,
+  listAuditEvents, listRules, createRule, updateRule, deleteRule, enableRule, disableRule,
 } from '../api/consentEngineClient';
 import type { AuditEvent, ConsentRule, CreateRulePayload } from '../types/consentEngine';
 import type { ViewName } from '../types';
@@ -116,6 +115,7 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
   const [rules, setRules] = useState<ConsentRule[]>([]);
   const [error, setError] = useState('');
   const [showModeSheet, setShowModeSheet] = useState(false);
+  const [showDeleteSheet, setShowDeleteSheet] = useState(false);
 
   const serviceRule = isGlobalRule
     ? (rules.find(r => r.id === globalRuleId) ?? null)
@@ -127,7 +127,13 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
 
   const serviceName = isGlobalRule
     ? 'All requesters'
-    : (serviceNameFromRuleLabel(serviceRule?.label) ?? extractVerifierName(verifierDid));
+    : (() => {
+        const fromRule = serviceNameFromRuleLabel(serviceRule?.label);
+        if (fromRule) return fromRule;
+        // Fall back to any audit event's ruleLabel (CE stores the rule label that matched)
+        const fromEvent = events.map(e => serviceNameFromRuleLabel(e.ruleLabel)).find(Boolean);
+        return fromEvent ?? extractVerifierName(verifierDid);
+      })();
 
   const mode: ShareMode = !serviceRule
     ? 'ask'
@@ -143,10 +149,6 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
     ...events.flatMap(e => (e.allowedFields && e.allowedFields.length > 0) ? e.allowedFields : (e.requestedFields ?? [])),
     ...ruleExplicitFields,
   ]));
-
-  const allowedFields: string[] = serviceRule?.allowedFields?.matchType === 'explicit'
-    ? ruleExplicitFields
-    : allFields;
 
   const ruleCredType: string | null = serviceRule?.credentialType?.matchType === 'exact'
     ? (serviceRule.credentialType.value ?? null)
@@ -233,27 +235,17 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
     }
   };
 
-  // ── Field toggling ──────────────────────────────────────────────────────────
+  // ── Delete rule ─────────────────────────────────────────────────────────────
 
-  const toggleField = async (field: string) => {
-    if (!serviceRule || saving || mode !== 'always') return;
+  const handleDelete = async () => {
+    if (!serviceRule || saving) return;
     setSaving(true);
+    setShowDeleteSheet(false);
     try {
-      const current = serviceRule.allowedFields?.matchType === 'explicit'
-        ? (serviceRule.allowedFields.fields ?? [])
-        : allFields;
-      const newFields = current.includes(field)
-        ? current.filter(f => f !== field)
-        : [...current, field];
-      const updated = await updateRule(apiKey, serviceRule.id, {
-        allowedFields: newFields.length > 0
-          ? { matchType: 'explicit', fields: newFields }
-          : { matchType: 'any' },
-      });
-      setRules(prev => prev.map(r => r.id === updated.id ? updated : r));
-    } catch {
-      /* ignore */
-    } finally {
+      await deleteRule(apiKey, serviceRule.id);
+      navigate('travel_services');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete rule.');
       setSaving(false);
     }
   };
@@ -348,10 +340,10 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
             <p className="text-[14px] text-[#6d6b7e] px-1 leading-5">{bannerCaption}</p>
           </div>
 
-          {/* Enable / disable toggle (when rule exists) */}
+          {/* Enable / disable toggle + delete (when rule exists) */}
           {serviceRule && (
-            <div className="bg-white rounded-[12px] border border-[#f1f1f3]">
-              <div className="flex items-center gap-3 px-4 py-3">
+            <div className="bg-white rounded-[12px] border border-[#f1f1f3] overflow-hidden">
+              <div className="flex items-center gap-3 px-4 py-3 border-b border-[#f1f1f3]">
                 <div className="w-11 h-11 rounded-full bg-[#f4f3fc] flex items-center justify-center flex-shrink-0">
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                     <path d="M18.36 6.64a9 9 0 1 1-12.73 0" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round"/>
@@ -366,6 +358,13 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
                 </div>
                 <Toggle checked={serviceRule.enabled} onChange={toggleEnabled} disabled={saving} />
               </div>
+              <button
+                onClick={() => setShowDeleteSheet(true)}
+                disabled={saving}
+                className="w-full px-4 py-3 text-left text-[15px] font-medium text-[#aa281e] active:bg-red-50 transition-colors disabled:opacity-40"
+              >
+                Delete rule
+              </button>
             </div>
           )}
 
@@ -391,45 +390,25 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
               <h2 className="text-[20px] font-semibold text-[#28272e] px-1 pt-2">Info shared</h2>
               <div className="bg-white rounded-[12px] border border-[#f1f1f3] overflow-hidden divide-y divide-[#f1f1f3]">
                 {allFields.map(field => {
-                  const isChecked = mode === 'always' && allowedFields.includes(field);
                   const lastEvent = events.find(e => e.requestedFields?.includes(field));
                   return (
-                    <button
-                      key={field}
-                      disabled={mode !== 'always' || saving}
-                      onClick={() => toggleField(field)}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left active:bg-[#f7f6f8] transition-colors disabled:opacity-50"
-                    >
-                      <div className="w-11 h-11 rounded-full bg-[#f4f3fc] flex items-center justify-center flex-shrink-0">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <div key={field} className="flex items-center gap-3 px-4 py-3">
+                      <div className="w-9 h-9 rounded-full bg-[#f4f3fc] flex items-center justify-center flex-shrink-0">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                           <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
                           <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[16px] font-semibold text-[#28272e] leading-6">{formatFieldName(field)}</p>
+                        <p className="text-[15px] font-medium text-[#28272e] leading-6">{formatFieldName(field)}</p>
                         {lastEvent && (
-                          <p className="text-[13px] text-[#6d6b7e] leading-5">
-                            Last shared {formatDate(lastEvent.timestamp)}
-                          </p>
+                          <p className="text-[12px] text-[#868496] leading-5">Last shared {formatDate(lastEvent.timestamp)}</p>
                         )}
                       </div>
-                      <div className={`w-6 h-6 rounded-[4px] flex items-center justify-center flex-shrink-0 border-2 transition-colors ${
-                        isChecked ? 'bg-[#5843de] border-[#5843de]' : 'bg-white border-[#d7d6dc]'
-                      }`}>
-                        {isChecked && (
-                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                            <path d="M2.5 7l3.5 3.5 5.5-7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        )}
-                      </div>
-                    </button>
+                    </div>
                   );
                 })}
               </div>
-              {mode !== 'always' && (
-                <p className="text-[13px] text-[#868496] px-1">Set to "Always" above to configure which fields to share.</p>
-              )}
             </div>
           )}
 
@@ -471,6 +450,43 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
           )}
         </main>
       )}
+
+      {/* Delete confirmation sheet */}
+      <AnimatePresence>
+        {showDeleteSheet && (
+          <div className="fixed inset-0 z-[60]" onClick={() => setShowDeleteSheet(false)}>
+            <motion.div className="absolute inset-0 bg-black/40" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
+            <motion.div
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[512px] bg-white rounded-t-[24px] px-5 pt-4"
+              style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}
+              initial={{ y: '100%' }}
+              animate={{ y: 0, transition: { type: 'spring', damping: 30, stiffness: 300 } }}
+              exit={{ y: '100%', transition: { duration: 0.2 } }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="w-9 h-1 bg-[#d7d6dc] rounded-full mx-auto mb-5" />
+              <h3 className="text-[18px] font-bold text-[#28272e] mb-2">Delete rule?</h3>
+              <p className="text-[14px] text-[#6d6b7e] mb-6">
+                This will remove the consent rule for {serviceName}. You'll be asked for consent next time they request your info.
+              </p>
+              <div className="space-y-3">
+                <button
+                  onClick={handleDelete}
+                  className="w-full bg-[#aa281e] text-white text-[16px] font-semibold rounded-full py-4 active:opacity-80"
+                >
+                  Delete rule
+                </button>
+                <button
+                  onClick={() => setShowDeleteSheet(false)}
+                  className="w-full text-[#28272e] text-[16px] font-medium py-4 rounded-full border border-black/10 active:bg-black/5"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Mode bottom sheet */}
       <AnimatePresence>
