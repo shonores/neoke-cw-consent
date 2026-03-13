@@ -445,7 +445,7 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
       {/* Mode bottom sheet */}
       <AnimatePresence>
         {showModeSheet && (
-          <div className="fixed inset-0 z-50" onClick={() => setShowModeSheet(false)}>
+          <div className="fixed inset-0 z-[60]" onClick={() => setShowModeSheet(false)}>
             <motion.div
               className="absolute inset-0 bg-black/40"
               initial={{ opacity: 0 }}
@@ -453,7 +453,7 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
               exit={{ opacity: 0 }}
             />
             <motion.div
-              className="absolute inset-x-0 bottom-0 bg-[#f7f6f8] rounded-t-[24px] z-50"
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[512px] bg-[#f7f6f8] rounded-t-[24px]"
               style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}
               initial={{ y: '100%' }}
               animate={{ y: 0, transition: { type: 'spring', damping: 30, stiffness: 300 } }}

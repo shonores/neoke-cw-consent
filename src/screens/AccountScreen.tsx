@@ -423,10 +423,10 @@ export default function AccountScreen({ navigate }: Props) {
 
       {/* ── Edit name sheet ─────────────────────────────────────── */}
       {showEditName && (
-        <div className="fixed inset-0 z-50" onClick={() => setShowEditName(false)}>
+        <div className="fixed inset-0 z-[60]" onClick={() => setShowEditName(false)}>
           <div className="absolute inset-0 bg-black/40" />
           <div
-            className="absolute inset-x-0 bottom-0 bg-white rounded-t-[24px] p-6 z-50"
+            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[512px] bg-white rounded-t-[24px] p-6"
             style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}
             onClick={e => e.stopPropagation()}
           >
@@ -472,10 +472,10 @@ export default function AccountScreen({ navigate }: Props) {
 
       {/* ── Edit email sheet ─────────────────────────────────────── */}
       {showEditEmail && (
-        <div className="fixed inset-0 z-50" onClick={() => setShowEditEmail(false)}>
+        <div className="fixed inset-0 z-[60]" onClick={() => setShowEditEmail(false)}>
           <div className="absolute inset-0 bg-black/40" />
           <div
-            className="absolute inset-x-0 bottom-0 bg-white rounded-t-[24px] p-6 z-50"
+            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[512px] bg-white rounded-t-[24px] p-6"
             style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}
             onClick={e => e.stopPropagation()}
           >
@@ -511,10 +511,10 @@ export default function AccountScreen({ navigate }: Props) {
 
       {/* ── Disconnect CE sheet ─────────────────────────────────── */}
       {showDisconnectSheet && (
-        <div className="fixed inset-0 z-50" onClick={() => setShowDisconnectSheet(false)}>
+        <div className="fixed inset-0 z-[60]" onClick={() => setShowDisconnectSheet(false)}>
           <div className="absolute inset-0 bg-black/40" />
           <div
-            className="absolute inset-x-0 bottom-0 bg-white rounded-t-[24px] p-6 z-50"
+            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[512px] bg-white rounded-t-[24px] p-6"
             style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}
             onClick={e => e.stopPropagation()}
           >
@@ -543,10 +543,10 @@ export default function AccountScreen({ navigate }: Props) {
 
       {/* ── Delete account sheet ─────────────────────────────────── */}
       {showDeleteSheet && (
-        <div className="fixed inset-0 z-50" onClick={() => setShowDeleteSheet(false)}>
+        <div className="fixed inset-0 z-[60]" onClick={() => setShowDeleteSheet(false)}>
           <div className="absolute inset-0 bg-black/40" />
           <div
-            className="absolute inset-x-0 bottom-0 bg-white rounded-t-[24px] p-6 z-50"
+            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[512px] bg-white rounded-t-[24px] p-6"
             style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}
             onClick={e => e.stopPropagation()}
           >

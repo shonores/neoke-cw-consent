@@ -79,10 +79,10 @@ interface DeleteSheetProps {
 
 function DeleteSheet({ rule, onConfirm, onCancel, loading }: DeleteSheetProps) {
   return (
-    <div className="fixed inset-0 z-50" onClick={onCancel}>
+    <div className="fixed inset-0 z-[60]" onClick={onCancel}>
       <div className="absolute inset-0 bg-black/40" />
       <div
-        className="fixed inset-x-0 bottom-0 bg-white rounded-t-3xl shadow-2xl p-6 z-50 border-t border-black/5"
+        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[512px] bg-white rounded-t-3xl shadow-2xl p-6 border-t border-black/5"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-10 h-1 bg-[#c7c7cc] rounded-full mx-auto mb-5" />

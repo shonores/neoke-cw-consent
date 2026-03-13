@@ -381,7 +381,7 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
             onClick={() => { if (manualUri.trim()) processOfferUri(manualUri.trim()); }}
             disabled={!manualUri.trim()}
           >
-            Connect to Node
+            Continue
           </PrimaryButton>
         </div>
       )}

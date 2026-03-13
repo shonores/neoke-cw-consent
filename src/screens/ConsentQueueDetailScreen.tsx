@@ -285,9 +285,9 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
       {/* PIN sheet */}
       <AnimatePresence>
         {showPinSheet && (
-          <div className="fixed inset-0 z-50" onClick={() => setShowPinSheet(false)}>
+          <div className="fixed inset-0 z-[60]" onClick={() => setShowPinSheet(false)}>
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-            <div className="fixed inset-x-0 bottom-0 bg-white rounded-t-[32px] shadow-2xl p-6 z-50"
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[512px] bg-white rounded-t-[32px] shadow-2xl p-6"
               onClick={e => e.stopPropagation()}>
               <div className="w-10 h-1 bg-[#c7c7cc] rounded-full mx-auto mb-5" />
               <h3 className="text-[20px] font-bold text-[#28272e] mb-2">Enter PIN</h3>

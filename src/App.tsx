@@ -96,20 +96,20 @@ function TabBar({
           <div className="relative">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path
-                d="M2 12h4l2 3h8l2-3h4"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"
+                d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"
                 stroke="currentColor"
                 strokeWidth="1.7"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 fill={consentActive ? 'currentColor' : 'none'}
-                fillOpacity={consentActive ? 0.08 : 0}
+                fillOpacity={consentActive ? 0.12 : 0}
+              />
+              <path
+                d="M13.73 21a2 2 0 01-3.46 0"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
             {pendingCount > 0 ? (
@@ -132,19 +132,19 @@ function TabBar({
       >
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
           <circle
-            cx="8" cy="8" r="3.5"
+            cx="12" cy="12" r="9.25"
             stroke="currentColor"
             strokeWidth="1.7"
             fill={accountActive ? 'currentColor' : 'none'}
-            fillOpacity={accountActive ? 0.12 : 0}
+            fillOpacity={accountActive ? 0.08 : 0}
           />
+          <circle cx="12" cy="9.5" r="2.75" stroke="currentColor" strokeWidth="1.5" />
           <path
-            d="M2 20c0-3.31 2.69-6 6-6s6 2.69 6 6"
+            d="M6.5 18.5c0-2.76 2.46-5 5.5-5s5.5 2.24 5.5 5"
             stroke="currentColor"
-            strokeWidth="1.7"
+            strokeWidth="1.5"
             strokeLinecap="round"
           />
-          <path d="M16 6h6M16 10h4M16 14h5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
         </svg>
         <span className="text-[10px] font-medium">Profile</span>
       </button>
