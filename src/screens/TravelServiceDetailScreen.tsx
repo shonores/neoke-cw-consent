@@ -8,7 +8,7 @@ import {
 import type { AuditEvent, ConsentRule, CreateRulePayload } from '../types/consentEngine';
 import type { ViewName } from '../types';
 import ScreenNav from '../components/ScreenNav';
-import { extractVerifierName } from '../utils/credentialHelpers';
+import { extractVerifierName, serviceNameFromRuleLabel } from '../utils/credentialHelpers';
 
 type ShareMode = 'always' | 'ask' | 'never';
 
@@ -26,18 +26,6 @@ const variants = {
 interface Props {
   navigate: (view: ViewName) => void;
   verifierDid: string;
-}
-
-function serviceNameFromRuleLabel(label?: string): string | null {
-  if (!label) return null;
-  const stripped = label
-    .replace(/^Always\s+share\s+with\s+/i, '')
-    .replace(/^Always:\s+/i, '')
-    .replace(/^Block\s+/i, '')
-    .trim();
-  // Reject if it's still a raw DID or x509 identifier
-  if (stripped.startsWith('did:') || stripped.startsWith('x509_')) return null;
-  return stripped || null;
 }
 
 function formatDate(dateStr: string): string {
@@ -307,7 +295,7 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
     <motion.div variants={variants} initial="initial" animate="animate" exit="exit"
       className="flex-1 flex flex-col bg-[#f7f6f8] min-h-screen">
 
-      <ScreenNav title={serviceName} onBack={() => navigate('travel_services')} />
+      <ScreenNav title={loading ? '' : serviceName} onBack={() => navigate('travel_services')} />
 
       {loading ? (
         <div className="flex-1 flex items-center justify-center">

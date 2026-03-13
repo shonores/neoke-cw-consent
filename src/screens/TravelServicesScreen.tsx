@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
 import { useAuth } from '../context/AuthContext';
 import { listAuditSummary, listRules } from '../api/consentEngineClient';
-import { extractVerifierName } from '../utils/credentialHelpers';
+import { extractVerifierName, serviceNameFromRuleLabel } from '../utils/credentialHelpers';
 import type { ConsentRule } from '../types/consentEngine';
 import type { ViewName } from '../types';
 
@@ -19,8 +19,9 @@ interface Props {
   navigate: (view: ViewName, extra?: { selectedServiceDid?: string }) => void;
 }
 
-function extractServiceName(did?: string): string {
-  return extractVerifierName(did);
+function bestNameForDid(did: string, rules: ConsentRule[]): string {
+  const rule = rules.find(r => r.party.matchType === 'did' && r.party.value === did);
+  return serviceNameFromRuleLabel(rule?.label) ?? extractVerifierName(did);
 }
 
 function formatDate(dateStr: string): string {
@@ -60,11 +61,13 @@ export default function TravelServicesScreen({ navigate }: Props) {
         listRules(apiKey),
       ]);
 
+      // Rules are the authoritative source of human-readable names (their labels were set
+      // at the time the user approved, when verifier.name was available from the preview).
       const auditServices = summary
         .filter(e => e.verifierDid)
         .map(e => ({
-          did: e.verifierDid,
-          name: extractServiceName(e.verifierDid),
+          did: e.verifierDid!,
+          name: bestNameForDid(e.verifierDid!, rules),
           lastShared: e.lastSharedAt,
         }));
 
@@ -78,14 +81,11 @@ export default function TravelServicesScreen({ navigate }: Props) {
           r.enabled &&
           !auditDids.has(r.party.value)
         )
-        .map(r => {
-          // Prefer the rule label as service name (strip "Always share with " prefix)
-          const labelName = r.label?.replace(/^Always\s+share\s+with\s+/i, '').replace(/^Always:\s+/i, '').trim();
-          const name = (labelName && !labelName.startsWith('x509_') && !labelName.startsWith('did:'))
-            ? labelName
-            : extractServiceName(r.party.value);
-          return { did: r.party.value!, name, lastShared: r.createdAt };
-        });
+        .map(r => ({
+          did: r.party.value!,
+          name: bestNameForDid(r.party.value!, rules),
+          lastShared: r.createdAt,
+        }));
 
       const serviceList = [...auditServices, ...ruleServices]
         .sort((a, b) => b.lastShared.localeCompare(a.lastShared));
@@ -231,7 +231,7 @@ export default function TravelServicesScreen({ navigate }: Props) {
                 {blockedOpen && (
                   <div className="bg-white rounded-[12px] border border-[#f1f1f3] overflow-hidden divide-y divide-[#f1f1f3]">
                     {blockedRules.map(r => {
-                      const name = extractServiceName(r.party.value);
+                      const name = bestNameForDid(r.party.value!, rules);
                       return (
                         <button
                           key={r.id}

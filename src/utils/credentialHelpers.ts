@@ -254,6 +254,8 @@ export function getIssuerDisplay(credential: Credential): string {
 export function extractVerifierName(clientId?: string, name?: string): string {
   if (name) return name;
   if (!clientId) return 'Unknown service';
+  // x509_hash is just a hash — no human-readable name is embedded; caller must supply name
+  if (clientId.startsWith('x509_hash:')) return 'Unknown service';
   const x509Dns = clientId.match(/^x509_san_dns:([^/?#]+)/);
   if (x509Dns) return x509Dns[1];
   const x509Uri = clientId.match(/^x509_san_uri:(https?:\/\/[^/?#]+)/);
@@ -266,6 +268,31 @@ export function extractVerifierName(clientId?: string, name?: string): string {
     return last.length > 16 ? last.slice(0, 8) + '…' + last.slice(-4) : last;
   }
   return clientId.length > 20 ? clientId.slice(0, 10) + '…' + clientId.slice(-6) : clientId;
+}
+
+/**
+ * Extract a human-readable service name from a CE rule label.
+ * Strips known prefixes ("Always share with X", "Always: X", "Block X").
+ * Returns null if the result is still a raw DID or x509 identifier.
+ */
+export function serviceNameFromRuleLabel(label?: string | null): string | null {
+  if (!label) return null;
+  const stripped = label
+    .replace(/^Always\s+share\s+with\s+/i, '')
+    .replace(/^Always:\s+/i, '')
+    .replace(/^Block\s+/i, '')
+    .trim();
+  if (stripped.startsWith('did:') || stripped.startsWith('x509_')) return null;
+  return stripped || null;
+}
+
+/**
+ * Best-effort service name from an audit event.
+ * Prefers the rule label (which contains the human-readable name set at rule creation),
+ * then falls back to extractVerifierName on the raw DID.
+ */
+export function serviceNameFromEvent(event: { ruleLabel?: string | null; verifierDid?: string | null; issuerDid?: string | null }): string {
+  return serviceNameFromRuleLabel(event.ruleLabel) ?? extractVerifierName(event.verifierDid ?? event.issuerDid ?? undefined);
 }
 
 // ============================================================

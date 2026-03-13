@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ceIntake } from '../api/consentEngineClient';
 
 interface Props {
@@ -24,14 +24,18 @@ function IconCheckCircle() {
   );
 }
 
+function Spinner() {
+  return (
+    <div className="w-14 h-14 rounded-full border-[3px] border-[#5843de]/20 border-t-[#5843de] animate-spin" />
+  );
+}
+
 /**
- * Background CE intake handler.
- * Normally renders nothing. On auto_executed (rule matched → shared silently),
- * briefly shows a success confirmation then auto-dismisses.
- * All other outcomes are handled silently via callbacks.
+ * CE intake handler — always visible while processing.
+ * Shows a "Processing" screen immediately, then transitions to success or falls back.
  */
 export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback, onReviewQueue }: Props) {
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [phase, setPhase] = useState<'processing' | 'success'>('processing');
 
   useEffect(() => {
     let cancelled = false;
@@ -42,9 +46,8 @@ export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback
         if (result.action === 'queued') {
           onReviewQueue(result.queuedItem?.id ?? result.requestId);
         } else if (result.action === 'auto_executed') {
-          // Show brief success confirmation then return to home
-          setShowSuccess(true);
-          setTimeout(() => { if (!cancelled) { setShowSuccess(false); onDismiss(); } }, 1800);
+          setPhase('success');
+          setTimeout(() => { if (!cancelled) onDismiss(); }, 1800);
         } else {
           // rejected (e.g. preview_failed) — fall back to manual consent flow
           onFallback(rawLink, detectLinkType(rawLink));
@@ -57,23 +60,49 @@ export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback
     return () => { cancelled = true; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!showSuccess) return null;
-
   return (
-    <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-[var(--bg-ios)] text-center p-6">
-      <motion.div
-        initial={{ scale: 0.5, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="flex flex-col items-center gap-6"
-      >
-        <div className="w-24 h-24 bg-green-50 border border-green-100 rounded-full flex items-center justify-center">
-          <IconCheckCircle />
-        </div>
-        <div>
-          <h2 className="text-[#28272e] font-bold text-[28px] leading-tight">Information shared</h2>
-          <p className="text-[#868496] text-[17px] mt-2">Returning to Home…</p>
-        </div>
-      </motion.div>
+    <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-[#f7f6f8] text-center p-6">
+      <AnimatePresence mode="wait">
+        {phase === 'processing' ? (
+          <motion.div
+            key="processing"
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.92 }}
+            transition={{ duration: 0.2 }}
+            className="flex flex-col items-center gap-6"
+          >
+            <div className="w-24 h-24 bg-white border border-black/[0.06] rounded-full flex items-center justify-center shadow-sm">
+              <Spinner />
+            </div>
+            <div>
+              <h2 className="text-[#28272e] font-bold text-[28px] leading-tight">Processing</h2>
+              <p className="text-[#868496] text-[17px] mt-2">Checking your consent rules…</p>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="success"
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+            className="flex flex-col items-center gap-6"
+          >
+            <motion.div
+              initial={{ scale: 0.5 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', damping: 16, stiffness: 400 }}
+              className="w-24 h-24 bg-green-50 border border-green-100 rounded-full flex items-center justify-center"
+            >
+              <IconCheckCircle />
+            </motion.div>
+            <div>
+              <h2 className="text-[#28272e] font-bold text-[28px] leading-tight">Information shared</h2>
+              <p className="text-[#868496] text-[17px] mt-2">Returning to Home…</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
 import { useAuth } from '../context/AuthContext';
 import { listAuditEvents, deleteAuditEvent, clearAuditEvents } from '../api/consentEngineClient';
-import { extractVerifierName } from '../utils/credentialHelpers';
+import { serviceNameFromEvent } from '../utils/credentialHelpers';
 import type { AuditEvent, AuditAction } from '../types/consentEngine';
 import type { ViewName } from '../types';
 
@@ -63,12 +63,8 @@ function formatDateCaption(dateStr: string): string {
   return d.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
-function extractServiceName(did?: string): string {
-  return extractVerifierName(did);
-}
-
 function getEventContent(event: AuditEvent): { title: string; description: string } {
-  const service = extractServiceName(event.verifierDid ?? event.issuerDid);
+  const service = serviceNameFromEvent(event);
   const credType = event.credentialType ? ` (${formatCredentialType(event.credentialType)})` : '';
 
   switch (event.action) {
@@ -237,7 +233,7 @@ function EventDetailSheet({
   onClose: () => void;
   onNavigateToService: (did: string) => void;
 }) {
-  const service = extractServiceName(event.verifierDid ?? event.issuerDid);
+  const service = serviceNameFromEvent(event);
   const isShared = event.action === 'auto_presented' || event.action === 'manually_approved';
   const isDeclined = event.action === 'rejected' || event.action === 'manually_rejected';
   const fields = (event.allowedFields && event.allowedFields.length > 0)
@@ -432,10 +428,15 @@ export default function AuditLogScreen({ navigate }: Props) {
         offset: offsetRef.current,
         order: 'desc',
       });
-      // L7: 'queued' events are operational state (request entered inbox), not user activity.
-      // Each interaction emits both a 'queued' + a terminal event; showing 'queued' doubles
-      // every entry and pollutes the feed with stale "View request" CTAs.
-      const filtered = data.filter(e => e.action !== 'queued');
+      // Filter noise from the activity feed:
+      // - 'queued' events are operational state (inbox entry), not user activity — each interaction
+      //   emits queued + a terminal event, so showing both doubles every entry.
+      // - 'rejected' events with no verifierDid are preview_failed requests — CE couldn't even
+      //   identify who was asking, so there's nothing meaningful to show.
+      const filtered = data.filter(e =>
+        e.action !== 'queued' &&
+        !(e.action === 'rejected' && !e.verifierDid && !e.ruleLabel)
+      );
       if (reset) {
         setEvents(filtered);
       } else {
