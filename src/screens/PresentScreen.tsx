@@ -21,9 +21,7 @@ import QRScanner from '../components/QRScanner';
 import PrimaryButton from '../components/PrimaryButton';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
-import CredentialThumbnail from '../components/CredentialThumbnail';
 import CredentialCardFace from '../components/CredentialCardFace';
-import OptionCard from '../components/OptionCard';
 import ConsentRequestView from '../components/ConsentRequestView';
 import type { Credential, VPPreviewResponse, ViewName } from '../types';
 
@@ -232,8 +230,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
       setSelections(initialSelections);
       setSkippedX509(usedSkip);
       setPreview(data);
-      const needsSelection = data.queries.some((q) => (q.candidates?.length ?? 0) > 1);
-      setStage(needsSelection ? 'select' : 'consent');
+      setStage('consent');
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         markExpired();
@@ -322,88 +319,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
     );
   }
 
-  if (stage === 'select' && preview) {
-    const ambiguousQueries = preview.queries.filter((q) => (q.candidates?.length ?? 0) > 1);
-    const multipleGroups = ambiguousQueries.length > 1;
-
-    return (
-      <div className="flex flex-col min-h-screen bg-[var(--bg-ios)]">
-        <nav className="px-5 pt-14 pb-4 flex items-center gap-3">
-          <button
-            onClick={() => navigate('dashboard')}
-            className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-          </button>
-          <h1 className="text-[28px] font-bold text-[#28272e]">
-            {multipleGroups ? 'Multiple Credentials' : 'Select Credential'}
-          </h1>
-        </nav>
-
-        <div className="px-5 pb-6 flex-shrink-0">
-          <h2 className="text-[24px] font-bold text-[var(--text-main)] leading-tight">
-            {multipleGroups ? 'Choose credentials to share' : 'Choose a credential to share'}
-          </h2>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-5 pb-28 space-y-6">
-          {ambiguousQueries.map((query) => {
-            const selectedIndex = selections[query.queryId] ?? query.candidates[0]?.index;
-            return (
-              <div key={query.queryId}>
-                <p className="text-[16px] font-bold text-[var(--text-main)] mb-3">
-                  {multipleGroups ? (() => {
-                    const first = query.candidates[0];
-                    const lc = first ? findLocalCred(first.type, first.issuer) : undefined;
-                    return lc ? getCredentialLabel(lc) : getCandidateLabel(first?.type ?? []);
-                  })() : 'Select one'}
-                </p>
-                <div className="space-y-3">
-                  {query.candidates.map((cand) => {
-                    const isSelected = selectedIndex === cand.index;
-                    const localCred = findLocalCred(cand.type, cand.issuer);
-                    const { backgroundColor, textColor } = localCred
-                      ? getCardColor(localCred)
-                      : getCardColorForTypes(cand.type);
-                    const logoUrl = localCred?.displayMetadata?.logoUrl;
-                    const label = localCred ? getCredentialLabel(localCred) : getCandidateLabel(cand.type);
-                    const issuerLabel = parseIssuerLabel(cand.issuer);
-
-                    return (
-                      <OptionCard
-                        key={cand.index}
-                        selected={isSelected}
-                        onClick={() => setSelections((prev) => ({ ...prev, [query.queryId]: cand.index }))}
-                        title={label}
-                        description={issuerLabel}
-                        icon={
-                          <CredentialThumbnail
-                            backgroundColor={backgroundColor}
-                            textColor={textColor}
-                            logoUrl={logoUrl}
-                          />
-                        }
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-5 pt-4 pb-10 bg-[var(--bg-ios)] z-40 border-t border-black/5">
-          <PrimaryButton onClick={() => setStage('consent')}>
-            Continue
-          </PrimaryButton>
-        </div>
-      </div>
-    );
-  }
-
-  if (stage === 'error') {
+if (stage === 'error') {
     return (
       <div className="flex-1 flex flex-col min-h-screen bg-[var(--bg-ios)]">
         <nav className="px-5 pt-14 pb-4">
@@ -458,8 +374,6 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
   if (stage === 'consent' && preview) {
     const verifierName = vpExtras.clientName ?? preview.verifier.name ?? parseIssuerLabel(preview.verifier.clientId);
     const purpose = vpExtras.clientPurpose ?? preview.verifier.purpose;
-    const hasMultiSelect = preview.queries.some(q => q.candidates.length > 1);
-
     const credentialRows = preview.queries.map(q => {
       const cand = q.candidates.find(c => c.index === selections[q.queryId]) ?? q.candidates[0];
       return cand
@@ -486,7 +400,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
       <div className="flex flex-col min-h-screen bg-[var(--bg-ios)] overflow-x-hidden">
         <nav className="px-5 pt-14 pb-4">
           <button
-            onClick={() => setStage(hasMultiSelect ? 'select' : 'scan')}
+            onClick={() => setStage('scan')}
             className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -503,7 +417,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
           actionState="idle"
           onShare={handleShare}
           onAlwaysShare={ceState.ceEnabled && ceState.ceApiKey ? handleAlwaysShare : undefined}
-          onReject={() => setStage(hasMultiSelect ? 'select' : 'scan')}
+          onReject={() => setStage('scan')}
           logoUri={vpExtras.logoUri}
           transactionData={vpExtras.transactionData}
           onCredentialClick={handleCredentialClick}

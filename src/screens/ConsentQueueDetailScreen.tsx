@@ -100,9 +100,9 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
       }
 
       await approveQueueItem(apiKey, item.id, txCode);
-      setActionState('done');
       await refreshPendingCount();
-      setTimeout(() => navigate('consent_queue'), 2000);
+      setActionState('done');
+      setTimeout(() => navigate('dashboard'), 1800);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Could not share credentials.';
       if (msg.includes('already') || msg.includes('expired')) {
@@ -167,19 +167,26 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
 
   if (actionState === 'done') {
     return (
-      <motion.div variants={variants} initial="initial" animate="animate" exit="exit"
-        className="flex-1 flex flex-col bg-[var(--bg-ios)] min-h-screen items-center justify-center gap-4 px-8">
-        <div className="w-20 h-20 bg-[#f4f3fc] rounded-full flex items-center justify-center">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" fill="#5843de" fillOpacity="0.12" />
-            <path d="M8 12l3 3 5-5" stroke="#5843de" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
-        <p className="text-[20px] font-bold text-[#28272e] text-center">
-          {item.linkType === 'credential_offer' ? 'Credential accepted' : 'Information shared'}
-        </p>
-        <p className="text-[14px] text-[#868496]">Returning to inbox…</p>
-      </motion.div>
+      <div className="flex-1 flex flex-col items-center justify-center p-6 min-h-screen bg-[var(--bg-ios)] text-center">
+        <motion.div
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="flex flex-col items-center gap-6"
+        >
+          <div className="w-24 h-24 bg-green-50 border border-green-100 rounded-full flex items-center justify-center">
+            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <circle cx="12" cy="12" r="10" stroke="#5843de" strokeWidth="1.5" />
+              <path d="M8.5 12l2.5 2.5 4.5-5" stroke="#5843de" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-[#28272e] font-bold text-[28px] leading-tight">
+              {item.linkType === 'credential_offer' ? 'Credential saved' : 'Information shared'}
+            </h2>
+            <p className="text-[#868496] text-[17px] mt-2">Returning to Home…</p>
+          </div>
+        </motion.div>
+      </div>
     );
   }
 

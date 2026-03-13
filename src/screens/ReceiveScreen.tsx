@@ -13,7 +13,6 @@ import {
 import { saveLocalCredential } from '../store/localCredentials';
 import QRScanner from '../components/QRScanner';
 import PrimaryButton from '../components/PrimaryButton';
-import SecondaryButton from '../components/SecondaryButton';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import CredentialThumbnail from '../components/CredentialThumbnail';
@@ -268,41 +267,45 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
       <div className="flex flex-col min-h-screen bg-[var(--bg-ios)]">
         <ScreenNav title="Save Credential" onBack={() => navigate('dashboard')} />
 
-        {/* Title */}
-        <div className="px-5 pb-6 flex-shrink-0">
-          <h2 className="text-[24px] font-bold text-[var(--text-main)] leading-tight">
-            Save your <span className="text-[var(--primary)] font-black italic">{label}</span>?
-          </h2>
-        </div>
-
         {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto px-5 pb-40 space-y-6">
-          <p className="text-[12px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Info to save</p>
+        <div className="flex-1 overflow-y-auto px-5 pb-40 space-y-5">
+          <div className="pb-1">
+            <h2 className="text-[24px] font-semibold text-[#28272e] leading-[28px]">
+              <span className="text-[#5843de]">{label}</span>
+              {' '}is being offered to you
+            </h2>
+          </div>
 
-          <div className="bg-[var(--bg-white)] rounded-[var(--radius-2xl)] flex items-center px-4 py-4 shadow-[var(--shadow-sm)] border border-[var(--border-subtle)]">
-            <CredentialThumbnail
-              backgroundColor={backgroundColor}
-              textColor={textColor}
-              logoUrl={logoUrl}
-              className="mr-4"
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-[15px] font-semibold text-[var(--text-main)] truncate">{label}</p>
-              {description && (
-                <p className="text-[13px] text-[var(--text-muted)] truncate font-medium">{description}</p>
-              )}
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-[#868496] px-1 mb-2">Credential offered</p>
+            <div className="bg-white rounded-[16px] flex items-center px-4 py-4 border border-[#f1f1f3] shadow-sm">
+              <CredentialThumbnail
+                backgroundColor={backgroundColor}
+                textColor={textColor}
+                logoUrl={logoUrl}
+                className="mr-4"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-[16px] font-bold text-[#28272e] truncate">{label}</p>
+                {description && (
+                  <p className="text-[13px] text-[#6d6b7e] truncate font-medium">{description}</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Pinned action buttons */}
-        <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-5 pt-4 pb-24 space-y-3 bg-[var(--bg-ios)] z-40 border-t border-black/5">
+        <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-5 pt-4 pb-10 bg-[var(--bg-ios)]/90 backdrop-blur-[4px] z-40 space-y-2 border-t border-[#f1f1f3]">
           <PrimaryButton onClick={handleAccept} loading={processing}>
-            Confirm & Save
+            Accept credential
           </PrimaryButton>
-          <SecondaryButton onClick={() => navigate('dashboard')}>
+          <button
+            onClick={() => navigate('dashboard')}
+            className="w-full text-[#5843de] text-[16px] font-medium py-4 active:opacity-60 transition-opacity"
+          >
             Maybe later
-          </SecondaryButton>
+          </button>
         </div>
       </div>
     );
