@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
 import { useAuth } from '../context/AuthContext';
-import { listAuditSummary, listRules } from '../api/consentEngineClient';
-import { extractVerifierName, serviceNameFromRuleLabel } from '../utils/credentialHelpers';
+import { listRules } from '../api/consentEngineClient';
+import { serviceNameFromRuleLabel } from '../utils/credentialHelpers';
 import type { ConsentRule } from '../types/consentEngine';
 import type { ViewName } from '../types';
 
@@ -19,9 +19,8 @@ interface Props {
   navigate: (view: ViewName, extra?: { selectedServiceDid?: string }) => void;
 }
 
-function bestNameForDid(did: string, rules: ConsentRule[]): string {
-  const rule = rules.find(r => r.party.matchType === 'did' && r.party.value === did);
-  return serviceNameFromRuleLabel(rule?.label) ?? extractVerifierName(did);
+function nameForRule(rule: ConsentRule): string {
+  return serviceNameFromRuleLabel(rule.label) ?? rule.party.value ?? 'Unknown service';
 }
 
 function formatDate(dateStr: string): string {
@@ -57,38 +56,17 @@ export default function TravelServicesScreen({ navigate }: Props) {
     setLoading(true);
     setError('');
     try {
-      const [summary, rules] = await Promise.all([
-        listAuditSummary(apiKey, nodeId),
-        listRules(apiKey),
-      ]);
+      const rules = await listRules(apiKey);
 
-      // Rules are the authoritative source of human-readable names (their labels were set
-      // at the time the user approved, when verifier.name was available from the preview).
-      const auditServices = summary
-        .filter(e => e.verifierDid)
-        .map(e => ({
-          did: e.verifierDid!,
-          name: bestNameForDid(e.verifierDid!, rules),
-          lastShared: e.lastSharedAt,
-        }));
-
-      // Also surface enabled DID-specific rules that haven't produced audit events yet
-      const auditDids = new Set(auditServices.map(s => s.did));
-      const ruleServices = rules
-        .filter(r =>
-          r.ruleType === 'verification' &&
-          r.party.matchType === 'did' &&
-          r.party.value &&
-          r.enabled &&
-          !auditDids.has(r.party.value)
-        )
-        .map(r => ({
-          did: r.party.value!,
-          name: bestNameForDid(r.party.value!, rules),
-          lastShared: r.createdAt,
-        }));
-
-      const serviceList = [...auditServices, ...ruleServices]
+      // Only show services that have an active (enabled) DID-specific rule
+      const activeRules = rules.filter(r =>
+        r.ruleType === 'verification' &&
+        r.party.matchType === 'did' &&
+        r.party.value &&
+        r.enabled
+      );
+      const serviceList = activeRules
+        .map(r => ({ did: r.party.value!, name: nameForRule(r), lastShared: r.updatedAt }))
         .sort((a, b) => b.lastShared.localeCompare(a.lastShared));
 
       setServices(serviceList);
@@ -113,7 +91,7 @@ export default function TravelServicesScreen({ navigate }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [apiKey, nodeId]);
+  }, [apiKey]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -167,9 +145,9 @@ export default function TravelServicesScreen({ navigate }: Props) {
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
-            <p className="text-[17px] font-bold text-[#28272e] mb-2">No services yet</p>
+            <p className="text-[17px] font-bold text-[#28272e] mb-2">No consent rules yet</p>
             <p className="text-[14px] text-[#868496] leading-relaxed">
-              Services you share your information with will appear here.
+              Services you've set rules for will appear here.
             </p>
           </div>
         ) : (
@@ -210,7 +188,7 @@ export default function TravelServicesScreen({ navigate }: Props) {
                   <ServiceInitialsAvatar name={s.name} />
                   <div className="flex-1 min-w-0">
                     <p className="text-[16px] font-semibold text-[#28272e] leading-6">{s.name}</p>
-                    <p className="text-[14px] text-[#6d6b7e] leading-5">Last shared {formatDate(s.lastShared)}</p>
+                    <p className="text-[14px] text-[#6d6b7e] leading-5">Rule created {formatDate(s.lastShared)}</p>
                   </div>
                   <svg width="7" height="12" viewBox="0 0 7 12" fill="none" className="flex-shrink-0">
                     <path d="M1 1l5 5-5 5" stroke="#c7c7cc" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
