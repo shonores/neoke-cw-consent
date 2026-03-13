@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
-import { useAuth } from '../context/AuthContext';
 import { listRules } from '../api/consentEngineClient';
 import { serviceNameFromRuleLabel } from '../utils/credentialHelpers';
 import type { ConsentRule } from '../types/consentEngine';
@@ -40,7 +39,6 @@ function ServiceInitialsAvatar({ name }: { name: string }) {
 
 export default function TravelServicesScreen({ navigate }: Props) {
   const { state } = useConsentEngine();
-  const { state: authState } = useAuth();
   const apiKey = state.ceApiKey ?? '';
 
   const [loading, setLoading] = useState(true);
@@ -48,7 +46,6 @@ export default function TravelServicesScreen({ navigate }: Props) {
   const [services, setServices] = useState<Array<{ did: string; name: string; lastShared: string }>>([]);
   const [blockedRules, setBlockedRules] = useState<ConsentRule[]>([]);
   const [globalRules, setGlobalRules] = useState<ConsentRule[]>([]);
-  const [allRules, setAllRules] = useState<ConsentRule[]>([]);
   const [blockedOpen, setBlockedOpen] = useState(false);
 
   const load = useCallback(async () => {
@@ -84,7 +81,6 @@ export default function TravelServicesScreen({ navigate }: Props) {
         r.enabled
       );
       setGlobalRules(globals);
-      setAllRules(rules);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load services.');
     } finally {
