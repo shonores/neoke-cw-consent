@@ -91,17 +91,17 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
     if (!state.token) return;
     const trimmed = uri.trim();
 
-    // Route to CE if configured and available
-    if (onRouteToCe && isCeConfigured() && ceState.ceEnabled && ceState.ceApiKey) {
-      onRouteToCe(trimmed);
-      return;
-    }
-    if (isCeConfigured() && ceState.ceEnabled) {
-      setCeBypassed(true);
-    }
-
     const uriType = detectUriType(trimmed);
+
+    // Presentation requests → CE intake (if configured); credential offers always go direct
     if (uriType === 'present') {
+      if (onRouteToCe && isCeConfigured() && ceState.ceEnabled && ceState.ceApiKey) {
+        onRouteToCe(trimmed);
+        return;
+      }
+      if (isCeConfigured() && ceState.ceEnabled) {
+        setCeBypassed(true);
+      }
       navigate('present', { pendingUri: trimmed });
       return;
     }
