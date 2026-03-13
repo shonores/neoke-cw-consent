@@ -24,13 +24,6 @@ function extractServiceName(did?: string, name?: string): string {
   return extractVerifierName(did, name);
 }
 
-function timeUntil(dateStr: string): string {
-  const diff = new Date(dateStr).getTime() - Date.now();
-  if (diff <= 0) return 'Expired';
-  const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins}m remaining`;
-  return `${Math.floor(mins / 60)}h remaining`;
-}
 
 export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Props) {
   const { state, refreshPendingCount } = useConsentEngine();
@@ -179,7 +172,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
     return (
       <motion.div variants={variants} initial="initial" animate="animate" exit="exit"
         className="flex-1 flex flex-col bg-[var(--bg-ios)] min-h-screen">
-        <nav className="px-5 pt-14 pb-4">
+        <nav className="sticky top-0 z-10 bg-[var(--bg-ios)] px-5 pt-14 pb-4">
           <button onClick={() => navigate('consent_queue')}
             className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -323,20 +316,11 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
                 <p className="text-[13px] font-semibold text-[#aa281e]">Request expired · Cannot be approved</p>
               </div>
             )}
-            {item.status === 'pending' && !isExpired && new Date(effectiveExpiry).getTime() - Date.now() < 3_600_000 && (
-              <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-[12px] px-4 py-3">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="flex-shrink-0">
-                  <circle cx="12" cy="12" r="10" stroke="#f59e0b" strokeWidth="1.7" />
-                  <path d="M12 7v5l3 2" stroke="#f59e0b" strokeWidth="1.7" strokeLinecap="round" />
-                </svg>
-                <p className="text-[13px] font-semibold text-orange-700">{timeUntil(effectiveExpiry)} · Act now</p>
-              </div>
-            )}
             {isResolved && (
               <div className={`flex items-center gap-2 rounded-[12px] px-4 py-3 ${
                 item.resolvedAction === 'approved' ? 'bg-green-50 border border-green-200' : 'bg-[#f7f6f8] border border-[#f1f1f3]'
               }`}>
-                <p className={`text-[13px] font-semibold ${item.resolvedAction === 'approved' ? 'text-[#198e41]' : 'text-[#6d6b7e]'}`}>
+                <p className={`text-[13px] font-semibold ${item.resolvedAction === 'approved' ? 'text-[#198e41]' : 'text-[#868496]'}`}>
                   {item.resolvedAction === 'approved' ? 'Approved' : item.status === 'expired' ? 'Expired' : item.status === 'error' ? 'Failed' : 'Declined'}
                 </p>
               </div>

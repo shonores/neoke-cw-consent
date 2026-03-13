@@ -23,7 +23,7 @@ export default function OptionCard({ selected, onClick, title, description, icon
 
                 <div className="flex-1 min-w-0">
                     <p className="text-[15px] font-bold text-[var(--text-main)] truncate">{title}</p>
-                    {description && <p className="text-[13px] text-[var(--text-muted)] mt-0.5 font-medium truncate">{description}</p>}
+                    {description && <p className="text-[13px] text-[#868496] mt-0.5 font-medium truncate">{description}</p>}
                 </div>
 
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${selected ? 'border-[var(--primary)] bg-[var(--primary)]' : 'border-[#c7c7cc]'

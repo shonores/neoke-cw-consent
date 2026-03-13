@@ -8,6 +8,7 @@ import {
   getNamespaceGroups,
   extractFields,
   formatDate,
+  serviceNameFromEvent,
 } from '../utils/credentialHelpers';
 import { deleteLocalCredential } from '../store/localCredentials';
 import { deleteCredential } from '../api/client';
@@ -31,18 +32,6 @@ type Tab = 'details' | 'activity';
 const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}/;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-function serviceNameFromDid(did?: string): string {
-  if (!did) return 'Unknown';
-  if (did.startsWith('did:web:')) {
-    const domain = did.slice('did:web:'.length).split(':')[0];
-    const first = domain.split('.')[0];
-    return first.charAt(0).toUpperCase() + first.slice(1);
-  }
-  const parts = did.split(':');
-  const last = parts[parts.length - 1];
-  return last.charAt(0).toUpperCase() + last.slice(1);
-}
 
 function initialsFromName(name: string): string {
   const words = name.split(/[\s\-_]+/).filter(Boolean);
@@ -240,7 +229,7 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
         <div className="flex items-center gap-2 px-5 pt-5 pb-1 flex-shrink-0">
           <StatusBadge status={status} />
           {credential.expirationDate && (
-            <span className="text-xs text-[var(--text-muted)]">
+            <span className="text-xs text-[#868496]">
               Expires {formatDate(credential.expirationDate)}
             </span>
           )}
@@ -257,7 +246,7 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
                   className={`flex-1 text-[13px] font-medium rounded-[8px] transition-all duration-150 capitalize ${
                     tab === t
                       ? 'bg-white shadow-sm text-[var(--text-main)]'
-                      : 'text-[var(--text-muted)]'
+                      : 'text-[#868496]'
                   }`}
                 >
                   {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -310,18 +299,18 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
                   </svg>
                 </div>
                 <p className="text-[15px] font-semibold text-[var(--text-main)] mb-1">No activity yet</p>
-                <p className="text-[13px] text-[var(--text-muted)]">Sharing events for this credential will appear here.</p>
+                <p className="text-[13px] text-[#868496]">Sharing events for this credential will appear here.</p>
               </div>
             ) : (
               <div className="pt-2">
                 {groups.map(({ month, events: monthEvents }) => (
                   <div key={month}>
-                    <p className="px-5 pt-4 pb-1 text-[12px] font-semibold text-[var(--text-muted)] uppercase tracking-wide">
+                    <p className="px-5 pt-4 pb-1 text-[12px] font-semibold text-[#868496] uppercase tracking-wide">
                       {month}
                     </p>
                     <div>
                       {monthEvents.map((e) => {
-                        const serviceName = serviceNameFromDid(e.verifierDid ?? e.issuerDid);
+                        const serviceName = serviceNameFromEvent(e);
                         const initials = initialsFromName(serviceName);
                         const color = avatarColor(serviceName);
                         const label = actionLabel(e);
@@ -341,10 +330,10 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
                             {/* Info */}
                             <div className="flex-1 min-w-0">
                               <p className="text-[14px] font-semibold text-[var(--text-main)] truncate">{serviceName}</p>
-                              <p className="text-[12px] text-[var(--text-muted)] mt-0.5">{label}</p>
+                              <p className="text-[12px] text-[#868496] mt-0.5">{label}</p>
                             </div>
                             {/* Time */}
-                            <p className="text-[12px] text-[var(--text-muted)] flex-shrink-0">{time}</p>
+                            <p className="text-[12px] text-[#868496] flex-shrink-0">{time}</p>
                           </div>
                         );
                       })}
@@ -392,7 +381,7 @@ function PlainFieldRow({ label, value }: PlainFieldRowProps) {
         <img
           src={src}
           alt={label}
-          className="w-24 h-32 object-cover rounded-xl"
+          className="w-24 h-32 object-cover rounded-[12px]"
           loading="lazy"
         />
       </div>
@@ -423,7 +412,7 @@ function PlainFieldRow({ label, value }: PlainFieldRowProps) {
 
   return (
     <div className="py-3 border-b border-[var(--border-subtle)] last:border-0">
-      <p className="text-xs text-[var(--text-muted)] mb-0.5">{label}</p>
+      <p className="text-xs text-[#868496] mb-0.5">{label}</p>
       <p className="text-[17px] font-medium text-[var(--text-main)] break-all whitespace-pre-line">{displayValue}</p>
     </div>
   );

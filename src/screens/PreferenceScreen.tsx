@@ -152,7 +152,7 @@ export default function PreferenceScreen({ prefKey, navigate }: Props) {
       <main className="flex-1 overflow-y-auto pb-40 px-5">
         {/* Subtitle */}
         <div className="pb-6">
-          <p className="text-[16px] text-[#6d6b7e] leading-6">{config.subtitle}</p>
+          <p className="text-[16px] text-[#868496] leading-6">{config.subtitle}</p>
         </div>
 
         {/* Chip groups */}

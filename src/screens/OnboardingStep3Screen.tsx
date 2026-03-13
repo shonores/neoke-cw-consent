@@ -48,7 +48,7 @@ export default function OnboardingStep3Screen({ onComplete, onSkip }: Props) {
       <div className="flex-1 flex flex-col px-6 pt-14 pb-10">
         {/* Icon */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #5843de 0%, #7c3aed 100%)' }}>
+          <div className="w-12 h-12 rounded-[12px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #5843de 0%, #7c3aed 100%)' }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path d="M12 2L4 6v6c0 5.25 3.5 9.74 8 11 4.5-1.26 8-5.75 8-11V6l-8-4z" stroke="white" strokeWidth="1.7" strokeLinejoin="round" fill="rgba(255,255,255,0.15)" />
             </svg>
@@ -56,7 +56,7 @@ export default function OnboardingStep3Screen({ onComplete, onSkip }: Props) {
           <h1 className="text-[28px] font-bold text-[#28272e]">Automate Consent</h1>
         </div>
 
-        <p className="text-[16px] text-[#6d6b7e] leading-relaxed mb-8">
+        <p className="text-[16px] text-[#868496] leading-relaxed mb-8">
           Connect a Consent Engine to automatically handle credential requests using rules you define — without being present.
         </p>
 
@@ -71,13 +71,13 @@ export default function OnboardingStep3Screen({ onComplete, onSkip }: Props) {
               onChange={(e) => { setCeUrl(e.target.value); setError(''); }}
               onKeyDown={(e) => e.key === 'Enter' && handleConnect()}
               placeholder="https://consent.example.com"
-              className="w-full bg-white border border-black/[0.08] rounded-2xl px-4 py-4 text-[16px] text-[#28272e] placeholder-[#c7c7cc] focus:outline-none focus:border-[#5843de] shadow-sm transition-colors"
+              className="w-full bg-white border border-black/[0.08] rounded-[12px] px-4 py-4 text-[16px] text-[#28272e] placeholder-[#c7c7cc] focus:outline-none focus:border-[#5843de] shadow-sm transition-colors"
               disabled={loading}
             />
           </div>
 
-          <div className="bg-white rounded-2xl px-4 py-3.5 shadow-sm">
-            <p className="text-[14px] text-[#6d6b7e]">
+          <div className="bg-white rounded-[12px] px-4 py-3.5 shadow-sm">
+            <p className="text-[14px] text-[#868496]">
               Your API Key will be used to connect — the same key you just entered.
             </p>
           </div>

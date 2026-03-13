@@ -346,7 +346,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
       <div className="flex-1 flex flex-col items-center justify-center p-6 min-h-screen bg-[var(--bg-ios)]">
         <div className="text-center space-y-4">
           <LoadingSpinner size="lg" className="mx-auto" />
-          <p className="text-[var(--text-muted)] text-[15px] font-bold">
+          <p className="text-[#868496] text-[15px] font-bold">
             {stage === 'loading' ? 'Processing request…' : 'Sharing credential…'}
           </p>
         </div>
@@ -646,14 +646,14 @@ if (stage === 'error') {
 <div className={`flex-1 overflow-y-auto px-5 space-y-5 ${showManual ? 'pb-28' : 'pb-6'}`}>
         <div className="flex bg-black/5 rounded-[var(--radius-2xl)] p-1 gap-1">
           <button
-            className={`flex-1 flex items-center justify-center gap-2 py-3 text-[14px] rounded-xl transition-all ${!showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[var(--text-muted)] font-medium'}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 text-[14px] rounded-[12px] transition-all ${!showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[#868496] font-medium'}`}
             onClick={() => setShowManual(false)}
           >
             <IconCamera />
             Camera
           </button>
           <button
-            className={`flex-1 flex items-center justify-center gap-2 py-3 text-[14px] rounded-xl transition-all ${showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[var(--text-muted)] font-medium'}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 text-[14px] rounded-[12px] transition-all ${showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[#868496] font-medium'}`}
             onClick={() => setShowManual(true)}
           >
             <IconPaste />

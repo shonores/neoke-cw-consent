@@ -30,7 +30,7 @@ export default function ConsentLayout({
       <div className="bg-white border-b border-black/5 px-5 py-6 text-center">
         <div className="text-4xl mb-3" aria-hidden>{icon}</div>
         <h2 className="text-xl font-bold text-[#28272e]">{title}</h2>
-        {subtitle && <p className="text-sm text-[#6d6b7e] mt-1">{subtitle}</p>}
+        {subtitle && <p className="text-sm text-[#868496] mt-1">{subtitle}</p>}
       </div>
 
       {/* Scrollable content */}
@@ -47,7 +47,7 @@ export default function ConsentLayout({
             disabled={action.disabled || action.loading}
             aria-label={action.label}
             className={`
-              relative flex items-center justify-center gap-2 px-4 py-3.5 rounded-2xl font-semibold text-sm
+              relative flex items-center justify-center gap-2 px-4 py-3.5 rounded-[12px] font-semibold text-sm
               min-h-[44px] transition-all duration-150 active:scale-95
               disabled:opacity-50 disabled:cursor-not-allowed
               ${action.variant === 'primary'

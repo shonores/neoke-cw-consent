@@ -16,7 +16,7 @@ interface ScreenNavProps {
  */
 export default function ScreenNav({ title, onBack, right, backLabel = 'Go back' }: ScreenNavProps) {
   return (
-    <nav className={`px-5 pt-14 pb-4 flex items-center ${right ? 'justify-between' : 'gap-3'}`}>
+    <nav className={`sticky top-0 z-10 bg-[#f7f6f8] px-5 pt-14 pb-4 flex items-center ${right ? 'justify-between' : 'gap-3'}`}>
       <div className="flex items-center gap-3">
         {onBack && (
           <button

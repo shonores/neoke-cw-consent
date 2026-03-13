@@ -165,7 +165,7 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }
 
 function ListCard({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mx-4 bg-white rounded-[24px] p-1 flex flex-col gap-1">
+    <div className="mx-4 bg-white rounded-[12px] p-1 flex flex-col gap-1">
       {children}
     </div>
   );
@@ -229,7 +229,7 @@ function InfoRow({ label, value, onEdit, divider = true }: {
     <div className={`flex items-center gap-3 px-4 py-4 ${divider ? 'border-b border-[#f1f1f3]' : ''}`}>
       <div className="flex-1 min-w-0">
         <p className="text-[16px] font-semibold text-[#28272e] leading-6">{label}</p>
-        <p className="text-[14px] text-[#6d6b7e] leading-5 truncate">{value || '—'}</p>
+        <p className="text-[14px] text-[#868496] leading-5 truncate">{value || '—'}</p>
       </div>
       <button
         onClick={onEdit}
@@ -296,7 +296,7 @@ export default function AccountScreen({ navigate }: Props) {
       className="flex-1 flex flex-col bg-[#f7f6f8] min-h-screen"
     >
       {/* Header */}
-      <div className="px-4 pt-14 pb-2">
+      <div className="sticky top-0 z-10 bg-[#f7f6f8] px-4 pt-14 pb-2">
         <h1 className="text-[28px] font-bold text-[#28272e] leading-8">Profile</h1>
       </div>
 
@@ -304,7 +304,7 @@ export default function AccountScreen({ navigate }: Props) {
 
         {/* ── Personal info ────────────────────────────────────── */}
         <SectionHeader title="Personal info" />
-        <div className="mx-4 bg-white rounded-[24px] overflow-hidden">
+        <div className="mx-4 bg-white rounded-[12px] overflow-hidden">
           <InfoRow label="Name" value={displayName} onEdit={openEditName} />
           <InfoRow label="Email" value={profile.email} onEdit={openEditEmail} divider={false} />
         </div>
@@ -520,7 +520,7 @@ export default function AccountScreen({ navigate }: Props) {
           >
             <div className="w-9 h-1 bg-[#d7d6dc] rounded-full mx-auto mb-5" />
             <h3 className="text-[18px] font-bold text-[#28272e] mb-2">Disconnect Consent Engine?</h3>
-            <p className="text-[14px] text-[#6d6b7e] mb-6 leading-5">
+            <p className="text-[14px] text-[#868496] mb-6 leading-5">
               All consent rules and queue history will remain on the Consent Engine. You can reconnect at any time.
             </p>
             <div className="space-y-3">
@@ -552,7 +552,7 @@ export default function AccountScreen({ navigate }: Props) {
           >
             <div className="w-9 h-1 bg-[#d7d6dc] rounded-full mx-auto mb-5" />
             <h3 className="text-[18px] font-bold text-[#28272e] mb-2">Delete account?</h3>
-            <p className="text-[14px] text-[#6d6b7e] mb-6 leading-5">
+            <p className="text-[14px] text-[#868496] mb-6 leading-5">
               This will clear all local credentials and sign you out. This action cannot be undone.
             </p>
             <div className="space-y-3">

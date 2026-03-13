@@ -283,7 +283,9 @@ export function serviceNameFromRuleLabel(label?: string | null): string | null {
     .replace(/^Block\s+/i, '')
     .trim();
   if (stripped.startsWith('did:') || stripped.startsWith('x509_')) return null;
-  return stripped || null;
+  // Reject placeholder values written when verifier name was not yet known
+  if (stripped.toLowerCase() === 'unknown service' || stripped === '') return null;
+  return stripped;
 }
 
 /**

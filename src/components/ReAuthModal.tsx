@@ -49,7 +49,7 @@ export default function ReAuthModal() {
 
         <div className="px-6 pt-4 pb-10">
           <h2 className="text-[22px] font-bold text-[#28272e] mb-1">Session expired</h2>
-          <p className="text-[15px] text-[#6d6b7e] mb-5">
+          <p className="text-[15px] text-[#868496] mb-5">
             Enter your API key to continue.
           </p>
 
@@ -62,7 +62,7 @@ export default function ReAuthModal() {
               value={apiKey}
               onChange={(e) => { setApiKey(e.target.value); setError(''); }}
               placeholder="API Key"
-              className="w-full bg-white border border-black/[0.08] rounded-2xl px-4 py-4 text-[16px] text-[#28272e] placeholder-[#c7c7cc] focus:outline-none focus:border-[#5843de] transition-colors"
+              className="w-full bg-white border border-black/[0.08] rounded-[12px] px-4 py-4 text-[16px] text-[#28272e] placeholder-[#c7c7cc] focus:outline-none focus:border-[#5843de] transition-colors"
               autoComplete="off"
               disabled={loading}
             />

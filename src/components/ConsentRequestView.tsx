@@ -76,7 +76,7 @@ function CredentialCardRow({
       />
       <div className="flex-1 min-w-0">
         <p className="text-[16px] font-bold text-[#28272e] truncate">{label}</p>
-        <p className="text-[13px] text-[#6d6b7e] truncate font-medium">{issuerLabel}</p>
+        <p className="text-[13px] text-[#868496] truncate font-medium">{issuerLabel}</p>
         {fields && fields.length > 0 && (
           <p className="text-[12px] text-[#868496] truncate mt-0.5">{fields.join(', ')}</p>
         )}
@@ -257,7 +257,7 @@ export default function ConsentRequestView({
         <button
           onClick={onShare}
           disabled={sharing || actionsDisabled}
-          className="w-full bg-[#5843de] text-white text-[16px] font-semibold rounded-2xl py-4 active:opacity-80 transition-opacity disabled:opacity-40"
+          className="w-full bg-[#5843de] text-white text-[16px] font-semibold rounded-[12px] py-4 active:opacity-80 transition-opacity disabled:opacity-40"
         >
           {sharing ? (
             <span className="flex items-center justify-center gap-2">
@@ -275,7 +275,7 @@ export default function ConsentRequestView({
           <button
             onClick={onAlwaysShare}
             disabled={sharing}
-            className="w-full bg-[#5843de]/10 text-[#5843de] text-[16px] font-semibold rounded-2xl py-4 active:opacity-80 transition-opacity disabled:opacity-60"
+            className="w-full bg-[#5843de]/10 text-[#5843de] text-[16px] font-semibold rounded-[12px] py-4 active:opacity-80 transition-opacity disabled:opacity-60"
           >
             Always share with {serviceName}
           </button>
@@ -284,7 +284,7 @@ export default function ConsentRequestView({
         <button
           onClick={onReject}
           disabled={sharing}
-          className="w-full text-[#5843de] text-[16px] font-medium py-3.5 rounded-2xl border border-[#5843de]/25 active:opacity-60 transition-opacity disabled:opacity-40"
+          className="w-full text-[#5843de] text-[16px] font-medium py-3.5 rounded-[12px] border border-[#5843de]/25 active:opacity-60 transition-opacity disabled:opacity-40"
         >
           Don't share
         </button>

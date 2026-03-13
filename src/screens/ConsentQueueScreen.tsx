@@ -89,9 +89,9 @@ function statusBadge(item: PendingRequest, isExpired: boolean): { label: string;
   if (item.status === 'pending' && isExpired) return { label: 'Expired', cls: 'bg-red-50 text-[#aa281e]' };
   if (item.status === 'pending') return null;
   if (item.resolvedAction === 'approved') return { label: 'Accepted', cls: 'bg-green-50 text-[#198e41]' };
-  if (item.status === 'expired') return { label: 'Expired', cls: 'bg-[#f7f6f8] text-[#6d6b7e]' };
+  if (item.status === 'expired') return { label: 'Expired', cls: 'bg-[#f7f6f8] text-[#868496]' };
   if (item.status === 'error') return { label: 'Failed', cls: 'bg-orange-50 text-orange-700' };
-  return { label: 'Declined', cls: 'bg-[#f7f6f8] text-[#6d6b7e]' };
+  return { label: 'Declined', cls: 'bg-[#f7f6f8] text-[#868496]' };
 }
 
 function SwipeableInboxItem({
@@ -184,12 +184,12 @@ function SwipeableInboxItem({
             <ServiceAvatar />
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2 w-full">
-                <p className={`text-[16px] leading-6 truncate ${isActionable ? 'font-semibold text-[#28272e]' : 'font-normal text-[#6d6b7e]'}`}>
+                <p className={`text-[16px] leading-6 truncate ${isActionable ? 'font-semibold text-[#28272e]' : 'font-normal text-[#868496]'}`}>
                   {title}
                 </p>
                 <span className="text-[12px] text-[#868496] flex-shrink-0 leading-6">{timeAgo(item.createdAt)}</span>
               </div>
-              <p className={`text-[14px] leading-5 line-clamp-2 ${isActionable ? 'text-[#28272e] font-semibold' : 'text-[#6d6b7e]'}`}>
+              <p className={`text-[14px] leading-5 line-clamp-2 ${isActionable ? 'text-[#28272e] font-semibold' : 'text-[#868496]'}`}>
                 {message}
               </p>
               {badge && (

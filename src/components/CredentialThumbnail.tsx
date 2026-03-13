@@ -23,7 +23,7 @@ export default function CredentialThumbnail({
 }: CredentialThumbnailProps) {
   return (
     <div
-      className={`w-[72px] h-[46px] rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden p-1.5 ${className}`}
+      className={`w-[72px] h-[46px] rounded-[12px] flex-shrink-0 flex items-center justify-center overflow-hidden p-1.5 ${className}`}
       style={{ backgroundColor }}
     >
       {logoUrl && (

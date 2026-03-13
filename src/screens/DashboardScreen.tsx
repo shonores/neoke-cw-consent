@@ -137,7 +137,7 @@ export default function DashboardScreen({ navigate, refreshSignal }: DashboardSc
             <ErrorMessage message={error} />
             <button
               onClick={() => fetchCredentials()}
-              className="mt-4 w-full bg-white hover:bg-[#f2f2f7] text-[var(--text-main)] text-[15px] font-bold py-4 rounded-2xl transition-colors shadow-sm border border-black/5"
+              className="mt-4 w-full bg-white hover:bg-[#f2f2f7] text-[var(--text-main)] text-[15px] font-bold py-4 rounded-[12px] transition-colors shadow-sm border border-black/5"
             >
               Try again
             </button>
@@ -161,7 +161,7 @@ export default function DashboardScreen({ navigate, refreshSignal }: DashboardSc
                   <p className="text-[16px] font-semibold text-[#28272e] leading-6 mb-1">
                     No travel document... yet!
                   </p>
-                  <p className="text-[14px] text-[#6d6b7e] leading-5">
+                  <p className="text-[14px] text-[#868496] leading-5">
                     Scan a QR code to add your first credential to the wallet.
                   </p>
                 </div>

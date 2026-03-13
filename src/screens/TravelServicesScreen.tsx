@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
 import { listRules } from '../api/consentEngineClient';
-import { serviceNameFromRuleLabel } from '../utils/credentialHelpers';
+import { serviceNameFromRuleLabel, extractVerifierName } from '../utils/credentialHelpers';
 import type { ConsentRule } from '../types/consentEngine';
 import type { ViewName } from '../types';
 
@@ -19,21 +19,28 @@ interface Props {
 }
 
 function nameForRule(rule: ConsentRule): string {
-  return serviceNameFromRuleLabel(rule.label) ?? rule.party.value ?? 'Unknown service';
-}
-
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' }) +
-    ' at ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return (
+    serviceNameFromRuleLabel(rule.label) ??
+    extractVerifierName(rule.party.value ?? undefined)
+  );
 }
 
 function ServiceInitialsAvatar({ name }: { name: string }) {
-  const initials = name.replace(/^did:.*/, '??').split('.')[0].slice(0, 2).toUpperCase();
+  const initials = name.replace(/^did:.*/, '??').replace(/^Unknown.*/, '?').split(/[\s.]/)[0].slice(0, 2).toUpperCase();
   return (
     <div className="w-11 h-11 rounded-full bg-[#f4f3fc] flex items-center justify-center flex-shrink-0">
       <span className="text-[13px] font-bold text-[#5843de]">{initials}</span>
     </div>
+  );
+}
+
+function StatusPill({ enabled }: { enabled: boolean }) {
+  return (
+    <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full flex-shrink-0 ${
+      enabled ? 'bg-[#e9e7f9] text-[#5843de]' : 'bg-[#fbeae9] text-[#aa281e]'
+    }`}>
+      {enabled ? 'Always' : 'Never'}
+    </span>
   );
 }
 
@@ -43,10 +50,8 @@ export default function TravelServicesScreen({ navigate }: Props) {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [services, setServices] = useState<Array<{ did: string; name: string; lastShared: string }>>([]);
-  const [blockedRules, setBlockedRules] = useState<ConsentRule[]>([]);
+  const [didRules, setDidRules] = useState<ConsentRule[]>([]);
   const [globalRules, setGlobalRules] = useState<ConsentRule[]>([]);
-  const [blockedOpen, setBlockedOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -54,31 +59,14 @@ export default function TravelServicesScreen({ navigate }: Props) {
     try {
       const rules = await listRules(apiKey);
 
-      // Only show services that have an active (enabled) DID-specific rule
-      const activeRules = rules.filter(r =>
-        r.ruleType === 'verification' &&
-        r.party.matchType === 'did' &&
-        r.party.value &&
-        r.enabled
-      );
-      const serviceList = activeRules
-        .map(r => ({ did: r.party.value!, name: nameForRule(r), lastShared: r.updatedAt }))
-        .sort((a, b) => b.lastShared.localeCompare(a.lastShared));
-
-      setServices(serviceList);
-
-      const blocked = rules.filter(r =>
-        r.ruleType === 'verification' &&
-        r.party.matchType === 'did' &&
-        r.party.value &&
-        !r.enabled
-      );
-      setBlockedRules(blocked);
+      // All DID-specific verification rules — enabled (Always) and disabled (Never)
+      const did = rules
+        .filter(r => r.ruleType === 'verification' && r.party.matchType === 'did' && r.party.value)
+        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+      setDidRules(did);
 
       const globals = rules.filter(r =>
-        r.ruleType === 'verification' &&
-        r.party.matchType === 'any' &&
-        r.enabled
+        r.ruleType === 'verification' && r.party.matchType === 'any'
       );
       setGlobalRules(globals);
     } catch (err) {
@@ -95,6 +83,8 @@ export default function TravelServicesScreen({ navigate }: Props) {
     const id = setInterval(() => { load(); }, REFRESH_INTERVAL_MS);
     return () => clearInterval(id);
   }, [load]);
+
+  const isEmpty = !loading && !error && didRules.length === 0 && globalRules.length === 0;
 
   return (
     <motion.div variants={variants} initial="initial" animate="animate" exit="exit"
@@ -133,7 +123,7 @@ export default function TravelServicesScreen({ navigate }: Props) {
             <p className="text-[14px] text-[#aa281e] mb-3 font-medium">{error}</p>
             <button onClick={load} className="text-[14px] font-semibold text-[#5843de]">Try again</button>
           </div>
-        ) : services.length === 0 ? (
+        ) : isEmpty ? (
           <div className="bg-white rounded-[12px] border border-[#f1f1f3] p-8 flex flex-col items-center text-center">
             <div className="w-16 h-16 bg-[#f4f3fc] rounded-full flex items-center justify-center mb-4">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
@@ -173,60 +163,29 @@ export default function TravelServicesScreen({ navigate }: Props) {
                 ))}
               </div>
             )}
-            <div className="bg-white rounded-[12px] border border-[#f1f1f3] overflow-hidden divide-y divide-[#f1f1f3]">
-              {services.map(s => (
-                <button
-                  key={s.did}
-                  className="w-full flex gap-3 items-center px-3 py-3 text-left active:bg-[#f7f6f8] transition-colors"
-                  onClick={() => navigate('travel_service_detail', { selectedServiceDid: s.did })}
-                >
-                  <ServiceInitialsAvatar name={s.name} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[16px] font-semibold text-[#28272e] leading-6">{s.name}</p>
-                    <p className="text-[14px] text-[#6d6b7e] leading-5">Rule created {formatDate(s.lastShared)}</p>
-                  </div>
-                  <svg width="7" height="12" viewBox="0 0 7 12" fill="none" className="flex-shrink-0">
-                    <path d="M1 1l5 5-5 5" stroke="#c7c7cc" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-              ))}
-            </div>
 
-            {blockedRules.length > 0 && (
-              <div className="space-y-2">
-                <button
-                  onClick={() => setBlockedOpen(o => !o)}
-                  className="w-full bg-white rounded-[12px] border border-[#f1f1f3] flex items-center justify-between px-4 py-4 active:bg-[#f7f6f8] transition-colors"
-                >
-                  <span className="text-[16px] font-medium text-[#28272e]">Blocked</span>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className={`transition-transform duration-200 ${blockedOpen ? 'rotate-180' : ''}`}>
-                    <path d="M6 9l6 6 6-6" stroke="#868496" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-                {blockedOpen && (
-                  <div className="bg-white rounded-[12px] border border-[#f1f1f3] overflow-hidden divide-y divide-[#f1f1f3]">
-                    {blockedRules.map(r => {
-                      const name = nameForRule(r);
-                      return (
-                        <button
-                          key={r.id}
-                          className="w-full flex gap-3 items-center px-3 py-3 text-left active:bg-[#f7f6f8] transition-colors"
-                          onClick={() => navigate('travel_service_detail', { selectedServiceDid: r.party.value! })}
-                        >
-                          <ServiceInitialsAvatar name={name} />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[16px] font-semibold text-[#6d6b7e] leading-6">{name}</p>
-                            <p className="text-[14px] text-[#868496] leading-5">Blocked</p>
-                          </div>
-                          <svg width="7" height="12" viewBox="0 0 7 12" fill="none" className="flex-shrink-0">
-                            <path d="M1 1l5 5-5 5" stroke="#c7c7cc" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-                <p className="text-[14px] text-[#868496] px-1">Services you've configured to never share your info.</p>
+            {didRules.length > 0 && (
+              <div className="bg-white rounded-[12px] border border-[#f1f1f3] overflow-hidden divide-y divide-[#f1f1f3]">
+                {didRules.map(rule => {
+                  const name = nameForRule(rule);
+                  return (
+                    <button
+                      key={rule.id}
+                      className="w-full flex gap-3 items-center px-3 py-3 text-left active:bg-[#f7f6f8] transition-colors"
+                      onClick={() => navigate('travel_service_detail', { selectedServiceDid: rule.party.value! })}
+                    >
+                      <ServiceInitialsAvatar name={name} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[16px] font-semibold text-[#28272e] leading-6 truncate">{name}</p>
+                        <p className="text-[13px] text-[#868496] leading-5">Updated {new Date(rule.updatedAt).toLocaleDateString([], { day: 'numeric', month: 'short' })}</p>
+                      </div>
+                      <StatusPill enabled={rule.enabled} />
+                      <svg width="7" height="12" viewBox="0 0 7 12" fill="none" className="flex-shrink-0 ml-1">
+                        <path d="M1 1l5 5-5 5" stroke="#c7c7cc" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </>

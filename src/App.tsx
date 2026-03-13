@@ -232,6 +232,7 @@ function AppInner() {
     if (extra && 'selectedQueueItemId' in extra) setSelectedQueueItemId(extra.selectedQueueItemId ?? null);
     if (extra && 'selectedServiceDid' in extra) setSelectedServiceDid(extra.selectedServiceDid ?? null);
     setCurrentView(view);
+    window.scrollTo(0, 0);
 
     // Update URL hash
     const updateHash = (v: ViewName, e?: { editingRuleId?: string | null; selectedQueueItemId?: string | null; selectedServiceDid?: string | null }) => {

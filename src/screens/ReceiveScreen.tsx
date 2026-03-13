@@ -205,7 +205,7 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
       <div className="flex-1 flex flex-col items-center justify-center p-6 min-h-screen bg-[var(--bg-ios)]">
         <div className="text-center space-y-4">
           <LoadingSpinner size="lg" className="mx-auto" />
-          <p className="text-[var(--text-muted)] text-[15px] font-medium">Processing credential offer…</p>
+          <p className="text-[#868496] text-[15px] font-medium">Processing credential offer…</p>
         </div>
       </div>
     );
@@ -249,7 +249,7 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
           </motion.div>
           <div>
             <h2 className="text-[var(--text-main)] font-bold text-[28px] leading-tight">Credential Added!</h2>
-            <p className="text-[var(--text-muted)] text-[16px] mt-2 font-medium">Returning to your wallet…</p>
+            <p className="text-[#868496] text-[16px] mt-2 font-medium">Returning to your wallet…</p>
           </div>
         </div>
       </div>
@@ -288,7 +288,7 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
               <div className="flex-1 min-w-0">
                 <p className="text-[16px] font-bold text-[#28272e] truncate">{label}</p>
                 {description && (
-                  <p className="text-[13px] text-[#6d6b7e] truncate font-medium">{description}</p>
+                  <p className="text-[13px] text-[#868496] truncate font-medium">{description}</p>
                 )}
               </div>
             </div>
@@ -337,14 +337,14 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
         {/* Camera / Paste toggle */}
         <div className="flex bg-black/5 rounded-[var(--radius-xl)] p-1 gap-1">
           <button
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[14px] rounded-lg transition-all ${!showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[var(--text-muted)] font-medium'}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[14px] rounded-lg transition-all ${!showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[#868496] font-medium'}`}
             onClick={() => setShowManual(false)}
           >
             <IconCamera />
             Camera
           </button>
           <button
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[14px] rounded-lg transition-all ${showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[var(--text-muted)] font-medium'}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[14px] rounded-lg transition-all ${showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[#868496] font-medium'}`}
             onClick={() => setShowManual(true)}
           >
             <IconPaste />
@@ -369,7 +369,7 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
             <QRScanner onScan={(r) => processOfferUri(r)} />
             {error && <ErrorMessage message={error} />}
             <div className="bg-[var(--bg-white)]/50 rounded-[var(--radius-xl)] p-4 border border-dashed border-[var(--border-subtle)] text-center">
-              <p className="text-[12px] text-[var(--text-muted)] font-medium">
+              <p className="text-[12px] text-[#868496] font-medium">
                 Scan any <span className="text-[var(--text-main)] font-bold">OpenID</span> QR code to start the intake process.
               </p>
             </div>

@@ -20,7 +20,7 @@ export default function CeStatusBanner({ onNavigateToQueue, onRetry }: Props) {
     return (
       <button
         onClick={handleRetry}
-        className="w-full flex items-center gap-2 px-4 py-3 bg-orange-50 border border-orange-200 rounded-2xl text-left transition-colors active:bg-orange-100"
+        className="w-full flex items-center gap-2 px-4 py-3 bg-orange-50 border border-orange-200 rounded-[12px] text-left transition-colors active:bg-orange-100"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="flex-shrink-0 text-orange-500">
           <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
@@ -39,7 +39,7 @@ export default function CeStatusBanner({ onNavigateToQueue, onRetry }: Props) {
     return (
       <button
         onClick={onNavigateToQueue}
-        className="w-full flex items-center gap-2 px-4 py-3 bg-[#5843de]/8 border border-[#5843de]/20 rounded-2xl text-left transition-colors active:bg-[#5843de]/12"
+        className="w-full flex items-center gap-2 px-4 py-3 bg-[#5843de]/8 border border-[#5843de]/20 rounded-[12px] text-left transition-colors active:bg-[#5843de]/12"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="flex-shrink-0 text-[#5843de]">
           <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />

@@ -192,7 +192,7 @@ function ActivityItem({
               <p className="flex-1 font-semibold text-[16px] leading-6 text-[#28272e] truncate">{title}</p>
               <span className="text-[12px] text-[#868496] flex-shrink-0 leading-4">{formatRelativeTime(event.timestamp)}</span>
             </div>
-            <p className="text-[14px] text-[#6d6b7e] leading-5 mt-0.5">{description}</p>
+            <p className="text-[14px] text-[#868496] leading-5 mt-0.5">{description}</p>
           </div>
         </div>
 
@@ -209,7 +209,7 @@ function ActivityItem({
               <span className={`text-[14px] font-medium leading-5 ${
                 status.type === 'text-red' ? 'text-[#aa281e]' :
                 status.type === 'text-green' ? 'text-[#198e41]' :
-                'text-[#6d6b7e]'
+                'text-[#868496]'
               }`}>
                 {status.label}
               </span>

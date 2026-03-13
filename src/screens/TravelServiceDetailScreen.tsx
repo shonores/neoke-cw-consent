@@ -116,11 +116,17 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
   const serviceName = isGlobalRule
     ? 'All requesters'
     : (() => {
+        // 1. Rule label (most reliable — set at approval time)
         const fromRule = serviceNameFromRuleLabel(serviceRule?.label);
         if (fromRule) return fromRule;
-        // Fall back to any audit event's ruleLabel (CE stores the rule label that matched)
-        const fromEvent = events.map(e => serviceNameFromRuleLabel(e.ruleLabel)).find(Boolean);
-        return fromEvent ?? extractVerifierName(verifierDid);
+        // 2. verifierName from any audit event (CE-supplied from client_metadata.client_name)
+        const fromVerifierName = events.map(e => e.verifierName?.trim()).find(Boolean);
+        if (fromVerifierName) return fromVerifierName;
+        // 3. ruleLabel from any audit event
+        const fromEventLabel = events.map(e => serviceNameFromRuleLabel(e.ruleLabel)).find(Boolean);
+        if (fromEventLabel) return fromEventLabel;
+        // 4. Parse the verifierDid (works for did:web / x509_san_dns; returns 'Unknown service' for x509_hash)
+        return extractVerifierName(verifierDid);
       })();
 
   const mode: ShareMode = !serviceRule
@@ -325,7 +331,7 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
                 {saving ? '…' : pillLabel}
               </button>
             </div>
-            <p className="text-[14px] text-[#6d6b7e] px-1 leading-5">{bannerCaption}</p>
+            <p className="text-[14px] text-[#868496] px-1 leading-5">{bannerCaption}</p>
           </div>
 
           {/* Enable / disable toggle + delete (when rule exists) */}
@@ -340,7 +346,7 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[16px] font-medium text-[#28272e] leading-6">Rule enabled</p>
-                  <p className="text-[13px] text-[#6d6b7e] leading-5">
+                  <p className="text-[13px] text-[#868496] leading-5">
                     {serviceRule.enabled ? 'Active — rule applies to requests' : 'Paused — CE will ask instead'}
                   </p>
                 </div>
@@ -417,7 +423,7 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
                     <div key={event.id} className="flex items-center gap-3 px-4 py-3">
                       <div className="flex-1 min-w-0">
                         <p className="text-[15px] font-semibold text-[#28272e] leading-6">{label}</p>
-                        <p className="text-[13px] text-[#6d6b7e] leading-5">Shared on {formatDate(event.timestamp)}</p>
+                        <p className="text-[13px] text-[#868496] leading-5">Shared on {formatDate(event.timestamp)}</p>
                       </div>
                       <span className={`text-[13px] font-medium flex-shrink-0 ${
                         isSuccess ? 'text-[#198e41]' : isRejected ? 'text-[#aa281e]' : 'text-[#868496]'
@@ -454,7 +460,7 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
             >
               <div className="w-9 h-1 bg-[#d7d6dc] rounded-full mx-auto mb-5" />
               <h3 className="text-[18px] font-bold text-[#28272e] mb-2">Delete rule?</h3>
-              <p className="text-[14px] text-[#6d6b7e] mb-6">
+              <p className="text-[14px] text-[#868496] mb-6">
                 This will remove the consent rule for {serviceName}. You'll be asked for consent next time they request your info.
               </p>
               <div className="space-y-3">
@@ -500,7 +506,7 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
                   <h3 className="text-[22px] font-bold text-[#28272e] leading-7 mb-1">
                     Choose how to share your info
                   </h3>
-                  <p className="text-[15px] text-[#6d6b7e] leading-5">
+                  <p className="text-[15px] text-[#868496] leading-5">
                     You have full control of how you share your information with travel services.
                   </p>
                 </div>
@@ -525,7 +531,7 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
                       <p className="text-[15px] font-semibold leading-5 mb-0.5" style={{ color: opt.color }}>
                         {opt.label}
                       </p>
-                      <p className="text-[13px] text-[#6d6b7e] leading-5">{opt.description}</p>
+                      <p className="text-[13px] text-[#868496] leading-5">{opt.description}</p>
                     </div>
                   </button>
                 ))}

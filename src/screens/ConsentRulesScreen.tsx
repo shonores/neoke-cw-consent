@@ -87,7 +87,7 @@ function DeleteSheet({ rule, onConfirm, onCancel, loading }: DeleteSheetProps) {
       >
         <div className="w-10 h-1 bg-[#c7c7cc] rounded-full mx-auto mb-5" />
         <h3 className="text-[18px] font-bold text-[var(--text-main)] mb-2">Delete Rule</h3>
-        <p className="text-[14px] text-[var(--text-muted)] mb-6">
+        <p className="text-[14px] text-[#868496] mb-6">
           Delete "{rule.label ?? 'Unnamed rule'}"? This cannot be undone.
         </p>
         <div className="space-y-3">
@@ -194,7 +194,7 @@ export default function ConsentRulesScreen({ navigate }: Props) {
 
       {/* Filter tabs */}
       <div className="px-5 mb-4">
-        <div className="flex bg-black/5 rounded-xl p-1 gap-1">
+        <div className="flex bg-black/5 rounded-[12px] p-1 gap-1">
           {(['all', 'verification', 'issuance'] as const).map(tab => (
             <button
               key={tab}
@@ -211,11 +211,11 @@ export default function ConsentRulesScreen({ navigate }: Props) {
         {loading ? (
           <>
             {[1, 2, 3].map(i => (
-              <div key={i} className="animate-pulse bg-white rounded-2xl h-24 w-full shadow-sm" />
+              <div key={i} className="animate-pulse bg-white rounded-[12px] h-24 w-full shadow-sm" />
             ))}
           </>
         ) : error ? (
-          <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-4">
+          <div className="bg-red-50 border border-red-200 rounded-[12px] px-4 py-4">
             <p className="text-[14px] text-red-600 mb-3">{error}</p>
             <button
               onClick={load}
@@ -235,7 +235,7 @@ export default function ConsentRulesScreen({ navigate }: Props) {
             <p className="text-[17px] font-bold text-[#28272e] mb-2">
               {filter === 'all' ? 'No consent rules yet' : `No ${filter} rules`}
             </p>
-            <p className="text-[14px] text-[#6d6b7e] mb-6 leading-relaxed">
+            <p className="text-[14px] text-[#868496] mb-6 leading-relaxed">
               {filter === 'all'
                 ? 'Create rules to automatically handle credential requests without manual approval.'
                 : `Create a ${filter} rule to automate processing.`}
@@ -256,7 +256,7 @@ export default function ConsentRulesScreen({ navigate }: Props) {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
-                className="bg-white rounded-2xl shadow-sm overflow-hidden"
+                className="bg-white rounded-[12px] shadow-sm overflow-hidden"
               >
                 <div className="px-4 py-4">
                   {/* Top row: dot + label + badge + toggle */}
