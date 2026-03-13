@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { clearLocalCredentials } from '../store/localCredentials';
 import { useAuth } from '../context/AuthContext';
@@ -16,15 +16,6 @@ interface Props {
 }
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
-
-function IconPerson() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-      <circle cx="12" cy="7" r="4" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  );
-}
 
 function IconDocuments() {
   return (
@@ -214,6 +205,42 @@ function ListItem({
   );
 }
 
+// ─── Personal info storage ────────────────────────────────────────────────────
+
+const PROFILE_KEY = 'neoke_profile';
+interface ProfileData { firstName: string; lastName: string; email: string }
+function loadProfile(): ProfileData {
+  try {
+    const raw = localStorage.getItem(PROFILE_KEY);
+    if (raw) return JSON.parse(raw) as ProfileData;
+  } catch { /* */ }
+  return { firstName: '', lastName: '', email: '' };
+}
+function saveProfile(data: ProfileData) {
+  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(data)); } catch { /* */ }
+}
+
+// ─── InfoRow ──────────────────────────────────────────────────────────────────
+
+function InfoRow({ label, value, onEdit, divider = true }: {
+  label: string; value: string; onEdit: () => void; divider?: boolean;
+}) {
+  return (
+    <div className={`flex items-center gap-3 px-4 py-4 ${divider ? 'border-b border-[#f1f1f3]' : ''}`}>
+      <div className="flex-1 min-w-0">
+        <p className="text-[16px] font-semibold text-[#28272e] leading-6">{label}</p>
+        <p className="text-[14px] text-[#6d6b7e] leading-5 truncate">{value || '—'}</p>
+      </div>
+      <button
+        onClick={onEdit}
+        className="flex-shrink-0 px-3 py-1.5 bg-[#f4f3fc] text-[#5843de] text-[14px] font-medium rounded-full active:opacity-70 transition-opacity"
+      >
+        Edit
+      </button>
+    </div>
+  );
+}
+
 // ─── Main screen ─────────────────────────────────────────────────────────────
 
 export default function AccountScreen({ navigate }: Props) {
@@ -221,6 +248,40 @@ export default function AccountScreen({ navigate }: Props) {
   const { state: ceState, removeCe, refreshHealth, autoConfigureCe } = useConsentEngine();
   const [showDisconnectSheet, setShowDisconnectSheet] = useState(false);
   const [showDeleteSheet, setShowDeleteSheet] = useState(false);
+
+  // Personal info
+  const [profile, setProfile] = useState<ProfileData>(loadProfile);
+  const [showEditName, setShowEditName] = useState(false);
+  const [showEditEmail, setShowEditEmail] = useState(false);
+  const [draftFirst, setDraftFirst] = useState('');
+  const [draftLast, setDraftLast] = useState('');
+  const [draftEmail, setDraftEmail] = useState('');
+
+  useEffect(() => { setProfile(loadProfile()); }, []);
+
+  const openEditName = () => {
+    setDraftFirst(profile.firstName);
+    setDraftLast(profile.lastName);
+    setShowEditName(true);
+  };
+  const openEditEmail = () => {
+    setDraftEmail(profile.email);
+    setShowEditEmail(true);
+  };
+  const saveName = () => {
+    const updated = { ...profile, firstName: draftFirst.trim(), lastName: draftLast.trim() };
+    setProfile(updated);
+    saveProfile(updated);
+    setShowEditName(false);
+  };
+  const saveEmail = () => {
+    const updated = { ...profile, email: draftEmail.trim() };
+    setProfile(updated);
+    saveProfile(updated);
+    setShowEditEmail(false);
+  };
+
+  const displayName = [profile.firstName, profile.lastName].filter(Boolean).join(' ');
 
   const nodeHost = (() => {
     if (state.baseUrl) {
@@ -241,10 +302,16 @@ export default function AccountScreen({ navigate }: Props) {
 
       <main className="flex-1 pb-32 overflow-y-auto">
 
+        {/* ── Personal info ────────────────────────────────────── */}
+        <SectionHeader title="Personal info" />
+        <div className="mx-4 bg-white rounded-[24px] overflow-hidden">
+          <InfoRow label="Name" value={displayName} onEdit={openEditName} />
+          <InfoRow label="Email" value={profile.email} onEdit={openEditEmail} divider={false} />
+        </div>
+
         {/* ── General ──────────────────────────────────────────── */}
         <SectionHeader title="General" />
         <ListCard>
-          <ListItem icon={<IconPerson />} label="Personal info" onClick={() => {}} />
           <ListItem icon={<IconDocuments />} label="Documents" onClick={() => navigate('dashboard')} />
         </ListCard>
 
@@ -353,6 +420,94 @@ export default function AccountScreen({ navigate }: Props) {
         {/* Version */}
         <p className="text-[14px] text-[#868496] text-center py-6">Version 0.01</p>
       </main>
+
+      {/* ── Edit name sheet ─────────────────────────────────────── */}
+      {showEditName && (
+        <div className="fixed inset-0 z-50" onClick={() => setShowEditName(false)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div
+            className="absolute inset-x-0 bottom-0 bg-white rounded-t-[24px] p-6 z-50"
+            style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="w-9 h-1 bg-[#d7d6dc] rounded-full mx-auto mb-5" />
+            <h3 className="text-[18px] font-bold text-[#28272e] mb-5">Edit your name</h3>
+            <div className="space-y-3 mb-6">
+              <div>
+                <label className="text-[12px] text-[#868496] font-medium block mb-1">First name</label>
+                <input
+                  value={draftFirst}
+                  onChange={e => setDraftFirst(e.target.value)}
+                  placeholder="First name"
+                  className="w-full bg-white border border-[#d7d6dc] rounded-[8px] px-4 py-3 text-[16px] text-[#28272e] placeholder-[#868496] focus:outline-none focus:border-[#5843de] focus:ring-1 focus:ring-[#5843de]/10 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-[12px] text-[#868496] font-medium block mb-1">Last name</label>
+                <input
+                  value={draftLast}
+                  onChange={e => setDraftLast(e.target.value)}
+                  placeholder="Last name"
+                  className="w-full bg-white border border-[#d7d6dc] rounded-[8px] px-4 py-3 text-[16px] text-[#28272e] placeholder-[#868496] focus:outline-none focus:border-[#5843de] focus:ring-1 focus:ring-[#5843de]/10 transition-colors"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowEditName(false)}
+                className="flex-1 py-4 bg-[#f4f3fc] text-[#5843de] text-[16px] font-medium rounded-full active:opacity-70"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveName}
+                className="flex-1 py-4 bg-[#5843de] text-white text-[16px] font-medium rounded-full active:opacity-80"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Edit email sheet ─────────────────────────────────────── */}
+      {showEditEmail && (
+        <div className="fixed inset-0 z-50" onClick={() => setShowEditEmail(false)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div
+            className="absolute inset-x-0 bottom-0 bg-white rounded-t-[24px] p-6 z-50"
+            style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="w-9 h-1 bg-[#d7d6dc] rounded-full mx-auto mb-5" />
+            <h3 className="text-[18px] font-bold text-[#28272e] mb-5">Edit your email</h3>
+            <div className="mb-6">
+              <label className="text-[12px] text-[#868496] font-medium block mb-1">Email address</label>
+              <input
+                type="email"
+                value={draftEmail}
+                onChange={e => setDraftEmail(e.target.value)}
+                placeholder="your@email.com"
+                className="w-full bg-white border border-[#d7d6dc] rounded-[8px] px-4 py-3 text-[16px] text-[#28272e] placeholder-[#868496] focus:outline-none focus:border-[#5843de] focus:ring-1 focus:ring-[#5843de]/10 transition-colors"
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowEditEmail(false)}
+                className="flex-1 py-4 bg-[#f4f3fc] text-[#5843de] text-[16px] font-medium rounded-full active:opacity-70"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveEmail}
+                className="flex-1 py-4 bg-[#5843de] text-white text-[16px] font-medium rounded-full active:opacity-80"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Disconnect CE sheet ─────────────────────────────────── */}
       {showDisconnectSheet && (

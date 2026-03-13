@@ -3,7 +3,6 @@ import { discoverWalletCredentials, ApiError } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { getLocalCredentials, mergeWithLocalCredentials, clearLocalCredentials } from '../store/localCredentials';
 import CredentialStack from '../components/CredentialStack';
-import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import type { Credential, ViewName } from '../types';
 
@@ -108,11 +107,30 @@ export default function DashboardScreen({ navigate, refreshSignal }: DashboardSc
 
       <main className="flex-1 pb-28">
         {loading ? (
-          <div className="px-5 flex items-center justify-center pt-16">
-            <div className="text-center space-y-3">
-              <LoadingSpinner size="lg" className="mx-auto" />
-              <p className="text-[var(--text-muted)] text-sm font-medium">Updating wallet…</p>
-            </div>
+          // Skeleton cards — one per known credential (min 1)
+          <div className="pt-2 px-4">
+            {Array.from({ length: Math.max(1, credentials.length) }).map((_, i, arr) => (
+              <div
+                key={i}
+                className="relative bg-white border border-[#f1f1f3] rounded-[16px] overflow-hidden"
+                style={{
+                  aspectRatio: '1.586',
+                  position: 'relative',
+                  zIndex: i + 1,
+                  marginTop: i === 0 ? 0 : 'calc(-100% / 1.586 + 80px)',
+                  filter: i > 0 && arr.length > 1
+                    ? 'drop-shadow(0 -6px 18px rgba(0,0,0,0.30)) drop-shadow(0 -2px 40px rgba(0,0,0,0.15))'
+                    : undefined,
+                }}
+              >
+                <div className="absolute bg-[#e8e8eb] rounded-full animate-pulse"
+                  style={{ top: '11%', left: '5.5%', height: '7%', width: '23%' }} />
+                <div className="absolute bg-[#e8e8eb] rounded-full animate-pulse"
+                  style={{ top: '11%', right: '5.5%', height: '7%', width: '15%' }} />
+                <div className="absolute bg-[#e8e8eb] rounded-full animate-pulse"
+                  style={{ top: '81%', left: '5.5%', height: '7%', width: '65%' }} />
+              </div>
+            ))}
           </div>
         ) : error ? (
           <div className="px-5 pt-6">
@@ -125,26 +143,34 @@ export default function DashboardScreen({ navigate, refreshSignal }: DashboardSc
             </button>
           </div>
         ) : credentials.length === 0 ? (
-          <div className="px-5 pt-2">
-            <div className="bg-white rounded-[32px] p-8 shadow-sm border border-black/5 text-center">
-              <div className="w-16 h-16 rounded-3xl bg-[var(--primary-bg)] flex items-center justify-center mb-6 mx-auto">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden>
-                  <rect x="4" y="3" width="16" height="18" rx="2" stroke="var(--primary)" strokeWidth="2" />
-                  <circle cx="12" cy="9" r="3" stroke="var(--primary)" strokeWidth="1.5" />
-                  <path d="M7 18c0-2.5 2-4.5 5-4.5s5 2 5 4.5" stroke="var(--primary)" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
+          // Empty state — card matching credential card dimensions
+          <div className="pt-2 px-4">
+            <div
+              className="bg-white border border-[#f1f1f3] rounded-[16px] overflow-hidden p-5 flex flex-col justify-between"
+              style={{ aspectRatio: '1.586' }}
+            >
+              <div className="flex flex-col gap-3">
+                <div className="w-11 h-11 bg-[#f4f3fc] rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
+                    <rect x="3" y="4" width="18" height="16" rx="2" stroke="#5843de" strokeWidth="1.7" strokeLinejoin="round"/>
+                    <circle cx="12" cy="9" r="2.5" stroke="#5843de" strokeWidth="1.5"/>
+                    <path d="M7 17c0-2.2 2-4 5-4s5 1.8 5 4" stroke="#5843de" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-[16px] font-semibold text-[#28272e] leading-6 mb-1">
+                    No travel document... yet!
+                  </p>
+                  <p className="text-[14px] text-[#6d6b7e] leading-5">
+                    Scan a QR code to add your first credential to the wallet.
+                  </p>
+                </div>
               </div>
-              <h2 className="text-[22px] font-bold text-[var(--text-main)] mb-2">
-                Empty Wallet
-              </h2>
-              <p className="text-[15px] text-[var(--text-muted)] mb-8 leading-relaxed font-medium">
-                Your digital credentials will appear here once you add them.
-              </p>
               <button
                 onClick={() => navigate('receive')}
-                className="w-full text-white text-[16px] font-semibold py-4 rounded-full bg-[#5843de] shadow-md shadow-[#5843de]/20 transition-all active:scale-[0.98] active:opacity-90"
+                className="self-start bg-[#5843de] text-white text-[14px] font-medium px-4 py-1.5 rounded-full active:opacity-80 transition-opacity"
               >
-                Add Credential
+                Add credential
               </button>
             </div>
           </div>
