@@ -62,10 +62,10 @@ function IconPaste() {
 function IconCheckCircle() {
   return (
     <svg width="56" height="56" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <circle cx="12" cy="12" r="10" stroke="#5843de" strokeWidth="1.5" />
+      <circle cx="12" cy="12" r="10" stroke="#5B4FE9" strokeWidth="1.5" />
       <path
         d="M8.5 12l2.5 2.5 4.5-5"
-        stroke="#5843de"
+        stroke="#5B4FE9"
         strokeWidth="1.8"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -208,7 +208,7 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
       <div className="flex-1 flex flex-col items-center justify-center p-6 min-h-screen bg-[var(--bg-ios)]">
         <div className="text-center space-y-4">
           <LoadingSpinner size="lg" className="mx-auto" />
-          <p className="text-[#868496] text-[15px] font-medium">Processing credential offer…</p>
+          <p className="text-[#8e8e93] text-[15px] font-medium">Processing credential offer…</p>
         </div>
       </div>
     );
@@ -252,7 +252,7 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
           </motion.div>
           <div>
             <h2 className="text-[var(--text-main)] font-bold text-[28px] leading-tight">Credential Added!</h2>
-            <p className="text-[#868496] text-[16px] mt-2 font-medium">Returning to your wallet…</p>
+            <p className="text-[#8e8e93] text-[16px] mt-2 font-medium">Returning to your wallet…</p>
           </div>
         </div>
       </div>
@@ -273,14 +273,14 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto px-5 pb-40 space-y-5">
           <div className="pb-1">
-            <h2 className="text-[24px] font-semibold text-[#28272e] leading-[28px]">
-              <span className="text-[#5843de]">{label}</span>
+            <h2 className="text-[24px] font-semibold text-[#1c1c1e] leading-[28px]">
+              <span className="text-[#5B4FE9]">{label}</span>
               {' '}is being offered to you
             </h2>
           </div>
 
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-[#868496] px-1 mb-2">Credential offered</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8e8e93] px-1 mb-2">Credential offered</p>
             <div className="bg-white rounded-[16px] flex items-center px-4 py-4 border border-[#f1f1f3] shadow-sm">
               <CredentialThumbnail
                 backgroundColor={backgroundColor}
@@ -289,9 +289,9 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
                 className="mr-4"
               />
               <div className="flex-1 min-w-0">
-                <p className="text-[16px] font-bold text-[#28272e] truncate">{label}</p>
+                <p className="text-[16px] font-bold text-[#1c1c1e] truncate">{label}</p>
                 {description && (
-                  <p className="text-[13px] text-[#868496] truncate font-medium">{description}</p>
+                  <p className="text-[13px] text-[#8e8e93] truncate font-medium">{description}</p>
                 )}
               </div>
             </div>
@@ -305,7 +305,7 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
           </PrimaryButton>
           <button
             onClick={() => navigate('dashboard')}
-            className="w-full text-[#5843de] text-[16px] font-medium py-4 active:opacity-60 transition-opacity"
+            className="w-full text-[#5B4FE9] text-[16px] font-medium py-4 active:opacity-60 transition-opacity"
           >
             Maybe later
           </button>
@@ -340,14 +340,14 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
         {/* Camera / Paste toggle */}
         <div className="flex bg-black/5 rounded-[var(--radius-xl)] p-1 gap-1">
           <button
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[14px] rounded-lg transition-all ${!showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[#868496] font-medium'}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[14px] rounded-lg transition-all ${!showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[#8e8e93] font-medium'}`}
             onClick={() => setShowManual(false)}
           >
             <IconCamera />
             Camera
           </button>
           <button
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[14px] rounded-lg transition-all ${showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[#868496] font-medium'}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[14px] rounded-lg transition-all ${showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[#8e8e93] font-medium'}`}
             onClick={() => setShowManual(true)}
           >
             <IconPaste />
@@ -372,7 +372,7 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
             <QRScanner onScan={(r) => processOfferUri(r)} />
             {error && <ErrorMessage message={error} />}
             <div className="bg-[var(--bg-white)]/50 rounded-[var(--radius-xl)] p-4 border border-dashed border-[var(--border-subtle)] text-center">
-              <p className="text-[12px] text-[#868496] font-medium">
+              <p className="text-[12px] text-[#8e8e93] font-medium">
                 Scan any <span className="text-[var(--text-main)] font-bold">OpenID</span> QR code to start the intake process.
               </p>
             </div>

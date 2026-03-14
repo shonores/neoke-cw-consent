@@ -53,7 +53,7 @@ function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (
       aria-checked={checked}
       disabled={disabled}
       onClick={e => { e.stopPropagation(); onChange(); }}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50 ${checked ? 'bg-[#5843de]' : 'bg-[#e5e5ea]'}`}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50 ${checked ? 'bg-[#5B4FE9]' : 'bg-[#e5e5ea]'}`}
     >
       <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform ${checked ? 'translate-x-[20px]' : 'translate-x-[2px]'}`} />
     </button>
@@ -63,8 +63,8 @@ function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (
 function IconAlways() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="9" stroke="#5843de" strokeWidth="1.7"/>
-      <path d="M8 12l3 3 5-5" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="12" cy="12" r="9" stroke="#5B4FE9" strokeWidth="1.7"/>
+      <path d="M8 12l3 3 5-5" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
 }
@@ -72,9 +72,9 @@ function IconAlways() {
 function IconAsk() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="9" stroke="#28272e" strokeWidth="1.7"/>
-      <path d="M9.5 9.5a2.5 2.5 0 015 .833c0 1.667-2.5 2.5-2.5 2.5" stroke="#28272e" strokeWidth="1.7" strokeLinecap="round"/>
-      <circle cx="12" cy="16.5" r="0.75" fill="#28272e"/>
+      <circle cx="12" cy="12" r="9" stroke="#1c1c1e" strokeWidth="1.7"/>
+      <path d="M9.5 9.5a2.5 2.5 0 015 .833c0 1.667-2.5 2.5-2.5 2.5" stroke="#1c1c1e" strokeWidth="1.7" strokeLinecap="round"/>
+      <circle cx="12" cy="16.5" r="0.75" fill="#1c1c1e"/>
     </svg>
   );
 }
@@ -247,7 +247,7 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
   // ── Banner config ───────────────────────────────────────────────────────────
 
   const bannerBg =
-    mode === 'always' ? 'bg-[#e9e7f9] border-[#5843de]' :
+    mode === 'always' ? 'bg-[#e9e7f9] border-[#5B4FE9]' :
     mode === 'never'  ? 'bg-[#fbeae9] border-[#d9534f]/40' :
                         'bg-white border-[#f1f1f3]';
 
@@ -265,9 +265,9 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
 
   const pillLabel = mode === 'always' ? 'Always' : mode === 'never' ? 'Never' : 'Ask';
   const pillStyle =
-    mode === 'always' ? 'bg-[#5843de] text-white' :
+    mode === 'always' ? 'bg-[#5B4FE9] text-white' :
     mode === 'never'  ? 'bg-[#aa281e] text-white' :
-                        'bg-[#868496] text-white';
+                        'bg-[#8e8e93] text-white';
 
   // ── Mode sheet options (non-current) ────────────────────────────────────────
 
@@ -277,14 +277,14 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
       label: 'Always',
       description: `You'll always share your info and won't be asked for consent each time ${serviceName} wants to access your data.`,
       icon: <IconAlways />,
-      color: '#5843de',
+      color: '#5B4FE9',
     },
     {
       mode: 'ask' as ShareMode,
       label: 'Ask',
       description: `${serviceName} will ask you every time it needs personal information or travel preferences.`,
       icon: <IconAsk />,
-      color: '#28272e',
+      color: '#1c1c1e',
     },
     {
       mode: 'never' as ShareMode,
@@ -299,19 +299,19 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
 
   return (
     <motion.div variants={variants} initial="initial" animate="animate" exit="exit"
-      className="flex-1 flex flex-col bg-[#f7f6f8] min-h-screen">
+      className="flex-1 flex flex-col bg-[#F2F2F7] min-h-screen">
 
       <ScreenNav title={loading ? '' : serviceName} onBack={() => navigate('travel_services')} />
 
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
-          <div className="w-7 h-7 border-2 border-[#5843de] border-t-transparent rounded-full animate-spin" />
+          <div className="w-7 h-7 border-2 border-[#5B4FE9] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : error ? (
         <main className="px-4">
           <div className="bg-red-50 border border-red-200 rounded-[12px] px-4 py-4">
             <p className="text-[14px] text-[#aa281e] mb-3 font-medium">{error}</p>
-            <button onClick={load} className="text-[14px] font-semibold text-[#5843de]">Try again</button>
+            <button onClick={load} className="text-[14px] font-semibold text-[#5B4FE9]">Try again</button>
           </div>
         </main>
       ) : (
@@ -320,7 +320,7 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
           {/* Sharing mode banner */}
           <div className="space-y-2">
             <div className={`rounded-[12px] border-2 px-4 py-4 flex items-center gap-4 transition-colors ${bannerBg}`}>
-              <p className="flex-1 text-[16px] font-semibold text-[#28272e] leading-6">
+              <p className="flex-1 text-[16px] font-semibold text-[#1c1c1e] leading-6">
                 {bannerHeading}
               </p>
               <button
@@ -331,22 +331,22 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
                 {saving ? '…' : pillLabel}
               </button>
             </div>
-            <p className="text-[14px] text-[#868496] px-1 leading-5">{bannerCaption}</p>
+            <p className="text-[14px] text-[#8e8e93] px-1 leading-5">{bannerCaption}</p>
           </div>
 
           {/* Enable / disable toggle + delete (when rule exists) */}
           {serviceRule && (
             <div className="bg-white rounded-[12px] border border-[#f1f1f3] overflow-hidden">
               <div className="flex items-center gap-3 px-4 py-3 border-b border-[#f1f1f3]">
-                <div className="w-11 h-11 rounded-full bg-[#f4f3fc] flex items-center justify-center flex-shrink-0">
+                <div className="w-11 h-11 rounded-full bg-[#EEF2FF] flex items-center justify-center flex-shrink-0">
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                    <path d="M18.36 6.64a9 9 0 1 1-12.73 0" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round"/>
-                    <path d="M12 2v10" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round"/>
+                    <path d="M18.36 6.64a9 9 0 1 1-12.73 0" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round"/>
+                    <path d="M12 2v10" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round"/>
                   </svg>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[16px] font-medium text-[#28272e] leading-6">Rule enabled</p>
-                  <p className="text-[13px] text-[#868496] leading-5">
+                  <p className="text-[16px] font-medium text-[#1c1c1e] leading-6">Rule enabled</p>
+                  <p className="text-[13px] text-[#8e8e93] leading-5">
                     {serviceRule.enabled ? 'Active — rule applies to requests' : 'Paused — CE will ask instead'}
                   </p>
                 </div>
@@ -365,15 +365,15 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
           {/* Credential type */}
           {ruleCredType && (
             <div className="bg-white rounded-[12px] border border-[#f1f1f3] px-4 py-3 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-[#f4f3fc] flex items-center justify-center flex-shrink-0">
+              <div className="w-9 h-9 rounded-full bg-[#EEF2FF] flex items-center justify-center flex-shrink-0">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <rect x="2" y="5" width="20" height="14" rx="2" stroke="#5843de" strokeWidth="1.7"/>
-                  <path d="M2 10h20" stroke="#5843de" strokeWidth="1.7"/>
+                  <rect x="2" y="5" width="20" height="14" rx="2" stroke="#5B4FE9" strokeWidth="1.7"/>
+                  <path d="M2 10h20" stroke="#5B4FE9" strokeWidth="1.7"/>
                 </svg>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-semibold uppercase tracking-wider text-[#868496]">Credential type</p>
-                <p className="text-[14px] font-medium text-[#28272e] truncate">{ruleCredType.split('.').pop() ?? ruleCredType}</p>
+                <p className="text-[12px] font-semibold uppercase tracking-wider text-[#8e8e93]">Credential type</p>
+                <p className="text-[14px] font-medium text-[#1c1c1e] truncate">{ruleCredType.split('.').pop() ?? ruleCredType}</p>
               </div>
             </div>
           )}
@@ -381,22 +381,22 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
           {/* Info shared */}
           {allFields.length > 0 && (
             <div className="space-y-2">
-              <h2 className="text-[20px] font-semibold text-[#28272e] px-1 pt-2">Info shared</h2>
+              <h2 className="text-[20px] font-semibold text-[#1c1c1e] px-1 pt-2">Info shared</h2>
               <div className="bg-white rounded-[12px] border border-[#f1f1f3] overflow-hidden divide-y divide-[#f1f1f3]">
                 {allFields.map(field => {
                   const lastEvent = events.find(e => e.requestedFields?.includes(field));
                   return (
                     <div key={field} className="flex items-center gap-3 px-4 py-3">
-                      <div className="w-9 h-9 rounded-full bg-[#f4f3fc] flex items-center justify-center flex-shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-[#EEF2FF] flex items-center justify-center flex-shrink-0">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-                          <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[15px] font-medium text-[#28272e] leading-6">{formatFieldName(field)}</p>
+                        <p className="text-[15px] font-medium text-[#1c1c1e] leading-6">{formatFieldName(field)}</p>
                         {lastEvent && (
-                          <p className="text-[12px] text-[#868496] leading-5">Last shared {formatDate(lastEvent.timestamp)}</p>
+                          <p className="text-[12px] text-[#8e8e93] leading-5">Last shared {formatDate(lastEvent.timestamp)}</p>
                         )}
                       </div>
                     </div>
@@ -409,7 +409,7 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
           {/* History log */}
           {events.length > 0 && (
             <div className="space-y-2">
-              <h2 className="text-[20px] font-semibold text-[#28272e] px-1 pt-2">History log</h2>
+              <h2 className="text-[20px] font-semibold text-[#1c1c1e] px-1 pt-2">History log</h2>
               <div className="bg-white rounded-[12px] border border-[#f1f1f3] overflow-hidden divide-y divide-[#f1f1f3]">
                 {events.slice(0, 10).map(event => {
                   const isSuccess = event.action === 'auto_presented' || event.action === 'manually_approved';
@@ -422,11 +422,11 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
                   return (
                     <div key={event.id} className="flex items-center gap-3 px-4 py-3">
                       <div className="flex-1 min-w-0">
-                        <p className="text-[15px] font-semibold text-[#28272e] leading-6">{label}</p>
-                        <p className="text-[13px] text-[#868496] leading-5">Shared on {formatDate(event.timestamp)}</p>
+                        <p className="text-[15px] font-semibold text-[#1c1c1e] leading-6">{label}</p>
+                        <p className="text-[13px] text-[#8e8e93] leading-5">Shared on {formatDate(event.timestamp)}</p>
                       </div>
                       <span className={`text-[13px] font-medium flex-shrink-0 ${
-                        isSuccess ? 'text-[#198e41]' : isRejected ? 'text-[#aa281e]' : 'text-[#868496]'
+                        isSuccess ? 'text-[#198e41]' : isRejected ? 'text-[#aa281e]' : 'text-[#8e8e93]'
                       }`}>
                         {formatRelativeTime(event.timestamp)}
                       </span>
@@ -439,7 +439,7 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
 
           {events.length === 0 && allFields.length === 0 && !serviceRule && (
             <div className="pt-8 text-center">
-              <p className="text-[15px] text-[#868496]">No activity yet for this service.</p>
+              <p className="text-[15px] text-[#8e8e93]">No activity yet for this service.</p>
             </div>
           )}
         </main>
@@ -459,8 +459,8 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
               onClick={e => e.stopPropagation()}
             >
               <div className="w-9 h-1 bg-[#d7d6dc] rounded-full mx-auto mb-5" />
-              <h3 className="text-[18px] font-bold text-[#28272e] mb-2">Delete rule?</h3>
-              <p className="text-[14px] text-[#868496] mb-6">
+              <h3 className="text-[18px] font-bold text-[#1c1c1e] mb-2">Delete rule?</h3>
+              <p className="text-[14px] text-[#8e8e93] mb-6">
                 This will remove the consent rule for {serviceName}. You'll be asked for consent next time they request your info.
               </p>
               <div className="space-y-3">
@@ -472,7 +472,7 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
                 </button>
                 <button
                   onClick={() => setShowDeleteSheet(false)}
-                  className="w-full text-[#28272e] text-[16px] font-medium py-4 rounded-full border border-black/10 active:bg-black/5"
+                  className="w-full text-[#1c1c1e] text-[16px] font-medium py-4 rounded-full border border-black/10 active:bg-black/5"
                 >
                   Cancel
                 </button>
@@ -493,7 +493,7 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
               exit={{ opacity: 0 }}
             />
             <motion.div
-              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[512px] bg-[#f7f6f8] rounded-t-[24px]"
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[512px] bg-[#F2F2F7] rounded-t-[24px]"
               style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}
               initial={{ y: '100%' }}
               animate={{ y: 0, transition: { type: 'spring', damping: 30, stiffness: 300 } }}
@@ -503,10 +503,10 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
               <div className="w-9 h-1 bg-[#d7d6dc] rounded-full mx-auto mt-3 mb-1" />
               <div className="px-5 pt-4 pb-2 flex items-start justify-between gap-3">
                 <div className="flex-1">
-                  <h3 className="text-[22px] font-bold text-[#28272e] leading-7 mb-1">
+                  <h3 className="text-[22px] font-bold text-[#1c1c1e] leading-7 mb-1">
                     Choose how to share your info
                   </h3>
-                  <p className="text-[15px] text-[#868496] leading-5">
+                  <p className="text-[15px] text-[#8e8e93] leading-5">
                     You have full control of how you share your information with travel services.
                   </p>
                 </div>
@@ -515,7 +515,7 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
                   className="w-9 h-9 rounded-full bg-[#f1f1f3] flex items-center justify-center flex-shrink-0 active:opacity-70 mt-1"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M18 6L6 18M6 6l12 12" stroke="#28272e" strokeWidth="2.2" strokeLinecap="round"/>
+                    <path d="M18 6L6 18M6 6l12 12" stroke="#1c1c1e" strokeWidth="2.2" strokeLinecap="round"/>
                   </svg>
                 </button>
               </div>
@@ -524,14 +524,14 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
                   <button
                     key={opt.mode}
                     onClick={() => switchMode(opt.mode)}
-                    className="w-full bg-white border border-[#f1f1f3] rounded-[12px] flex gap-3 items-start px-3 py-3 text-left active:bg-[#f7f6f8] transition-colors"
+                    className="w-full bg-white border border-[#f1f1f3] rounded-[12px] flex gap-3 items-start px-3 py-3 text-left active:bg-[#F2F2F7] transition-colors"
                   >
                     <div className="mt-0.5 flex-shrink-0">{opt.icon}</div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[15px] font-semibold leading-5 mb-0.5" style={{ color: opt.color }}>
                         {opt.label}
                       </p>
-                      <p className="text-[13px] text-[#868496] leading-5">{opt.description}</p>
+                      <p className="text-[13px] text-[#8e8e93] leading-5">{opt.description}</p>
                     </div>
                   </button>
                 ))}

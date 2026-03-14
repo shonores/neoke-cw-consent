@@ -136,19 +136,19 @@ function ServiceAvatar({ action }: { action: AuditAction }) {
   const isExpired = action === 'expired';
 
   return (
-    <div className="w-11 h-11 rounded-full bg-[#f4f3fc] flex items-center justify-center flex-shrink-0">
+    <div className="w-11 h-11 rounded-full bg-[#EEF2FF] flex items-center justify-center flex-shrink-0">
       {isShare && (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-          <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-          <polyline points="16 6 12 2 8 6" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-          <line x1="12" y1="2" x2="12" y2="15" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round"/>
+          <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+          <polyline points="16 6 12 2 8 6" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+          <line x1="12" y1="2" x2="12" y2="15" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round"/>
         </svg>
       )}
       {isReceive && (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-          <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-          <polyline points="16 18 12 22 8 18" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-          <line x1="12" y1="2" x2="12" y2="22" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round"/>
+          <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+          <polyline points="16 18 12 22 8 18" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+          <line x1="12" y1="2" x2="12" y2="22" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round"/>
         </svg>
       )}
       {isRejected && (
@@ -159,8 +159,8 @@ function ServiceAvatar({ action }: { action: AuditAction }) {
       )}
       {isExpired && (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="9" stroke="#868496" strokeWidth="1.7"/>
-          <path d="M12 7v5l3 2" stroke="#868496" strokeWidth="1.7" strokeLinecap="round"/>
+          <circle cx="12" cy="12" r="9" stroke="#8e8e93" strokeWidth="1.7"/>
+          <path d="M12 7v5l3 2" stroke="#8e8e93" strokeWidth="1.7" strokeLinecap="round"/>
         </svg>
       )}
     </div>
@@ -184,17 +184,17 @@ function ActivityItem({
   return (
     <button
       onClick={onTap}
-      className={`rounded-[4px] w-full text-left active:bg-[#f7f6f8] transition-colors ${isQueued ? 'bg-[#f7f6f8]' : ''}`}
+      className={`rounded-[4px] w-full text-left active:bg-[#F2F2F7] transition-colors ${isQueued ? 'bg-[#F2F2F7]' : ''}`}
     >
       <div className="flex flex-col gap-3 px-2 py-3">
         <div className="flex gap-3 items-start">
           <ServiceAvatar action={event.action} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 w-full">
-              <p className="flex-1 font-semibold text-[16px] leading-6 text-[#28272e] truncate">{title}</p>
-              <span className="text-[12px] text-[#868496] flex-shrink-0 leading-4">{formatRelativeTime(event.timestamp)}</span>
+              <p className="flex-1 font-semibold text-[16px] leading-6 text-[#1c1c1e] truncate">{title}</p>
+              <span className="text-[12px] text-[#8e8e93] flex-shrink-0 leading-4">{formatRelativeTime(event.timestamp)}</span>
             </div>
-            <p className="text-[14px] text-[#868496] leading-5 mt-0.5">{description}</p>
+            <p className="text-[14px] text-[#8e8e93] leading-5 mt-0.5">{description}</p>
           </div>
         </div>
 
@@ -203,7 +203,7 @@ function ActivityItem({
             {status.type === 'pill' ? (
               <button
                 onClick={e => { e.stopPropagation(); onViewRequest?.(); }}
-                className="bg-[#5843de] text-white text-[14px] font-medium leading-5 px-3 py-1 rounded-full active:opacity-80 transition-opacity"
+                className="bg-[#5B4FE9] text-white text-[14px] font-medium leading-5 px-3 py-1 rounded-full active:opacity-80 transition-opacity"
               >
                 {status.label}
               </button>
@@ -211,13 +211,13 @@ function ActivityItem({
               <span className={`text-[14px] font-medium leading-5 ${
                 status.type === 'text-red' ? 'text-[#aa281e]' :
                 status.type === 'text-green' ? 'text-[#198e41]' :
-                'text-[#868496]'
+                'text-[#8e8e93]'
               }`}>
                 {status.label}
               </span>
             )}
             {dateCaption && (
-              <span className="text-[12px] text-[#868496] leading-4">{dateCaption}</span>
+              <span className="text-[12px] text-[#8e8e93] leading-4">{dateCaption}</span>
             )}
           </div>
         )}
@@ -271,15 +271,15 @@ function EventDetailSheet({
         <div className="flex items-center gap-3 px-5 pt-3 pb-4 border-b border-[#f1f1f3]">
           <ServiceAvatar action={event.action} />
           <div className="flex-1 min-w-0">
-            <p className="text-[17px] font-bold text-[#28272e] leading-6 truncate">{service}</p>
-            <p className="text-[13px] text-[#868496] leading-5">{formatFullDate(event.timestamp)}</p>
+            <p className="text-[17px] font-bold text-[#1c1c1e] leading-6 truncate">{service}</p>
+            <p className="text-[13px] text-[#8e8e93] leading-5">{formatFullDate(event.timestamp)}</p>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-[#f4f3fc] flex items-center justify-center flex-shrink-0 active:opacity-70"
+            className="w-8 h-8 rounded-full bg-[#EEF2FF] flex items-center justify-center flex-shrink-0 active:opacity-70"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M1 1l12 12M13 1L1 13" stroke="#5843de" strokeWidth="2" strokeLinecap="round"/>
+              <path d="M1 1l12 12M13 1L1 13" stroke="#5B4FE9" strokeWidth="2" strokeLinecap="round"/>
             </svg>
           </button>
         </div>
@@ -288,10 +288,10 @@ function EventDetailSheet({
           {/* Status */}
           <div className="flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-              isShared ? 'bg-[#198e41]' : isDeclined ? 'bg-[#aa281e]' : 'bg-[#868496]'
+              isShared ? 'bg-[#198e41]' : isDeclined ? 'bg-[#aa281e]' : 'bg-[#8e8e93]'
             }`} />
             <span className={`text-[14px] font-medium ${
-              isShared ? 'text-[#198e41]' : isDeclined ? 'text-[#aa281e]' : 'text-[#868496]'
+              isShared ? 'text-[#198e41]' : isDeclined ? 'text-[#aa281e]' : 'text-[#8e8e93]'
             }`}>
               {isShared ? 'Shared successfully'
                 : isDeclined ? 'Declined'
@@ -301,21 +301,21 @@ function EventDetailSheet({
                 : 'Activity'}
             </span>
             {event.credentialType && (
-              <span className="text-[13px] text-[#868496] ml-auto">{formatCredentialType(event.credentialType)}</span>
+              <span className="text-[13px] text-[#8e8e93] ml-auto">{formatCredentialType(event.credentialType)}</span>
             )}
           </div>
 
           {/* Fields */}
           {fields.length > 0 && (
             <div className="space-y-1.5">
-              <p className="text-[12px] font-semibold text-[#868496] uppercase tracking-wider">
+              <p className="text-[12px] font-semibold text-[#8e8e93] uppercase tracking-wider">
                 {isShared ? 'Information shared' : 'Information requested'}
               </p>
-              <div className="bg-[#f7f6f8] rounded-[12px] divide-y divide-[#ebebed]">
+              <div className="bg-[#F2F2F7] rounded-[12px] divide-y divide-[#ebebed]">
                 {fields.map(field => (
                   <div key={field} className="flex items-center gap-2.5 px-3 py-2.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#5843de] flex-shrink-0" />
-                    <span className="text-[15px] text-[#28272e]">{formatFieldName(field)}</span>
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#5B4FE9] flex-shrink-0" />
+                    <span className="text-[15px] text-[#1c1c1e]">{formatFieldName(field)}</span>
                   </div>
                 ))}
               </div>
@@ -330,11 +330,11 @@ function EventDetailSheet({
                 onClose();
                 onNavigateToService(did);
               }}
-              className="w-full flex items-center justify-between bg-[#f7f6f8] rounded-[12px] px-4 py-3.5 active:opacity-70 transition-opacity"
+              className="w-full flex items-center justify-between bg-[#F2F2F7] rounded-[12px] px-4 py-3.5 active:opacity-70 transition-opacity"
             >
-              <span className="text-[15px] font-semibold text-[#5843de]">Open {service} in Consent Rules</span>
+              <span className="text-[15px] font-semibold text-[#5B4FE9]">Open {service} in Consent Rules</span>
               <svg width="7" height="12" viewBox="0 0 7 12" fill="none">
-                <path d="M1 1l5 5-5 5" stroke="#5843de" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M1 1l5 5-5 5" stroke="#5B4FE9" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
           )}
@@ -498,10 +498,10 @@ export default function AuditLogScreen({ navigate }: Props) {
       initial="initial"
       animate="animate"
       exit="exit"
-      className="flex-1 flex flex-col bg-[#f7f6f8] min-h-screen"
+      className="flex-1 flex flex-col bg-[#F2F2F7] min-h-screen"
     >
       {/* Nav */}
-      <nav className="sticky top-0 z-10 bg-[#f7f6f8] px-5 pt-14 pb-4 flex items-center gap-3">
+      <nav className="sticky top-0 z-10 bg-[#F2F2F7] px-5 pt-14 pb-4 flex items-center gap-3">
         <button
           onClick={() => navigate('account')}
           className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"
@@ -510,7 +510,7 @@ export default function AuditLogScreen({ navigate }: Props) {
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
-        <h1 className="flex-1 text-[28px] font-bold text-[#28272e] leading-8">Activity</h1>
+        <h1 className="flex-1 text-[28px] font-bold text-[#1c1c1e] leading-8">Activity</h1>
         {events.length > 0 && (
           <button
             onClick={handleClearAll}
@@ -523,7 +523,7 @@ export default function AuditLogScreen({ navigate }: Props) {
       </nav>
 
       <main className="flex-1 px-4 pb-28 space-y-4">
-        <p className="text-[16px] text-[#28272e] leading-6 px-1">
+        <p className="text-[16px] text-[#1c1c1e] leading-6 px-1">
           A record of all data shared and consent requests, tracking every interaction and update in one place.
         </p>
 
@@ -531,7 +531,7 @@ export default function AuditLogScreen({ navigate }: Props) {
           <div className="bg-white rounded-[12px] border border-[#f1f1f3] p-2 space-y-0 divide-y divide-[#f1f1f3]">
             {[1, 2, 3, 4].map(i => (
               <div key={i} className="flex gap-3 px-2 py-3 animate-pulse">
-                <div className="w-11 h-11 rounded-full bg-[#f4f3fc] flex-shrink-0" />
+                <div className="w-11 h-11 rounded-full bg-[#EEF2FF] flex-shrink-0" />
                 <div className="flex-1 space-y-2 pt-1">
                   <div className="h-4 bg-[#f1f1f3] rounded w-2/3" />
                   <div className="h-3 bg-[#f1f1f3] rounded w-full" />
@@ -541,24 +541,24 @@ export default function AuditLogScreen({ navigate }: Props) {
             ))}
           </div>
         ) : error ? (
-          <div className="bg-red-50 border border-red-200 rounded-[12px] px-4 py-4">
+          <div className="bg-red-50 border border-red-200 rounded-[24px] px-4 py-4">
             <p className="text-[14px] text-[#aa281e] mb-4 font-medium">{error}</p>
             <button
               onClick={() => loadEvents(true)}
-              className="bg-[#5843de] text-white text-[15px] font-semibold px-6 py-3 rounded-full w-full active:opacity-80 transition-opacity"
+              className="bg-[#5B4FE9] text-white text-[15px] font-semibold px-6 py-3 rounded-full w-full active:opacity-80 transition-opacity"
             >
               Try again
             </button>
           </div>
         ) : events.length === 0 ? (
           <div className="bg-white rounded-[12px] border border-[#f1f1f3] p-8 flex flex-col items-center text-center">
-            <div className="w-16 h-16 bg-[#f4f3fc] rounded-full flex items-center justify-center mb-4">
+            <div className="w-16 h-16 bg-[#EEF2FF] rounded-full flex items-center justify-center mb-4">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L4 6v6c0 5.25 3.5 9.74 8 11 4.5-1.26 8-5.75 8-11V6l-8-4z" stroke="#5843de" strokeWidth="1.7" strokeLinejoin="round" fill="#5843de" fillOpacity="0.12" />
+                <path d="M12 2L4 6v6c0 5.25 3.5 9.74 8 11 4.5-1.26 8-5.75 8-11V6l-8-4z" stroke="#5B4FE9" strokeWidth="1.7" strokeLinejoin="round" fill="#5B4FE9" fillOpacity="0.12" />
               </svg>
             </div>
-            <p className="text-[17px] font-bold text-[#28272e] mb-2">No activity yet</p>
-            <p className="text-[14px] text-[#868496] leading-relaxed">
+            <p className="text-[17px] font-bold text-[#1c1c1e] mb-2">No activity yet</p>
+            <p className="text-[14px] text-[#8e8e93] leading-relaxed">
               Events will appear here as the Consent Engine handles requests on your behalf.
             </p>
           </div>
@@ -582,10 +582,10 @@ export default function AuditLogScreen({ navigate }: Props) {
 
             <div ref={bottomRef} className="h-6 flex items-center justify-center">
               {loadingMore && (
-                <div className="w-5 h-5 border-2 border-[#5843de] border-t-transparent rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-[#5B4FE9] border-t-transparent rounded-full animate-spin" />
               )}
               {!hasMore && events.length > 0 && (
-                <p className="text-[12px] text-[#868496]">All activity loaded</p>
+                <p className="text-[12px] text-[#8e8e93]">All activity loaded</p>
               )}
             </div>
           </>

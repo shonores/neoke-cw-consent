@@ -75,8 +75,8 @@ export default function QRScanner({ onScan, onError }: QRScannerProps) {
       {!cameraError && (
         <div className="relative w-full">
           {isStarting && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 rounded-[12px] z-10 gap-3 min-h-[260px]">
-              <div className="w-8 h-8 border-2 border-[#5843de]/30 border-t-[#5843de] rounded-full animate-spin" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 rounded-[24px] z-10 gap-3 min-h-[260px]">
+              <div className="w-8 h-8 border-2 border-[#5B4FE9]/30 border-t-[#5B4FE9] rounded-full animate-spin" />
               <p className="text-white/70 text-xs">
                 {hadCamera ? 'Starting camera…' : 'Requesting camera access…'}
               </p>
@@ -84,7 +84,7 @@ export default function QRScanner({ onScan, onError }: QRScannerProps) {
           )}
           <div
             id={liveId.current}
-            className="w-full rounded-[12px] overflow-hidden bg-black"
+            className="w-full rounded-[24px] overflow-hidden bg-black"
           />
           {/* Corner guides */}
           {!isStarting && (
@@ -104,8 +104,8 @@ export default function QRScanner({ onScan, onError }: QRScannerProps) {
 
       {/* Error state */}
       {cameraError && (
-        <div className="flex flex-col items-center gap-3 p-5 bg-black/5 rounded-[12px] text-center">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden className="text-[#868496]">
+        <div className="flex flex-col items-center gap-3 p-5 bg-black/5 rounded-[24px] text-center">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden className="text-[#8e8e93]">
             <path
               d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"
               stroke="currentColor"
@@ -115,7 +115,7 @@ export default function QRScanner({ onScan, onError }: QRScannerProps) {
             />
             <circle cx="12" cy="13" r="4" stroke="currentColor" strokeWidth="1.7" />
           </svg>
-          <p className="text-sm text-[#868496] leading-relaxed">{cameraError}</p>
+          <p className="text-sm text-[#8e8e93] leading-relaxed">{cameraError}</p>
         </div>
       )}
     </div>

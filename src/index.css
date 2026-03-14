@@ -2,24 +2,24 @@
 
 :root {
   /* Figma Design Tokens */
-  --color-brand: #5843de;
-  --color-brand-subtle: #f4f3fc;
+  --color-brand: #5B4FE9;
+  --color-brand-subtle: #EEF2FF;
 
   /* Text */
-  --text-base: #28272e;
+  --text-base: #1c1c1e;
   --text-subtle: #6d6b7e;
-  --text-placeholder: #868496;
+  --text-placeholder: #8e8e93;
   --text-disabled: #abaab6;
   --text-error: #aa281e;
   --text-warning: #aa7212;
   --text-success: #198e41;
 
   /* Backgrounds */
-  --bg-screen: #f7f6f8;
+  --bg-screen: #F2F2F7;
   --bg-base: #ffffff;
   --bg-base-subtle: #f1f1f3;
-  --bg-brand: #5843de;
-  --bg-brand-subtle: #f4f3fc;
+  --bg-brand: #5B4FE9;
+  --bg-brand-subtle: #EEF2FF;
   --bg-error: #fbeae9;
   --bg-warning: #fcf4e5;
   --bg-success: #ebfbf0;
@@ -27,15 +27,15 @@
   /* Borders */
   --border-base: #d7d6dc;
   --border-subtle: #e8e8eb;
-  --border-brand: #5843de;
+  --border-brand: #5B4FE9;
 
   /* Legacy aliases — keep for backwards compatibility */
-  --primary: #5843de;
-  --primary-bg: #f4f3fc;
-  --bg-ios: #f7f6f8;
+  --primary: #5B4FE9;
+  --primary-bg: #EEF2FF;
+  --bg-ios: #F2F2F7;
   --bg-white: #ffffff;
-  --text-main: #28272e;
-  --text-muted: #868496;
+  --text-main: #1c1c1e;
+  --text-muted: #8e8e93;
 
   /* Layout */
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);

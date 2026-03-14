@@ -13,7 +13,7 @@ export default function IconButton({ children, className = '', ...props }: IconB
         bg-black/[0.05] hover:bg-black/10
         transition-all duration-150
         active:scale-90 active:bg-black/[0.15]
-        text-[#5843de]
+        text-[#5B4FE9]
         ${className}
       `}
             {...props}

@@ -50,7 +50,7 @@ function TabBar({
     >
       {/* Home */}
       <button
-        className={`flex-1 flex flex-col items-center gap-1 pt-3 pb-3 transition-colors ${homeActive ? 'text-[#5843de]' : 'text-[#868496]'}`}
+        className={`flex-1 flex flex-col items-center gap-1 pt-3 pb-3 transition-colors ${homeActive ? 'text-[#5B4FE9]' : 'text-[#8e8e93]'}`}
         onClick={() => onNavigate('dashboard')}
         aria-label="Home"
       >
@@ -70,7 +70,7 @@ function TabBar({
 
       {/* Scan QR Code */}
       <button
-        className={`flex-1 flex flex-col items-center gap-1 pt-3 pb-3 transition-colors ${scanActive ? 'text-[#5843de]' : 'text-[#868496]'}`}
+        className={`flex-1 flex flex-col items-center gap-1 pt-3 pb-3 transition-colors ${scanActive ? 'text-[#5B4FE9]' : 'text-[#8e8e93]'}`}
         onClick={() => onNavigate('receive')}
         aria-label="Scan QR Code"
       >
@@ -89,7 +89,7 @@ function TabBar({
       {/* Inbox (consent queue) */}
       {ceEnabled && (
         <button
-          className={`flex-1 flex flex-col items-center gap-1 pt-3 pb-3 transition-colors relative ${consentActive ? 'text-[#5843de]' : 'text-[#868496]'}`}
+          className={`flex-1 flex flex-col items-center gap-1 pt-3 pb-3 transition-colors relative ${consentActive ? 'text-[#5B4FE9]' : 'text-[#8e8e93]'}`}
           onClick={() => onNavigate('consent_queue')}
           aria-label="Inbox"
         >
@@ -126,7 +126,7 @@ function TabBar({
 
       {/* Profile */}
       <button
-        className={`flex-1 flex flex-col items-center gap-1 pt-3 pb-3 transition-colors ${accountActive ? 'text-[#5843de]' : 'text-[#868496]'}`}
+        className={`flex-1 flex flex-col items-center gap-1 pt-3 pb-3 transition-colors ${accountActive ? 'text-[#5B4FE9]' : 'text-[#8e8e93]'}`}
         onClick={() => onNavigate('account')}
         aria-label="Profile"
       >
@@ -317,7 +317,7 @@ function AppInner() {
   // ── Session expired → re-auth sheet ─────────────────────────────────────
   if (state.sessionExpired) {
     return (
-      <div className="w-full max-w-lg mx-auto min-h-screen bg-[#f7f6f8]">
+      <div className="w-full max-w-lg mx-auto min-h-screen bg-[#F2F2F7]">
         <ReAuthModal />
       </div>
     );
@@ -363,7 +363,7 @@ function AppInner() {
   const showTabBar = ['dashboard', 'account', 'consent_rules', 'consent_queue', 'audit_log', 'travel_services', 'receive'].includes(currentView);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#f7f6f8] w-full max-w-lg mx-auto">
+    <div className="flex flex-col min-h-screen bg-[#F2F2F7] w-full max-w-lg mx-auto">
       <AnimatePresence mode="wait">
         {currentView === 'dashboard' && (
           <DashboardScreen

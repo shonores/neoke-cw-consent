@@ -18,15 +18,15 @@ function detectLinkType(uri: string): 'receive' | 'present' {
 function IconCheckCircle() {
   return (
     <svg width="56" height="56" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <circle cx="12" cy="12" r="10" stroke="#5843de" strokeWidth="1.5" />
-      <path d="M8.5 12l2.5 2.5 4.5-5" stroke="#5843de" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="12" cy="12" r="10" stroke="#5B4FE9" strokeWidth="1.5" />
+      <path d="M8.5 12l2.5 2.5 4.5-5" stroke="#5B4FE9" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
 function Spinner() {
   return (
-    <div className="w-14 h-14 rounded-full border-[3px] border-[#5843de]/20 border-t-[#5843de] animate-spin" />
+    <div className="w-14 h-14 rounded-full border-[3px] border-[#5B4FE9]/20 border-t-[#5B4FE9] animate-spin" />
   );
 }
 
@@ -61,7 +61,7 @@ export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-[#f7f6f8] text-center p-6">
+    <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-[#F2F2F7] text-center p-6">
       <AnimatePresence mode="wait">
         {phase === 'processing' ? (
           <motion.div
@@ -76,8 +76,8 @@ export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback
               <Spinner />
             </div>
             <div>
-              <h2 className="text-[#28272e] font-bold text-[28px] leading-tight">Processing</h2>
-              <p className="text-[#868496] text-[17px] mt-2">Checking your consent rules…</p>
+              <h2 className="text-[#1c1c1e] font-bold text-[28px] leading-tight">Processing</h2>
+              <p className="text-[#8e8e93] text-[17px] mt-2">Checking your consent rules…</p>
             </div>
           </motion.div>
         ) : (
@@ -97,8 +97,8 @@ export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback
               <IconCheckCircle />
             </motion.div>
             <div>
-              <h2 className="text-[#28272e] font-bold text-[28px] leading-tight">Information shared</h2>
-              <p className="text-[#868496] text-[17px] mt-2">Returning to Home…</p>
+              <h2 className="text-[#1c1c1e] font-bold text-[28px] leading-tight">Information shared</h2>
+              <p className="text-[#8e8e93] text-[17px] mt-2">Returning to Home…</p>
             </div>
           </motion.div>
         )}

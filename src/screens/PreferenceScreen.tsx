@@ -144,7 +144,7 @@ export default function PreferenceScreen({ prefKey, navigate }: Props) {
   return (
     <motion.div
       variants={variants} initial="initial" animate="animate" exit="exit"
-      className="flex-1 flex flex-col bg-[#f7f6f8] min-h-screen"
+      className="flex-1 flex flex-col bg-[#F2F2F7] min-h-screen"
     >
       <ScreenNav title={config.title} onBack={handleCancel} />
 
@@ -152,7 +152,7 @@ export default function PreferenceScreen({ prefKey, navigate }: Props) {
       <main className="flex-1 overflow-y-auto pb-40 px-5">
         {/* Subtitle */}
         <div className="pb-6">
-          <p className="text-[16px] text-[#868496] leading-6">{config.subtitle}</p>
+          <p className="text-[16px] text-[#8e8e93] leading-6">{config.subtitle}</p>
         </div>
 
         {/* Chip groups */}
@@ -160,7 +160,7 @@ export default function PreferenceScreen({ prefKey, navigate }: Props) {
           {config.groups.map((group, gi) => (
             <div key={gi} className="space-y-3">
               {group.label && (
-                <p className="text-[16px] font-semibold text-[#28272e] leading-6">{group.label}</p>
+                <p className="text-[16px] font-semibold text-[#1c1c1e] leading-6">{group.label}</p>
               )}
               <div className="flex flex-wrap gap-2">
                 {group.options.map(option => {
@@ -171,8 +171,8 @@ export default function PreferenceScreen({ prefKey, navigate }: Props) {
                       onClick={() => toggle(option)}
                       className={`px-4 py-2.5 rounded-full text-[16px] font-medium leading-6 transition-colors active:scale-95 ${
                         isSelected
-                          ? 'bg-[#d4d1ff] text-[#28272e]'
-                          : 'bg-[#f1f1f3] text-[#28272e]'
+                          ? 'bg-[#d4d1ff] text-[#1c1c1e]'
+                          : 'bg-[#f1f1f3] text-[#1c1c1e]'
                       }`}
                     >
                       {option}
@@ -192,13 +192,13 @@ export default function PreferenceScreen({ prefKey, navigate }: Props) {
       >
         <button
           onClick={handleCancel}
-          className="flex-1 py-4 bg-[#f4f3fc] text-[#5843de] text-[16px] font-medium rounded-full active:opacity-70 transition-opacity"
+          className="flex-1 py-4 bg-[#EEF2FF] text-[#5B4FE9] text-[16px] font-medium rounded-full active:opacity-70 transition-opacity"
         >
           Cancel
         </button>
         <button
           onClick={handleSave}
-          className="flex-1 py-4 bg-[#5843de] text-white text-[16px] font-medium rounded-full active:opacity-70 transition-opacity"
+          className="flex-1 py-4 bg-[#5B4FE9] text-white text-[16px] font-medium rounded-full active:opacity-70 transition-opacity"
         >
           Save
         </button>

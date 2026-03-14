@@ -29,8 +29,8 @@ export default function ConsentLayout({
       {/* Header */}
       <div className="bg-white border-b border-black/5 px-5 py-6 text-center">
         <div className="text-4xl mb-3" aria-hidden>{icon}</div>
-        <h2 className="text-xl font-bold text-[#28272e]">{title}</h2>
-        {subtitle && <p className="text-sm text-[#868496] mt-1">{subtitle}</p>}
+        <h2 className="text-xl font-bold text-[#1c1c1e]">{title}</h2>
+        {subtitle && <p className="text-sm text-[#8e8e93] mt-1">{subtitle}</p>}
       </div>
 
       {/* Scrollable content */}
@@ -51,8 +51,8 @@ export default function ConsentLayout({
               min-h-[44px] transition-all duration-150 active:scale-95
               disabled:opacity-50 disabled:cursor-not-allowed
               ${action.variant === 'primary'
-                ? 'bg-[#5843de] hover:bg-[#5843de]/90 text-white'
-                : 'bg-[#f1f1f3] hover:bg-[#e8e8eb] text-[#28272e] border border-black/[0.05]'}
+                ? 'bg-[#5B4FE9] hover:bg-[#5B4FE9]/90 text-white'
+                : 'bg-[#f1f1f3] hover:bg-[#e8e8eb] text-[#1c1c1e] border border-black/[0.05]'}
             `}
           >
             {action.loading ? <LoadingSpinner size="sm" /> : action.label}

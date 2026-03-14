@@ -71,7 +71,7 @@ export default function OnboardingStep2Screen({
         <h1 className="text-[32px] font-bold text-[var(--text-main)] leading-tight mb-2">
           Enter your API Key
         </h1>
-        <p className="text-[16px] text-[#868496] leading-snug">
+        <p className="text-[16px] text-[#8e8e93] leading-snug">
           Connect to your wallet on{' '}
           <span className="font-semibold text-[var(--text-main)]">{nodeHost}</span>
         </p>
@@ -90,7 +90,7 @@ export default function OnboardingStep2Screen({
           onChange={(e) => { setApiKey(e.target.value); setError(''); }}
           onKeyDown={(e) => e.key === 'Enter' && handleSignIn()}
           placeholder="API Key"
-          className="w-full bg-white border border-black/[0.08] rounded-[12px] px-4 py-4 text-[16px] text-[#28272e] placeholder-[#c7c7cc] focus:outline-none focus:border-[#5843de] shadow-sm transition-colors"
+          className="w-full bg-white border border-black/[0.08] rounded-[12px] px-4 py-4 text-[16px] text-[#1c1c1e] placeholder-[#c7c7cc] focus:outline-none focus:border-[#5B4FE9] shadow-sm transition-colors"
           autoComplete="off"
           disabled={loading}
           // eslint-disable-next-line jsx-a11y/no-autofocus
@@ -103,7 +103,7 @@ export default function OnboardingStep2Screen({
 
       {/* Pinned bottom area */}
       <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-6 pb-10 pt-4 space-y-4 bg-[var(--bg-ios)]">
-        <p className="text-center text-[13px] text-[#868496] leading-relaxed">
+        <p className="text-center text-[13px] text-[#8e8e93] leading-relaxed">
           By continuing, you agree to Neoke's{' '}
           <span className="text-[var(--primary)] font-medium">Terms and Conditions</span>
           {' '}and{' '}

@@ -89,7 +89,7 @@ function groupByMonth(events: AuditEvent[]): Array<{ month: string; events: Audi
 // ── Avatar ───────────────────────────────────────────────────────────────────
 
 const AVATAR_COLORS = [
-  '#5843de', '#e44b4b', '#2da35e', '#d97706', '#7c3aed',
+  '#5B4FE9', '#e44b4b', '#2da35e', '#d97706', '#7c3aed',
   '#0891b2', '#be185d', '#059669',
 ];
 
@@ -229,7 +229,7 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
         <div className="flex items-center gap-2 px-5 pt-5 pb-1 flex-shrink-0">
           <StatusBadge status={status} />
           {credential.expirationDate && (
-            <span className="text-xs text-[#868496]">
+            <span className="text-xs text-[#8e8e93]">
               Expires {formatDate(credential.expirationDate)}
             </span>
           )}
@@ -246,7 +246,7 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
                   className={`flex-1 text-[13px] font-medium rounded-[8px] transition-all duration-150 capitalize ${
                     tab === t
                       ? 'bg-white shadow-sm text-[var(--text-main)]'
-                      : 'text-[#868496]'
+                      : 'text-[#8e8e93]'
                   }`}
                 >
                   {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -280,7 +280,7 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
             {/* Issuer */}
             {credential.issuer && (
               <div className="mt-2">
-                <p className="text-xs text-[#868496] mb-0.5">Issuer</p>
+                <p className="text-xs text-[#8e8e93] mb-0.5">Issuer</p>
                 <p className="text-[13px] font-mono text-[#3c3c3e] break-all">{credential.issuer}</p>
               </div>
             )}
@@ -289,23 +289,23 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
           <div className="flex-1 pb-10">
             {loadingActivity ? (
               <div className="flex justify-center items-center pt-16">
-                <div className="w-6 h-6 border-2 border-[#5843de]/20 border-t-[#5843de] rounded-full animate-spin" />
+                <div className="w-6 h-6 border-2 border-[#5B4FE9]/20 border-t-[#5B4FE9] rounded-full animate-spin" />
               </div>
             ) : groups.length === 0 ? (
               <div className="flex flex-col items-center justify-center pt-16 px-8 text-center">
-                <div className="w-14 h-14 rounded-full bg-[#f4f3fc] flex items-center justify-center mb-4">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5843de" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <div className="w-14 h-14 rounded-full bg-[#EEF2FF] flex items-center justify-center mb-4">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5B4FE9" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                 </div>
                 <p className="text-[15px] font-semibold text-[var(--text-main)] mb-1">No activity yet</p>
-                <p className="text-[13px] text-[#868496]">Sharing events for this credential will appear here.</p>
+                <p className="text-[13px] text-[#8e8e93]">Sharing events for this credential will appear here.</p>
               </div>
             ) : (
               <div className="pt-2">
                 {groups.map(({ month, events: monthEvents }) => (
                   <div key={month}>
-                    <p className="px-5 pt-4 pb-1 text-[12px] font-semibold text-[#868496] uppercase tracking-wide">
+                    <p className="px-5 pt-4 pb-1 text-[12px] font-semibold text-[#8e8e93] uppercase tracking-wide">
                       {month}
                     </p>
                     <div>
@@ -330,10 +330,10 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
                             {/* Info */}
                             <div className="flex-1 min-w-0">
                               <p className="text-[14px] font-semibold text-[var(--text-main)] truncate">{serviceName}</p>
-                              <p className="text-[12px] text-[#868496] mt-0.5">{label}</p>
+                              <p className="text-[12px] text-[#8e8e93] mt-0.5">{label}</p>
                             </div>
                             {/* Time */}
-                            <p className="text-[12px] text-[#868496] flex-shrink-0">{time}</p>
+                            <p className="text-[12px] text-[#8e8e93] flex-shrink-0">{time}</p>
                           </div>
                         );
                       })}
@@ -377,7 +377,7 @@ function PlainFieldRow({ label, value }: PlainFieldRowProps) {
     }
     return (
       <div className="py-3">
-        <p className="text-xs text-[#868496] mb-1.5">{label}</p>
+        <p className="text-xs text-[#8e8e93] mb-1.5">{label}</p>
         <img
           src={src}
           alt={label}
@@ -412,7 +412,7 @@ function PlainFieldRow({ label, value }: PlainFieldRowProps) {
 
   return (
     <div className="py-3 border-b border-[var(--border-subtle)] last:border-0">
-      <p className="text-xs text-[#868496] mb-0.5">{label}</p>
+      <p className="text-xs text-[#8e8e93] mb-0.5">{label}</p>
       <p className="text-[17px] font-medium text-[var(--text-main)] break-all whitespace-pre-line">{displayValue}</p>
     </div>
   );

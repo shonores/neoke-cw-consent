@@ -20,8 +20,8 @@ interface Props {
 function IconDocuments() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
 }
@@ -29,10 +29,10 @@ function IconDocuments() {
 function IconSeat() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path d="M4 15V5a2 2 0 012-2h3" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M4 15h14a2 2 0 010 4H4a2 2 0 010-4z" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M14 15V8H9a2 2 0 00-2 2v5" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M14 8V5" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round"/>
+      <path d="M4 15V5a2 2 0 012-2h3" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M4 15h14a2 2 0 010 4H4a2 2 0 010-4z" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M14 15V8H9a2 2 0 00-2 2v5" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M14 8V5" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round"/>
     </svg>
   );
 }
@@ -40,8 +40,8 @@ function IconSeat() {
 function IconDining() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M6 1v3M10 1v3M14 1v3" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round"/>
+      <path d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M6 1v3M10 1v3M14 1v3" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round"/>
     </svg>
   );
 }
@@ -49,8 +49,8 @@ function IconDining() {
 function IconCuisines() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path d="M12 2a9 9 0 100 18A9 9 0 0012 2z" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M12 6v6l4 2" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M12 2a9 9 0 100 18A9 9 0 0012 2z" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M12 6v6l4 2" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
 }
@@ -58,8 +58,8 @@ function IconCuisines() {
 function IconAccessibility() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="4" r="1.5" stroke="#5843de" strokeWidth="1.7"/>
-      <path d="M6 8h12M12 8v6M9 22l3-8 3 8" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="12" cy="4" r="1.5" stroke="#5B4FE9" strokeWidth="1.7"/>
+      <path d="M6 8h12M12 8v6M9 22l3-8 3 8" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
 }
@@ -67,8 +67,8 @@ function IconAccessibility() {
 function IconNode() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <rect x="2" y="3" width="20" height="14" rx="2" stroke="#5843de" strokeWidth="1.7" strokeLinejoin="round"/>
-      <path d="M8 21h8M12 17v4" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round"/>
+      <rect x="2" y="3" width="20" height="14" rx="2" stroke="#5B4FE9" strokeWidth="1.7" strokeLinejoin="round"/>
+      <path d="M8 21h8M12 17v4" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round"/>
     </svg>
   );
 }
@@ -76,8 +76,8 @@ function IconNode() {
 function IconShield() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path d="M12 2L4 6v6c0 5.25 3.5 9.74 8 11 4.5-1.26 8-5.75 8-11V6l-8-4z" stroke="#5843de" strokeWidth="1.7" strokeLinejoin="round" fill="#5843de" fillOpacity="0.1"/>
-      <path d="M9 12l2 2 4-4" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M12 2L4 6v6c0 5.25 3.5 9.74 8 11 4.5-1.26 8-5.75 8-11V6l-8-4z" stroke="#5B4FE9" strokeWidth="1.7" strokeLinejoin="round" fill="#5B4FE9" fillOpacity="0.1"/>
+      <path d="M9 12l2 2 4-4" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
 }
@@ -85,8 +85,8 @@ function IconShield() {
 function IconBuildings() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path d="M3 21h18M3 7v14M15 21V7M3 7h12M15 7h6v14" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M7 11h2M7 15h2M11 11h2M11 15h2" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round"/>
+      <path d="M3 21h18M3 7v14M15 21V7M3 7h12M15 7h6v14" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M7 11h2M7 15h2M11 11h2M11 15h2" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round"/>
     </svg>
   );
 }
@@ -94,7 +94,7 @@ function IconBuildings() {
 function IconActivity() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
 }
@@ -102,8 +102,8 @@ function IconActivity() {
 function IconEnvelope() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="#5843de" strokeWidth="1.7" strokeLinejoin="round"/>
-      <polyline points="22 6 12 13 2 6" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round"/>
+      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="#5B4FE9" strokeWidth="1.7" strokeLinejoin="round"/>
+      <polyline points="22 6 12 13 2 6" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round"/>
     </svg>
   );
 }
@@ -111,8 +111,8 @@ function IconEnvelope() {
 function IconDoc() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M14 2v6h6M16 13H8M16 17H8" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round"/>
+      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M14 2v6h6M16 13H8M16 17H8" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round"/>
     </svg>
   );
 }
@@ -120,9 +120,9 @@ function IconDoc() {
 function IconLogout() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-      <polyline points="16 17 21 12 16 7" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-      <line x1="21" y1="12" x2="9" y2="12" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round"/>
+      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <polyline points="16 17 21 12 16 7" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <line x1="21" y1="12" x2="9" y2="12" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round"/>
     </svg>
   );
 }
@@ -139,7 +139,7 @@ function IconTrash() {
 function IconExternal() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" stroke="#868496" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" stroke="#8e8e93" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
 }
@@ -157,15 +157,15 @@ function IconChevron() {
 function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <div className="pt-5 pb-1.5 px-5">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-[#868496]">{title}</p>
-      {subtitle && <p className="text-[12px] text-[#868496] leading-4 mt-0.5">{subtitle}</p>}
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8e8e93]">{title}</p>
+      {subtitle && <p className="text-[12px] text-[#8e8e93] leading-4 mt-0.5">{subtitle}</p>}
     </div>
   );
 }
 
 function ListCard({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mx-4 bg-white rounded-[12px] p-1 flex flex-col gap-1">
+    <div className="mx-4 bg-white rounded-[24px] p-1 flex flex-col gap-1">
       {children}
     </div>
   );
@@ -173,9 +173,9 @@ function ListCard({ children }: { children: React.ReactNode }) {
 
 function ListItem({
   icon,
-  iconBg = 'bg-[#f4f3fc]',
+  iconBg = 'bg-[#EEF2FF]',
   label,
-  labelColor = 'text-[#28272e]',
+  labelColor = 'text-[#1c1c1e]',
   sublabel,
   right,
   onClick,
@@ -191,14 +191,14 @@ function ListItem({
   return (
     <button
       onClick={onClick}
-      className="w-full flex gap-3 items-center px-4 py-3 text-left active:bg-[#f7f6f8] transition-colors rounded-[12px]"
+      className="w-full flex gap-3 items-center px-4 py-3 text-left active:bg-[#F2F2F7] transition-colors rounded-[12px]"
     >
       <div className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 ${iconBg}`}>
         {icon}
       </div>
       <div className="flex-1 min-w-0">
         <p className={`text-[16px] font-medium leading-6 ${labelColor}`}>{label}</p>
-        {sublabel && <p className="text-[13px] text-[#868496] leading-5">{sublabel}</p>}
+        {sublabel && <p className="text-[13px] text-[#8e8e93] leading-5">{sublabel}</p>}
       </div>
       {right ?? <IconChevron />}
     </button>
@@ -228,12 +228,12 @@ function InfoRow({ label, value, onEdit, divider = true }: {
   return (
     <div className={`flex items-center gap-3 px-4 py-4 ${divider ? 'border-b border-[#f1f1f3]' : ''}`}>
       <div className="flex-1 min-w-0">
-        <p className="text-[16px] font-semibold text-[#28272e] leading-6">{label}</p>
-        <p className="text-[14px] text-[#868496] leading-5 truncate">{value || '—'}</p>
+        <p className="text-[16px] font-semibold text-[#1c1c1e] leading-6">{label}</p>
+        <p className="text-[14px] text-[#8e8e93] leading-5 truncate">{value || '—'}</p>
       </div>
       <button
         onClick={onEdit}
-        className="flex-shrink-0 px-3 py-1.5 bg-[#f4f3fc] text-[#5843de] text-[14px] font-medium rounded-full active:opacity-70 transition-opacity"
+        className="flex-shrink-0 px-3 py-1.5 bg-[#EEF2FF] text-[#5B4FE9] text-[14px] font-medium rounded-full active:opacity-70 transition-opacity"
       >
         Edit
       </button>
@@ -293,18 +293,18 @@ export default function AccountScreen({ navigate }: Props) {
   return (
     <motion.div
       variants={variants} initial="initial" animate="animate" exit="exit"
-      className="flex-1 flex flex-col bg-[#f7f6f8] min-h-screen"
+      className="flex-1 flex flex-col bg-[#F2F2F7] min-h-screen"
     >
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-[#f7f6f8] px-4 pt-14 pb-2">
-        <h1 className="text-[28px] font-bold text-[#28272e] leading-8">Profile</h1>
+      <div className="sticky top-0 z-10 bg-[#F2F2F7] px-4 pt-14 pb-2">
+        <h1 className="text-[28px] font-bold text-[#1c1c1e] leading-8">Profile</h1>
       </div>
 
       <main className="flex-1 pb-32 overflow-y-auto">
 
         {/* ── Personal info ────────────────────────────────────── */}
         <SectionHeader title="Personal info" />
-        <div className="mx-4 bg-white rounded-[12px] overflow-hidden">
+        <div className="mx-4 bg-white rounded-[24px] overflow-hidden">
           <InfoRow label="Name" value={displayName} onEdit={openEditName} />
           <InfoRow label="Email" value={profile.email} onEdit={openEditEmail} divider={false} />
         </div>
@@ -365,7 +365,7 @@ export default function AccountScreen({ navigate }: Props) {
             <div className="px-2 pb-1">
               <button
                 onClick={autoConfigureCe}
-                className="w-full py-2.5 text-[14px] font-medium text-[#5843de] bg-[#f4f3fc] rounded-[10px] active:opacity-70 transition-opacity"
+                className="w-full py-2.5 text-[14px] font-medium text-[#5B4FE9] bg-[#EEF2FF] rounded-[10px] active:opacity-70 transition-opacity"
               >
                 Connect
               </button>
@@ -418,7 +418,7 @@ export default function AccountScreen({ navigate }: Props) {
         </ListCard>
 
         {/* Version */}
-        <p className="text-[14px] text-[#868496] text-center py-6">Version 0.01</p>
+        <p className="text-[14px] text-[#8e8e93] text-center py-6">Version 0.01</p>
       </main>
 
       {/* ── Edit name sheet ─────────────────────────────────────── */}
@@ -431,37 +431,37 @@ export default function AccountScreen({ navigate }: Props) {
             onClick={e => e.stopPropagation()}
           >
             <div className="w-9 h-1 bg-[#d7d6dc] rounded-full mx-auto mb-5" />
-            <h3 className="text-[18px] font-bold text-[#28272e] mb-5">Edit your name</h3>
+            <h3 className="text-[18px] font-bold text-[#1c1c1e] mb-5">Edit your name</h3>
             <div className="space-y-3 mb-6">
               <div>
-                <label className="text-[12px] text-[#868496] font-medium block mb-1">First name</label>
+                <label className="text-[12px] text-[#8e8e93] font-medium block mb-1">First name</label>
                 <input
                   value={draftFirst}
                   onChange={e => setDraftFirst(e.target.value)}
                   placeholder="First name"
-                  className="w-full bg-white border border-[#d7d6dc] rounded-[8px] px-4 py-3 text-[16px] text-[#28272e] placeholder-[#868496] focus:outline-none focus:border-[#5843de] focus:ring-1 focus:ring-[#5843de]/10 transition-colors"
+                  className="w-full bg-white border border-[#d7d6dc] rounded-[8px] px-4 py-3 text-[16px] text-[#1c1c1e] placeholder-[#8e8e93] focus:outline-none focus:border-[#5B4FE9] focus:ring-1 focus:ring-[#5B4FE9]/10 transition-colors"
                 />
               </div>
               <div>
-                <label className="text-[12px] text-[#868496] font-medium block mb-1">Last name</label>
+                <label className="text-[12px] text-[#8e8e93] font-medium block mb-1">Last name</label>
                 <input
                   value={draftLast}
                   onChange={e => setDraftLast(e.target.value)}
                   placeholder="Last name"
-                  className="w-full bg-white border border-[#d7d6dc] rounded-[8px] px-4 py-3 text-[16px] text-[#28272e] placeholder-[#868496] focus:outline-none focus:border-[#5843de] focus:ring-1 focus:ring-[#5843de]/10 transition-colors"
+                  className="w-full bg-white border border-[#d7d6dc] rounded-[8px] px-4 py-3 text-[16px] text-[#1c1c1e] placeholder-[#8e8e93] focus:outline-none focus:border-[#5B4FE9] focus:ring-1 focus:ring-[#5B4FE9]/10 transition-colors"
                 />
               </div>
             </div>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowEditName(false)}
-                className="flex-1 py-4 bg-[#f4f3fc] text-[#5843de] text-[16px] font-medium rounded-full active:opacity-70"
+                className="flex-1 py-4 bg-[#EEF2FF] text-[#5B4FE9] text-[16px] font-medium rounded-full active:opacity-70"
               >
                 Cancel
               </button>
               <button
                 onClick={saveName}
-                className="flex-1 py-4 bg-[#5843de] text-white text-[16px] font-medium rounded-full active:opacity-80"
+                className="flex-1 py-4 bg-[#5B4FE9] text-white text-[16px] font-medium rounded-full active:opacity-80"
               >
                 Save
               </button>
@@ -480,27 +480,27 @@ export default function AccountScreen({ navigate }: Props) {
             onClick={e => e.stopPropagation()}
           >
             <div className="w-9 h-1 bg-[#d7d6dc] rounded-full mx-auto mb-5" />
-            <h3 className="text-[18px] font-bold text-[#28272e] mb-5">Edit your email</h3>
+            <h3 className="text-[18px] font-bold text-[#1c1c1e] mb-5">Edit your email</h3>
             <div className="mb-6">
-              <label className="text-[12px] text-[#868496] font-medium block mb-1">Email address</label>
+              <label className="text-[12px] text-[#8e8e93] font-medium block mb-1">Email address</label>
               <input
                 type="email"
                 value={draftEmail}
                 onChange={e => setDraftEmail(e.target.value)}
                 placeholder="your@email.com"
-                className="w-full bg-white border border-[#d7d6dc] rounded-[8px] px-4 py-3 text-[16px] text-[#28272e] placeholder-[#868496] focus:outline-none focus:border-[#5843de] focus:ring-1 focus:ring-[#5843de]/10 transition-colors"
+                className="w-full bg-white border border-[#d7d6dc] rounded-[8px] px-4 py-3 text-[16px] text-[#1c1c1e] placeholder-[#8e8e93] focus:outline-none focus:border-[#5B4FE9] focus:ring-1 focus:ring-[#5B4FE9]/10 transition-colors"
               />
             </div>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowEditEmail(false)}
-                className="flex-1 py-4 bg-[#f4f3fc] text-[#5843de] text-[16px] font-medium rounded-full active:opacity-70"
+                className="flex-1 py-4 bg-[#EEF2FF] text-[#5B4FE9] text-[16px] font-medium rounded-full active:opacity-70"
               >
                 Cancel
               </button>
               <button
                 onClick={saveEmail}
-                className="flex-1 py-4 bg-[#5843de] text-white text-[16px] font-medium rounded-full active:opacity-80"
+                className="flex-1 py-4 bg-[#5B4FE9] text-white text-[16px] font-medium rounded-full active:opacity-80"
               >
                 Save
               </button>
@@ -519,8 +519,8 @@ export default function AccountScreen({ navigate }: Props) {
             onClick={e => e.stopPropagation()}
           >
             <div className="w-9 h-1 bg-[#d7d6dc] rounded-full mx-auto mb-5" />
-            <h3 className="text-[18px] font-bold text-[#28272e] mb-2">Disconnect Consent Engine?</h3>
-            <p className="text-[14px] text-[#868496] mb-6 leading-5">
+            <h3 className="text-[18px] font-bold text-[#1c1c1e] mb-2">Disconnect Consent Engine?</h3>
+            <p className="text-[14px] text-[#8e8e93] mb-6 leading-5">
               All consent rules and queue history will remain on the Consent Engine. You can reconnect at any time.
             </p>
             <div className="space-y-3">
@@ -532,7 +532,7 @@ export default function AccountScreen({ navigate }: Props) {
               </button>
               <button
                 onClick={() => setShowDisconnectSheet(false)}
-                className="w-full bg-[#f4f3fc] text-[#5843de] text-[16px] font-semibold py-4 rounded-full active:opacity-80"
+                className="w-full bg-[#EEF2FF] text-[#5B4FE9] text-[16px] font-semibold py-4 rounded-full active:opacity-80"
               >
                 Cancel
               </button>
@@ -551,8 +551,8 @@ export default function AccountScreen({ navigate }: Props) {
             onClick={e => e.stopPropagation()}
           >
             <div className="w-9 h-1 bg-[#d7d6dc] rounded-full mx-auto mb-5" />
-            <h3 className="text-[18px] font-bold text-[#28272e] mb-2">Delete account?</h3>
-            <p className="text-[14px] text-[#868496] mb-6 leading-5">
+            <h3 className="text-[18px] font-bold text-[#1c1c1e] mb-2">Delete account?</h3>
+            <p className="text-[14px] text-[#8e8e93] mb-6 leading-5">
               This will clear all local credentials and sign you out. This action cannot be undone.
             </p>
             <div className="space-y-3">
@@ -564,7 +564,7 @@ export default function AccountScreen({ navigate }: Props) {
               </button>
               <button
                 onClick={() => setShowDeleteSheet(false)}
-                className="w-full bg-[#f4f3fc] text-[#5843de] text-[16px] font-semibold py-4 rounded-full active:opacity-80"
+                className="w-full bg-[#EEF2FF] text-[#5B4FE9] text-[16px] font-semibold py-4 rounded-full active:opacity-80"
               >
                 Cancel
               </button>

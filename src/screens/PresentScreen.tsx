@@ -346,7 +346,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
       <div className="flex-1 flex flex-col items-center justify-center p-6 min-h-screen bg-[var(--bg-ios)]">
         <div className="text-center space-y-4">
           <LoadingSpinner size="lg" className="mx-auto" />
-          <p className="text-[#868496] text-[15px] font-bold">
+          <p className="text-[#8e8e93] text-[15px] font-bold">
             {stage === 'loading' ? 'Processing request…' : 'Sharing credential…'}
           </p>
         </div>
@@ -398,8 +398,8 @@ if (stage === 'error') {
             <IconCheckCircle />
           </div>
           <div>
-            <h2 className="text-[#28272e] font-bold text-[28px] leading-tight">Information shared</h2>
-            <p className="text-[#868496] text-[17px] mt-2">Returning to Home…</p>
+            <h2 className="text-[#1c1c1e] font-bold text-[28px] leading-tight">Information shared</h2>
+            <p className="text-[#8e8e93] text-[17px] mt-2">Returning to Home…</p>
           </div>
         </motion.div>
       </div>
@@ -475,7 +475,7 @@ if (stage === 'error') {
                   aria-label="Close"
                 >
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M1 1l12 12M13 1L1 13" stroke="#868496" strokeWidth="2" strokeLinecap="round"/>
+                    <path d="M1 1l12 12M13 1L1 13" stroke="#8e8e93" strokeWidth="2" strokeLinecap="round"/>
                   </svg>
                 </button>
               </div>
@@ -483,32 +483,32 @@ if (stage === 'error') {
               {credSheet.view === 'options' ? (
                 /* ── Options: view details / change ── */
                 <div className="px-5 pt-3 pb-2">
-                  <h3 className="text-[20px] font-bold text-[#28272e] mb-4">Select option</h3>
-                  <div className="bg-[#f7f6f8] rounded-[16px] overflow-hidden">
+                  <h3 className="text-[20px] font-bold text-[#1c1c1e] mb-4">Select option</h3>
+                  <div className="bg-[#F2F2F7] rounded-[16px] overflow-hidden">
                     <button
                       onClick={() => setCredSheet({ queryIdx: credSheet.queryIdx, view: 'details' })}
                       className="w-full flex items-center gap-4 px-4 py-4 border-b border-[#f1f1f3] active:bg-[#eeecf8] transition-colors"
                     >
-                      <div className="w-11 h-11 bg-[#f4f3fc] rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="w-11 h-11 bg-[#EEF2FF] rounded-full flex items-center justify-center flex-shrink-0">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                          <path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12z" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-                          <circle cx="12" cy="12" r="3" stroke="#5843de" strokeWidth="1.7"/>
+                          <path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12z" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+                          <circle cx="12" cy="12" r="3" stroke="#5B4FE9" strokeWidth="1.7"/>
                         </svg>
                       </div>
-                      <span className="flex-1 text-left text-[16px] font-medium text-[#28272e]">View details</span>
+                      <span className="flex-1 text-left text-[16px] font-medium text-[#1c1c1e]">View details</span>
                       <svg width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M1 1l5 5-5 5" stroke="#c7c7cc" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </button>
                     <button
                       onClick={() => setCredSheet({ queryIdx: credSheet.queryIdx, view: 'change' })}
                       className="w-full flex items-center gap-4 px-4 py-4 active:bg-[#eeecf8] transition-colors"
                     >
-                      <div className="w-11 h-11 bg-[#f4f3fc] rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="w-11 h-11 bg-[#EEF2FF] rounded-full flex items-center justify-center flex-shrink-0">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                          <path d="M17 1l4 4-4 4M7 23l-4-4 4-4" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M3 5h7a4 4 0 014 4v1M21 19h-7a4 4 0 01-4-4v-1" stroke="#5843de" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M17 1l4 4-4 4M7 23l-4-4 4-4" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M3 5h7a4 4 0 014 4v1M21 19h-7a4 4 0 01-4-4v-1" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </div>
-                      <span className="flex-1 text-left text-[16px] font-medium text-[#28272e]">Change credential</span>
+                      <span className="flex-1 text-left text-[16px] font-medium text-[#1c1c1e]">Change credential</span>
                       <svg width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M1 1l5 5-5 5" stroke="#c7c7cc" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </button>
                   </div>
@@ -520,8 +520,8 @@ if (stage === 'error') {
                 const selectedIdx = selections[query.queryId] ?? query.candidates[0]?.index;
                 return (
                   <div className="pt-3 pb-2">
-                    <h3 className="text-[20px] font-bold text-[#28272e] mb-1 px-5">Choose credential</h3>
-                    <p className="text-[13px] text-[#868496] px-5 mb-4">Select which credential to share</p>
+                    <h3 className="text-[20px] font-bold text-[#1c1c1e] mb-1 px-5">Choose credential</h3>
+                    <p className="text-[13px] text-[#8e8e93] px-5 mb-4">Select which credential to share</p>
                     <div
                       className="flex gap-3 px-5 pb-4 overflow-x-auto snap-x snap-mandatory"
                       style={{ scrollbarWidth: 'none' }}
@@ -547,7 +547,7 @@ if (stage === 'error') {
                             <div
                               className="rounded-[16px] overflow-hidden transition-all"
                               style={{
-                                outline: isSelected ? '2px solid #5843de' : '2px solid transparent',
+                                outline: isSelected ? '2px solid #5B4FE9' : '2px solid transparent',
                                 outlineOffset: '2px',
                               }}
                             >
@@ -560,7 +560,7 @@ if (stage === 'error') {
                               />
                             </div>
                             {isSelected && (
-                              <p className="text-[12px] font-semibold text-[#5843de] text-center mt-1.5">Selected</p>
+                              <p className="text-[12px] font-semibold text-[#5B4FE9] text-center mt-1.5">Selected</p>
                             )}
                           </button>
                         );
@@ -573,7 +573,7 @@ if (stage === 'error') {
                 const { cred, candidate } = getSheetCandidate(credSheet.queryIdx);
                 const { backgroundColor, textColor } = cred
                   ? getCardColor(cred)
-                  : candidate ? getCardColorForTypes(candidate.type) : { backgroundColor: '#5843de', textColor: '#ffffff' };
+                  : candidate ? getCardColorForTypes(candidate.type) : { backgroundColor: '#5B4FE9', textColor: '#ffffff' };
                 const label = cred ? getCredentialLabel(cred) : getCandidateLabel(candidate?.type ?? []);
                 const description = cred?.displayMetadata?.description;
                 const logoUrl = cred?.displayMetadata?.logoUrl;
@@ -583,7 +583,7 @@ if (stage === 'error') {
 
                 return (
                   <div className="px-5 pt-3 pb-2 max-h-[70vh] overflow-y-auto">
-                    <h3 className="text-[20px] font-bold text-[#28272e] mb-4">{label}</h3>
+                    <h3 className="text-[20px] font-bold text-[#1c1c1e] mb-4">{label}</h3>
                     {/* Full credential card */}
                     <div className="rounded-[16px] overflow-hidden mb-4">
                       <CredentialCardFace
@@ -597,23 +597,23 @@ if (stage === 'error') {
                     {/* Requested fields */}
                     {fields.length > 0 ? (
                       <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-wider text-[#868496] px-1 mb-2">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8e8e93] px-1 mb-2">
                           Requested fields
                         </p>
-                        <div className="bg-[#f7f6f8] rounded-[16px] overflow-hidden">
+                        <div className="bg-[#F2F2F7] rounded-[16px] overflow-hidden">
                           {fields.map((f, i) => (
                             <div
                               key={i}
                               className={`flex justify-between items-start px-4 py-3 ${i < fields.length - 1 ? 'border-b border-[#f1f1f3]' : ''}`}
                             >
-                              <p className="text-[14px] text-[#868496] font-medium">{f.label}</p>
-                              <p className="text-[14px] text-[#28272e] font-medium text-right ml-4 max-w-[55%]">{f.value}</p>
+                              <p className="text-[14px] text-[#8e8e93] font-medium">{f.label}</p>
+                              <p className="text-[14px] text-[#1c1c1e] font-medium text-right ml-4 max-w-[55%]">{f.value}</p>
                             </div>
                           ))}
                         </div>
                       </div>
                     ) : (
-                      <p className="text-[14px] text-[#868496] text-center py-2">
+                      <p className="text-[14px] text-[#8e8e93] text-center py-2">
                         {cred ? 'No field data available locally' : 'Credential not found in wallet'}
                       </p>
                     )}
@@ -638,7 +638,7 @@ if (stage === 'error') {
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
-        <h1 className="text-[28px] font-bold text-[#28272e]">
+        <h1 className="text-[28px] font-bold text-[#1c1c1e]">
           Present
         </h1>
       </nav>
@@ -646,14 +646,14 @@ if (stage === 'error') {
 <div className={`flex-1 overflow-y-auto px-5 space-y-5 ${showManual ? 'pb-28' : 'pb-6'}`}>
         <div className="flex bg-black/5 rounded-[var(--radius-2xl)] p-1 gap-1">
           <button
-            className={`flex-1 flex items-center justify-center gap-2 py-3 text-[14px] rounded-[12px] transition-all ${!showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[#868496] font-medium'}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 text-[14px] rounded-[12px] transition-all ${!showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[#8e8e93] font-medium'}`}
             onClick={() => setShowManual(false)}
           >
             <IconCamera />
             Camera
           </button>
           <button
-            className={`flex-1 flex items-center justify-center gap-2 py-3 text-[14px] rounded-[12px] transition-all ${showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[#868496] font-medium'}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 text-[14px] rounded-[12px] transition-all ${showManual ? 'bg-white text-[var(--text-main)] font-bold shadow-sm' : 'text-[#8e8e93] font-medium'}`}
             onClick={() => setShowManual(true)}
           >
             <IconPaste />

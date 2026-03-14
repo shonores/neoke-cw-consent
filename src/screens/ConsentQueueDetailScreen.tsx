@@ -180,7 +180,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
     return (
       <motion.div variants={variants} initial="initial" animate="animate" exit="exit"
         className="flex-1 flex flex-col bg-[var(--bg-ios)] min-h-screen items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#5843de] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#5B4FE9] border-t-transparent rounded-full animate-spin" />
       </motion.div>
     );
   }
@@ -214,15 +214,15 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
         >
           <div className="w-24 h-24 bg-green-50 border border-green-100 rounded-full flex items-center justify-center">
             <svg width="56" height="56" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <circle cx="12" cy="12" r="10" stroke="#5843de" strokeWidth="1.5" />
-              <path d="M8.5 12l2.5 2.5 4.5-5" stroke="#5843de" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="12" cy="12" r="10" stroke="#5B4FE9" strokeWidth="1.5" />
+              <path d="M8.5 12l2.5 2.5 4.5-5" stroke="#5B4FE9" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
           <div>
-            <h2 className="text-[#28272e] font-bold text-[28px] leading-tight">
+            <h2 className="text-[#1c1c1e] font-bold text-[28px] leading-tight">
               {item.linkType === 'credential_offer' ? 'Credential received' : 'Information shared'}
             </h2>
-            <p className="text-[#868496] text-[17px] mt-2">Returning to Home…</p>
+            <p className="text-[#8e8e93] text-[17px] mt-2">Returning to Home…</p>
           </div>
         </motion.div>
       </div>
@@ -299,7 +299,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
     <motion.div variants={variants} initial="initial" animate="animate" exit="exit"
       className="flex-1 flex flex-col bg-[var(--bg-ios)] min-h-screen">
 
-      <nav className="px-5 pt-14 pb-4">
+      <nav className="sticky top-0 z-10 bg-[#F2F2F7] px-5 pt-14 pb-4">
         <button onClick={() => navigate('consent_queue')}
           className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -338,9 +338,9 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
             )}
             {isResolved && (
               <div className={`flex items-center gap-2 rounded-[12px] px-4 py-3 ${
-                item.resolvedAction === 'approved' ? 'bg-green-50 border border-green-200' : 'bg-[#f7f6f8] border border-[#f1f1f3]'
+                item.resolvedAction === 'approved' ? 'bg-green-50 border border-green-200' : 'bg-[#F2F2F7] border border-[#f1f1f3]'
               }`}>
-                <p className={`text-[13px] font-semibold ${item.resolvedAction === 'approved' ? 'text-[#198e41]' : 'text-[#868496]'}`}>
+                <p className={`text-[13px] font-semibold ${item.resolvedAction === 'approved' ? 'text-[#198e41]' : 'text-[#8e8e93]'}`}>
                   {item.resolvedAction === 'approved' ? 'Approved' : item.status === 'expired' ? 'Expired' : item.status === 'error' ? 'Failed' : 'Declined'}
                 </p>
               </div>
@@ -359,8 +359,8 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
               onClick={e => e.stopPropagation()}
             >
               <div className="w-10 h-1 bg-[#c7c7cc] rounded-full mx-auto mt-4 mb-5" />
-              <h3 className="text-[20px] font-bold text-[#28272e] px-5 mb-1">Choose credential</h3>
-              <p className="text-[14px] text-[#868496] px-5 mb-4">Select which credential to share</p>
+              <h3 className="text-[20px] font-bold text-[#1c1c1e] px-5 mb-1">Choose credential</h3>
+              <p className="text-[14px] text-[#8e8e93] px-5 mb-4">Select which credential to share</p>
               <div
                 className="flex gap-3 px-5 pb-2 overflow-x-auto snap-x snap-mandatory"
                 style={{ scrollbarWidth: 'none' }}
@@ -387,7 +387,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
                       <div
                         className="rounded-[16px] overflow-hidden transition-all"
                         style={{
-                          outline: isSelected ? '2px solid #5843de' : '2px solid transparent',
+                          outline: isSelected ? '2px solid #5B4FE9' : '2px solid transparent',
                           outlineOffset: '2px',
                         }}
                       >
@@ -400,7 +400,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
                         />
                       </div>
                       {isSelected && (
-                        <p className="text-[12px] font-semibold text-[#5843de] text-center mt-1.5">Selected</p>
+                        <p className="text-[12px] font-semibold text-[#5B4FE9] text-center mt-1.5">Selected</p>
                       )}
                     </button>
                   );
@@ -419,21 +419,21 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[512px] bg-white rounded-t-[32px] shadow-2xl p-6"
               onClick={e => e.stopPropagation()}>
               <div className="w-10 h-1 bg-[#c7c7cc] rounded-full mx-auto mb-5" />
-              <h3 className="text-[20px] font-bold text-[#28272e] mb-2">Enter PIN</h3>
-              <p className="text-[15px] text-[#868496] mb-6">Transaction PIN required from issuer.</p>
+              <h3 className="text-[20px] font-bold text-[#1c1c1e] mb-2">Enter PIN</h3>
+              <p className="text-[15px] text-[#8e8e93] mb-6">Transaction PIN required from issuer.</p>
               <input
                 type="password" inputMode="numeric" value={pinValue}
                 onChange={e => setPinValue(e.target.value)} placeholder="••••" autoFocus
-                className="w-full bg-[#f7f6f8] rounded-[16px] px-4 py-5 text-[28px] text-[#28272e] placeholder-[#c7c7cc] focus:outline-none focus:ring-2 focus:ring-[#5843de] mb-6 text-center tracking-[1em] font-mono font-bold"
+                className="w-full bg-[#F2F2F7] rounded-[16px] px-4 py-5 text-[28px] text-[#1c1c1e] placeholder-[#c7c7cc] focus:outline-none focus:ring-2 focus:ring-[#5B4FE9] mb-6 text-center tracking-[1em] font-mono font-bold"
               />
               <div className="space-y-3">
                 <button onClick={() => { if (pinValue) doApprove(pendingAction === 'always', pinValue); }}
                   disabled={!pinValue}
-                  className="w-full bg-[#5843de] text-white text-[16px] font-medium rounded-full py-4 disabled:opacity-50">
+                  className="w-full bg-[#5B4FE9] text-white text-[16px] font-medium rounded-full py-4 disabled:opacity-50">
                   Verify & Continue
                 </button>
                 <button onClick={() => { setShowPinSheet(false); setPinValue(''); setPendingAction(null); }}
-                  className="w-full bg-[#f4f3fc] text-[#5843de] text-[16px] font-medium rounded-full py-4">
+                  className="w-full bg-[#EEF2FF] text-[#5B4FE9] text-[16px] font-medium rounded-full py-4">
                   Cancel
                 </button>
               </div>

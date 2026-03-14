@@ -48,8 +48,8 @@ export default function ReAuthModal() {
         </div>
 
         <div className="px-6 pt-4 pb-10">
-          <h2 className="text-[22px] font-bold text-[#28272e] mb-1">Session expired</h2>
-          <p className="text-[15px] text-[#868496] mb-5">
+          <h2 className="text-[22px] font-bold text-[#1c1c1e] mb-1">Session expired</h2>
+          <p className="text-[15px] text-[#8e8e93] mb-5">
             Enter your API key to continue.
           </p>
 
@@ -62,7 +62,7 @@ export default function ReAuthModal() {
               value={apiKey}
               onChange={(e) => { setApiKey(e.target.value); setError(''); }}
               placeholder="API Key"
-              className="w-full bg-white border border-black/[0.08] rounded-[12px] px-4 py-4 text-[16px] text-[#28272e] placeholder-[#c7c7cc] focus:outline-none focus:border-[#5843de] transition-colors"
+              className="w-full bg-white border border-black/[0.08] rounded-[20px] px-4 py-4 text-[16px] text-[#1c1c1e] placeholder-[#c7c7cc] focus:outline-none focus:border-[#5B4FE9] transition-colors"
               autoComplete="off"
               disabled={loading}
             />
@@ -75,7 +75,7 @@ export default function ReAuthModal() {
               type="submit"
               disabled={loading || !apiKey.trim()}
               className="w-full flex items-center justify-center gap-2 py-4 rounded-full text-white font-semibold text-[17px] transition-opacity disabled:opacity-50 min-h-[56px]"
-              style={{ backgroundColor: '#5843de' }}
+              style={{ backgroundColor: '#5B4FE9' }}
             >
               {loading ? (
                 <>
@@ -90,7 +90,7 @@ export default function ReAuthModal() {
 
           <button
             onClick={logout}
-            className="w-full text-center text-[15px] text-[#868496] mt-3 py-2"
+            className="w-full text-center text-[15px] text-[#8e8e93] mt-3 py-2"
           >
             Sign out instead
           </button>

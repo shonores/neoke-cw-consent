@@ -6,7 +6,7 @@ interface ErrorMessageProps {
 export default function ErrorMessage({ message, className = '' }: ErrorMessageProps) {
   return (
     <div
-      className={`flex items-start gap-3 bg-red-50 border border-red-200 rounded-[12px] p-4 text-red-600 text-sm ${className}`}
+      className={`flex items-start gap-3 bg-red-50 border border-red-200 rounded-[24px] p-4 text-red-600 text-sm ${className}`}
       role="alert"
     >
       {/* Warning triangle — line icon, consistent with rest of design system */}

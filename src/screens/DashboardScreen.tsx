@@ -150,25 +150,25 @@ export default function DashboardScreen({ navigate, refreshSignal }: DashboardSc
               style={{ aspectRatio: '1.586' }}
             >
               <div className="flex flex-col gap-3">
-                <div className="w-11 h-11 bg-[#f4f3fc] rounded-full flex items-center justify-center flex-shrink-0">
+                <div className="w-11 h-11 bg-[#EEF2FF] rounded-full flex items-center justify-center flex-shrink-0">
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-                    <rect x="3" y="4" width="18" height="16" rx="2" stroke="#5843de" strokeWidth="1.7" strokeLinejoin="round"/>
-                    <circle cx="12" cy="9" r="2.5" stroke="#5843de" strokeWidth="1.5"/>
-                    <path d="M7 17c0-2.2 2-4 5-4s5 1.8 5 4" stroke="#5843de" strokeWidth="1.5" strokeLinecap="round"/>
+                    <rect x="3" y="4" width="18" height="16" rx="2" stroke="#5B4FE9" strokeWidth="1.7" strokeLinejoin="round"/>
+                    <circle cx="12" cy="9" r="2.5" stroke="#5B4FE9" strokeWidth="1.5"/>
+                    <path d="M7 17c0-2.2 2-4 5-4s5 1.8 5 4" stroke="#5B4FE9" strokeWidth="1.5" strokeLinecap="round"/>
                   </svg>
                 </div>
                 <div>
-                  <p className="text-[16px] font-semibold text-[#28272e] leading-6 mb-1">
+                  <p className="text-[16px] font-semibold text-[#1c1c1e] leading-6 mb-1">
                     No travel document... yet!
                   </p>
-                  <p className="text-[14px] text-[#868496] leading-5">
+                  <p className="text-[14px] text-[#8e8e93] leading-5">
                     Scan a QR code to add your first credential to the wallet.
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => navigate('receive')}
-                className="self-start bg-[#5843de] text-white text-[14px] font-medium px-4 py-1.5 rounded-full active:opacity-80 transition-opacity"
+                className="self-start bg-[#5B4FE9] text-white text-[14px] font-medium px-4 py-1.5 rounded-full active:opacity-80 transition-opacity"
               >
                 Add credential
               </button>

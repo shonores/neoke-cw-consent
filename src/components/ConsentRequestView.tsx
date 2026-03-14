@@ -76,10 +76,10 @@ function CredentialCardRow({
         className="mr-4"
       />
       <div className="flex-1 min-w-0">
-        <p className="text-[16px] font-bold text-[#28272e] truncate">{label}</p>
-        <p className="text-[13px] text-[#868496] truncate font-medium">{issuerLabel}</p>
+        <p className="text-[16px] font-bold text-[#1c1c1e] truncate">{label}</p>
+        <p className="text-[13px] text-[#8e8e93] truncate font-medium">{issuerLabel}</p>
         {fields && fields.length > 0 && (
-          <p className="text-[12px] text-[#868496] truncate mt-0.5">{fields.map(parseDisclosedClaim).join(', ')}</p>
+          <p className="text-[12px] text-[#8e8e93] truncate mt-0.5">{fields.map(parseDisclosedClaim).join(', ')}</p>
         )}
       </div>
       {onClick && (
@@ -94,7 +94,7 @@ function CredentialCardRow({
     return (
       <button
         onClick={onClick}
-        className="w-full bg-white rounded-[16px] flex items-center px-4 py-4 border border-[#f1f1f3] shadow-sm active:bg-[#f7f6f8] transition-colors text-left"
+        className="w-full bg-white rounded-[16px] flex items-center px-4 py-4 border border-[#f1f1f3] shadow-sm active:bg-[#F2F2F7] transition-colors text-left"
       >
         {inner}
       </button>
@@ -112,7 +112,7 @@ function CredentialCardRow({
 
 function SectionLabel({ children }: { children: ReactNode }) {
   return (
-    <p className="text-[11px] font-semibold uppercase tracking-wider text-[#868496] px-1 mb-2">
+    <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8e8e93] px-1 mb-2">
       {children}
     </p>
   );
@@ -153,8 +153,8 @@ export default function ConsentRequestView({
               <img src={logoUri} alt="" className="w-10 h-10 object-contain" />
             </div>
           )}
-          <h2 className="text-[24px] font-semibold text-[#28272e] leading-[28px]">
-            <span className="text-[#5843de]">{serviceName}</span>
+          <h2 className="text-[24px] font-semibold text-[#1c1c1e] leading-[28px]">
+            <span className="text-[#5B4FE9]">{serviceName}</span>
             {' '}
             {isVP
               ? 'wants you to share the following credentials'
@@ -167,7 +167,7 @@ export default function ConsentRequestView({
           <div>
             <SectionLabel>Reason</SectionLabel>
             <div className="bg-white rounded-[16px] px-4 py-4 border border-[#f1f1f3]">
-              <p className="text-[15px] text-[#28272e] leading-6">{purpose}</p>
+              <p className="text-[15px] text-[#1c1c1e] leading-6">{purpose}</p>
             </div>
           </div>
         )}
@@ -182,7 +182,7 @@ export default function ConsentRequestView({
                   key={i}
                   className={`px-4 py-3 ${i < transactionData.length - 1 ? 'border-b border-[#f1f1f3]' : ''}`}
                 >
-                  <p className="text-[15px] text-[#28272e] leading-5">{item}</p>
+                  <p className="text-[15px] text-[#1c1c1e] leading-5">{item}</p>
                 </div>
               ))}
             </div>
@@ -210,15 +210,15 @@ export default function ConsentRequestView({
           <div>
             <SectionLabel>Credentials to share</SectionLabel>
             <div className="bg-white rounded-[16px] flex items-center px-4 py-4 border border-[#f1f1f3] shadow-sm">
-              <div className="mr-4 w-10 h-10 bg-[#f4f3fc] rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="mr-4 w-10 h-10 bg-[#EEF2FF] rounded-full flex items-center justify-center flex-shrink-0">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                   <path d="M12 2L4 6v6c0 5.25 3.5 9.74 8 11 4.5-1.26 8-5.75 8-11V6l-8-4z"
-                    fill="#5843de" fillOpacity="0.15" stroke="#5843de" strokeWidth="1.7" strokeLinejoin="round" />
+                    fill="#5B4FE9" fillOpacity="0.15" stroke="#5B4FE9" strokeWidth="1.7" strokeLinejoin="round" />
                 </svg>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[16px] font-bold text-[#28272e]">Identity credential</p>
-                <p className="text-[13px] text-[#868496]">Credential details not included in request</p>
+                <p className="text-[16px] font-bold text-[#1c1c1e]">Identity credential</p>
+                <p className="text-[13px] text-[#8e8e93]">Credential details not included in request</p>
               </div>
             </div>
           </div>
@@ -231,13 +231,13 @@ export default function ConsentRequestView({
               <circle cx="12" cy="12" r="10" stroke="#198e41" strokeWidth="2" fill="#19a34110" />
               <path d="M9 12l2 2 4-4" stroke="#198e41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <span className="text-[12px] text-[#868496]">Verified: {linkedDomains[0]}</span>
+            <span className="text-[12px] text-[#8e8e93]">Verified: {linkedDomains[0]}</span>
           </div>
         )}
 
         {/* ── PIN required ──────────────────────────────────────── */}
         {needsPin && (
-          <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-[12px] px-4 py-3">
+          <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-[24px] px-4 py-3">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="flex-shrink-0">
               <rect x="5" y="11" width="14" height="10" rx="3" stroke="#d97706" strokeWidth="2" />
               <path d="M8 11V7a4 4 0 018 0v4" stroke="#d97706" strokeWidth="2" strokeLinecap="round" />
@@ -247,7 +247,7 @@ export default function ConsentRequestView({
         )}
 
         {actionError && (
-          <div className="bg-red-50 border border-red-200 rounded-[12px] px-4 py-3">
+          <div className="bg-red-50 border border-red-200 rounded-[24px] px-4 py-3">
             <p className="text-[14px] font-semibold text-[#aa281e]">{actionError}</p>
           </div>
         )}
@@ -258,7 +258,7 @@ export default function ConsentRequestView({
         <button
           onClick={onShare}
           disabled={sharing || actionsDisabled}
-          className="w-full bg-[#5843de] text-white text-[16px] font-semibold rounded-[12px] py-4 active:opacity-80 transition-opacity disabled:opacity-40"
+          className="w-full bg-[#5B4FE9] text-white text-[16px] font-semibold rounded-[12px] py-4 active:opacity-80 transition-opacity disabled:opacity-40"
         >
           {sharing ? (
             <span className="flex items-center justify-center gap-2">
@@ -276,7 +276,7 @@ export default function ConsentRequestView({
           <button
             onClick={onAlwaysShare}
             disabled={sharing}
-            className="w-full bg-[#5843de]/10 text-[#5843de] text-[16px] font-semibold rounded-[12px] py-4 active:opacity-80 transition-opacity disabled:opacity-60"
+            className="w-full bg-[#5B4FE9]/10 text-[#5B4FE9] text-[16px] font-semibold rounded-[12px] py-4 active:opacity-80 transition-opacity disabled:opacity-60"
           >
             {isVP ? `Always share with ${serviceName}` : `Always receive from ${serviceName}`}
           </button>
@@ -285,14 +285,14 @@ export default function ConsentRequestView({
         <button
           onClick={onReject}
           disabled={sharing}
-          className="w-full text-[#5843de] text-[16px] font-medium py-3.5 rounded-[12px] border border-[#5843de]/25 active:opacity-60 transition-opacity disabled:opacity-40"
+          className="w-full text-[#5B4FE9] text-[16px] font-medium py-3.5 rounded-[12px] border border-[#5B4FE9]/25 active:opacity-60 transition-opacity disabled:opacity-40"
         >
           {isVP ? "Don't share" : 'Maybe later'}
         </button>
 
-        <p className="text-[11px] text-[#868496] text-center leading-4">
+        <p className="text-[11px] text-[#8e8e93] text-center leading-4">
           You can always change these in{' '}
-          <span className="text-[#5843de] font-medium">Profile</span>
+          <span className="text-[#5B4FE9] font-medium">Profile</span>
         </p>
       </div>
     </>
