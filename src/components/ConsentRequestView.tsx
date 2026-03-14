@@ -263,7 +263,7 @@ export default function ConsentRequestView({
           {sharing ? (
             <span className="flex items-center justify-center gap-2">
               <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              {isVP ? 'Sharing…' : 'Accepting…'}
+              {isVP ? 'Sharing…' : 'Receiving…'}
             </span>
           ) : actionsDisabled ? (
             isVP ? 'Request expired' : 'Offer expired'
