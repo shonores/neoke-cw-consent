@@ -217,10 +217,10 @@ export default function PreferenceScreen({ prefKey, navigate }: Props) {
                       <button
                         key={option}
                         onClick={() => toggle(option)}
-                        className={`px-4 py-2.5 rounded-full text-[16px] font-medium leading-6 transition-colors active:scale-95 ${
+                        className={`px-4 py-2.5 rounded-full text-[15px] font-medium leading-6 transition-colors active:scale-95 ${
                           isSelected
-                            ? 'bg-[#d4d1ff] text-[#1c1c1e]'
-                            : 'bg-[#f1f1f3] text-[#1c1c1e]'
+                            ? 'bg-[#5B4FE9] border border-[#5B4FE9] text-white'
+                            : 'bg-white border border-[#d1d1d6] text-[#1c1c1e]'
                         }`}
                       >
                         {option}
