@@ -193,7 +193,7 @@ export default function ConsentRequestView({
         {credentialRows.length > 0 ? (
           <div>
             <SectionLabel>
-              {isVP ? 'Credentials to share' : 'Credential offered to you'}
+              {isVP ? 'Credentials to share' : 'Credential to accept'}
             </SectionLabel>
             <div className="space-y-3">
               {credentialRows.map((row, i) => (
@@ -242,7 +242,7 @@ export default function ConsentRequestView({
               <rect x="5" y="11" width="14" height="10" rx="3" stroke="#d97706" strokeWidth="2" />
               <path d="M8 11V7a4 4 0 018 0v4" stroke="#d97706" strokeWidth="2" strokeLinecap="round" />
             </svg>
-            <p className="text-[14px] font-semibold text-yellow-700">A PIN is required to share</p>
+            <p className="text-[14px] font-semibold text-yellow-700">{isVP ? 'A PIN is required to share' : 'A PIN is required to accept'}</p>
           </div>
         )}
 
@@ -263,12 +263,12 @@ export default function ConsentRequestView({
           {sharing ? (
             <span className="flex items-center justify-center gap-2">
               <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              {isVP ? 'Sharing…' : 'Receiving…'}
+              {isVP ? 'Sharing…' : 'Accepting…'}
             </span>
           ) : actionsDisabled ? (
             isVP ? 'Request expired' : 'Offer expired'
           ) : (
-            isVP ? 'Share information' : 'Receive credential'
+            isVP ? 'Share information' : 'Accept credential'
           )}
         </button>
 
@@ -278,7 +278,7 @@ export default function ConsentRequestView({
             disabled={sharing}
             className="w-full bg-[#5B4FE9]/10 text-[#5B4FE9] text-[16px] font-semibold rounded-[12px] py-4 active:opacity-80 transition-opacity disabled:opacity-60"
           >
-            {isVP ? `Always share with ${serviceName}` : `Always receive from ${serviceName}`}
+            {isVP ? `Always share with ${serviceName}` : `Always accept from ${serviceName}`}
           </button>
         )}
 
@@ -287,7 +287,7 @@ export default function ConsentRequestView({
           disabled={sharing}
           className="w-full text-[#5B4FE9] text-[16px] font-medium py-3.5 rounded-[12px] border border-[#5B4FE9]/25 active:opacity-60 transition-opacity disabled:opacity-40"
         >
-          {isVP ? "Don't share" : 'Maybe later'}
+          {isVP ? "Don't share" : "Don't accept credential"}
         </button>
 
         <p className="text-[11px] text-[#8e8e93] text-center leading-4">

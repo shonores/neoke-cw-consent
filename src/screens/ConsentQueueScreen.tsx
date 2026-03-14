@@ -56,8 +56,8 @@ function getItemMessage(item: PendingRequest): string {
   const issuer = extractVerifierName(item.preview.issuerDid);
   const type = item.preview.credentialTypes?.[0];
   return type
-    ? `${issuer} wants to send you a ${type}.`
-    : `${issuer} wants to send you a credential.`;
+    ? `${issuer} wants to offer you a ${type}.`
+    : `${issuer} wants to offer you a credential.`;
 }
 
 function ServiceAvatar() {
