@@ -40,8 +40,8 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
   // credSelections: typeKey → 0-based index within that type's candidate group
   // Sent to CE as { credentialType: candidateIndex } e.g. { "org.iso.23220.photoid.1": "1" }
   const [credSelections, setCredSelections] = useState<Record<string, number>>({});
-  // credPickerType: the typeKey whose picker sheet is open
-  const [credPickerType, setCredPickerType] = useState<string | null>(null);
+  // credSheet: the open credential detail/picker sheet
+  const [credSheet, setCredSheet] = useState<{ typeKey: string; view: 'options' | 'change' | 'details' } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -292,8 +292,11 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
           : []
     : (item.preview.credentialTypes ?? []).map(ct => ({ types: [ct], issuer: item.preview.issuerDid ?? '' }));
 
-  // Candidates for the currently open picker (matched by typeKey)
-  const pickerGroup = credPickerType ? matchedGroups.find(g => g.typeKey === credPickerType) : null;
+  // Derive the group for the open credential sheet
+  const sheetGroup = credSheet ? matchedGroups.find(g => g.typeKey === credSheet.typeKey) : null;
+  const sheetSelIdx = credSheet ? (credSelections[credSheet.typeKey] ?? 0) : 0;
+  const sheetCand = sheetGroup ? (sheetGroup.candidates[sheetSelIdx] ?? sheetGroup.candidates[0]) : null;
+  const sheetLocalCred = sheetCand ? localCreds.find(lc => lc.id === sheetCand.id) : null;
 
   return (
     <motion.div variants={variants} initial="initial" animate="animate" exit="exit"
@@ -323,9 +326,9 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
         onShare={() => handleShareClick(false)}
         onAlwaysShare={!isResolved && !isExpired ? () => handleShareClick(true) : undefined}
         onReject={handleReject}
-        onCredentialClick={matchedGroups.some(g => g.candidates.length > 1) ? (idx) => {
+        onCredentialClick={isVP && matchedGroups.length > 0 ? (idx) => {
           const g = matchedGroups[idx];
-          if (g && g.candidates.length > 1) setCredPickerType(g.typeKey ?? null);
+          if (g) setCredSheet({ typeKey: g.typeKey, view: g.candidates.length > 1 ? 'options' : 'details' });
         } : undefined}
         extras={
           <>
@@ -351,63 +354,127 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
         }
       />
 
-      {/* Credential picker sheet */}
+      {/* Credential detail / picker sheet */}
       <AnimatePresence>
-        {credPickerType && pickerGroup && (
-          <div className="fixed inset-0 z-[60]" onClick={() => setCredPickerType(null)}>
+        {credSheet && sheetGroup && (
+          <div className="fixed inset-0 z-[60]" onClick={() => setCredSheet(null)}>
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
             <div
-              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[512px] bg-white rounded-t-[32px] shadow-2xl pb-8"
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[512px] bg-white rounded-t-[24px] shadow-2xl relative"
+              style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}
               onClick={e => e.stopPropagation()}
             >
-              <div className="w-10 h-1 bg-[#c7c7cc] rounded-full mx-auto mt-4 mb-5" />
-              <h3 className="text-[20px] font-bold text-[#1c1c1e] px-5 mb-1">Choose credential</h3>
-              <p className="text-[14px] text-[#8e8e93] px-5 mb-4">Select which credential to share</p>
-              <div
-                className="flex gap-3 px-5 pb-2 overflow-x-auto snap-x snap-mandatory"
-                style={{ scrollbarWidth: 'none' }}
-              >
-                {pickerGroup.candidates.map(cand => {
-                  const localCred = localCreds.find(lc => lc.id === cand.id);
-                  const { backgroundColor, textColor } = localCred
-                    ? getCardColor(localCred)
-                    : getCardColorForTypes(pickerGroup.types);
-                  const label = localCred ? getCredentialLabel(localCred) : getCandidateLabel(pickerGroup.types);
-                  const description = localCred ? getCredentialDescription(localCred) : undefined;
-                  const logoUrl = localCred?.displayMetadata?.logoUrl;
-                  const candIdx = pickerGroup.candidates.indexOf(cand);
-                  const isSelected = credSelections[credPickerType] === candIdx;
-                  return (
-                    <button
-                      key={cand.id}
-                      onClick={() => {
-                        setCredSelections(prev => ({ ...prev, [credPickerType]: candIdx }));
-                        setCredPickerType(null);
-                      }}
-                      className="flex-shrink-0 snap-start w-[220px] focus:outline-none"
-                    >
-                      <div
-                        className="rounded-[16px] overflow-hidden transition-all"
-                        style={{
-                          outline: isSelected ? '2px solid #5B4FE9' : '2px solid transparent',
-                          outlineOffset: '2px',
-                        }}
-                      >
-                        <CredentialCardFace
-                          label={label}
-                          description={description}
-                          bgColor={backgroundColor}
-                          textColor={textColor}
-                          logoUrl={logoUrl}
-                        />
-                      </div>
-                      {isSelected && (
-                        <p className="text-[12px] font-semibold text-[#5B4FE9] text-center mt-1.5">Selected</p>
-                      )}
-                    </button>
-                  );
-                })}
+              <div className="flex items-center justify-between px-4 pt-3 pb-1">
+                <div className="w-9 h-1 bg-[#d7d6dc] rounded-full mx-auto" />
+                <button
+                  onClick={() => setCredSheet(null)}
+                  className="absolute right-4 top-3 w-8 h-8 rounded-full bg-black/[0.06] flex items-center justify-center active:bg-black/10 transition-colors"
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M1 1l12 12M13 1L1 13" stroke="#8e8e93" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                </button>
               </div>
+
+              {credSheet.view === 'options' ? (
+                <div className="px-5 pt-3 pb-2">
+                  <h3 className="text-[20px] font-bold text-[#1c1c1e] mb-4">Select option</h3>
+                  <div className="bg-[#F2F2F7] rounded-[16px] overflow-hidden">
+                    <button
+                      onClick={() => setCredSheet({ typeKey: credSheet.typeKey, view: 'details' })}
+                      className="w-full flex items-center gap-4 px-4 py-4 border-b border-[#f1f1f3] active:bg-[#eeecf8] transition-colors"
+                    >
+                      <div className="w-11 h-11 bg-[#EEF2FF] rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12z" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+                          <circle cx="12" cy="12" r="3" stroke="#5B4FE9" strokeWidth="1.7"/>
+                        </svg>
+                      </div>
+                      <span className="flex-1 text-left text-[16px] font-medium text-[#1c1c1e]">View details</span>
+                      <svg width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M1 1l5 5-5 5" stroke="#c7c7cc" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </button>
+                    <button
+                      onClick={() => setCredSheet({ typeKey: credSheet.typeKey, view: 'change' })}
+                      className="w-full flex items-center gap-4 px-4 py-4 active:bg-[#eeecf8] transition-colors"
+                    >
+                      <div className="w-11 h-11 bg-[#EEF2FF] rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <path d="M17 1l4 4-4 4M7 23l-4-4 4-4" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M3 5h7a4 4 0 014 4v1M21 19h-7a4 4 0 01-4-4v-1" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
+                      <span className="flex-1 text-left text-[16px] font-medium text-[#1c1c1e]">Change credential</span>
+                      <svg width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M1 1l5 5-5 5" stroke="#c7c7cc" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </button>
+                  </div>
+                </div>
+              ) : credSheet.view === 'change' ? (
+                <div className="pt-3 pb-2">
+                  <h3 className="text-[20px] font-bold text-[#1c1c1e] mb-1 px-5">Choose credential</h3>
+                  <p className="text-[13px] text-[#8e8e93] px-5 mb-4">Select which credential to share</p>
+                  <div className="flex gap-3 px-5 pb-4 overflow-x-auto snap-x snap-mandatory" style={{ scrollbarWidth: 'none' }}>
+                    {sheetGroup.candidates.map((cand, candIdx) => {
+                      const lc = localCreds.find(lc2 => lc2.id === cand.id);
+                      const { backgroundColor, textColor } = lc ? getCardColor(lc) : getCardColorForTypes(sheetGroup.types);
+                      const label = lc ? getCredentialLabel(lc) : getCandidateLabel(sheetGroup.types);
+                      const description = lc ? getCredentialDescription(lc) : undefined;
+                      const logoUrl = lc?.displayMetadata?.logoUrl;
+                      const isSelected = (credSelections[credSheet.typeKey] ?? 0) === candIdx;
+                      return (
+                        <button
+                          key={cand.id}
+                          onClick={() => {
+                            setCredSelections(prev => ({ ...prev, [credSheet.typeKey]: candIdx }));
+                            setCredSheet(null);
+                          }}
+                          className="flex-shrink-0 snap-start w-[220px] focus:outline-none"
+                        >
+                          <div className="rounded-[16px] overflow-hidden transition-all"
+                            style={{ outline: isSelected ? '2px solid #5B4FE9' : '2px solid transparent', outlineOffset: '2px' }}>
+                            <CredentialCardFace label={label} description={description} bgColor={backgroundColor} textColor={textColor} logoUrl={logoUrl} />
+                          </div>
+                          {isSelected && <p className="text-[12px] font-semibold text-[#5B4FE9] text-center mt-1.5">Selected</p>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                /* details view */
+                (() => {
+                  const { backgroundColor, textColor } = sheetLocalCred
+                    ? getCardColor(sheetLocalCred)
+                    : sheetGroup ? getCardColorForTypes(sheetGroup.types) : { backgroundColor: '#5B4FE9', textColor: '#ffffff' };
+                  const label = sheetLocalCred ? getCredentialLabel(sheetLocalCred) : getCandidateLabel(sheetGroup?.types ?? []);
+                  const description = sheetLocalCred ? getCredentialDescription(sheetLocalCred) : undefined;
+                  const logoUrl = sheetLocalCred?.displayMetadata?.logoUrl;
+                  const fields = item.preview.requestedFields ?? [];
+                  return (
+                    <div className="px-5 pt-3 pb-2 max-h-[70vh] overflow-y-auto">
+                      <h3 className="text-[20px] font-bold text-[#1c1c1e] mb-4">{label}</h3>
+                      <div className="rounded-[16px] overflow-hidden mb-4">
+                        <CredentialCardFace label={label} description={description} bgColor={backgroundColor} textColor={textColor} logoUrl={logoUrl} />
+                      </div>
+                      {fields.length > 0 ? (
+                        <div>
+                          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8e8e93] px-1 mb-2">Requested fields</p>
+                          <div className="bg-[#F2F2F7] rounded-[16px] overflow-hidden">
+                            {fields.map((f, i) => (
+                              <div key={i} className={`px-4 py-3 ${i < fields.length - 1 ? 'border-b border-[#f1f1f3]' : ''}`}>
+                                <p className="text-[14px] text-[#8e8e93] font-medium">{f}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-[14px] text-[#8e8e93] text-center py-2">
+                          {sheetLocalCred ? 'No field data available locally' : 'Credential not found in wallet'}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()
+              )}
             </div>
           </div>
         )}
