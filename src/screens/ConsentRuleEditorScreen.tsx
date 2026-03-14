@@ -34,7 +34,6 @@ interface Props {
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
-const TOTAL_STEPS = 7;
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Props) {
@@ -162,10 +161,9 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
           matchType: credentialTypeMode === 'specific' ? 'exact' : 'any',
           value: credentialTypeMode === 'specific' ? credentialType : undefined,
         },
-        allowedFields: {
-          matchType: fieldsMode,
-          fields: fieldsMode === 'explicit' ? explicitFields : undefined,
-        },
+        allowedFields: ruleType === 'issuance'
+          ? { matchType: 'any' as FieldsMode }
+          : { matchType: fieldsMode, fields: fieldsMode === 'explicit' ? explicitFields : undefined },
         conditions: conditions.size > 0 ? [
           ...(conditions.has('time_of_day') ? [{ type: 'time_of_day' as ConditionType, startHour: condStartHour, endHour: condEndHour }] : []),
           ...(conditions.has('day_of_week') ? [{ type: 'day_of_week' as ConditionType, allowedDays: condAllowedDays }] : []),
@@ -193,16 +191,21 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
     }
   };
 
+  // Issuance skips step 4 (Allowed Fields) — not relevant when receiving a whole credential
+  const totalSteps = ruleType === 'issuance' ? 6 : 7;
+  // For display: issuance steps 5-7 appear as 4-6
+  const displayStep = ruleType === 'issuance' && step > 4 ? step - 1 : step;
+
   const goNext = () => {
-    if (step < TOTAL_STEPS) setStep(prev => (prev + 1) as Step);
+    if (step === 3 && ruleType === 'issuance') { setStep(5); return; }
+    if (step < 7) setStep(prev => (prev + 1) as Step);
     else handleSave();
   };
   const goBack = () => {
+    if (step === 5 && ruleType === 'issuance') { setStep(3); return; }
     if (step > 1) setStep(prev => (prev - 1) as Step);
     else navigate('consent_rules');
   };
-
-  const step4Label = ruleType === 'verification' ? 'Allowed Fields' : 'Trusted Issuer';
 
   if (loadingExisting) {
     return (
@@ -235,10 +238,10 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
         <div className="h-1.5 bg-black/5 rounded-full overflow-hidden border border-black/5">
           <div
             className="h-full bg-[var(--primary)] rounded-full transition-all duration-300"
-            style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
+            style={{ width: `${(displayStep / totalSteps) * 100}%` }}
           />
         </div>
-        <p className="text-[12px] text-[#8e8e93] mt-1.5 tracking-tight">Step {step} of {TOTAL_STEPS}</p>
+        <p className="text-[12px] text-[#8e8e93] mt-1.5 tracking-tight">Step {displayStep} of {totalSteps}</p>
       </div>
 
       <div className="flex-1 px-5 pb-36 space-y-4 overflow-y-auto">
@@ -481,7 +484,11 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
           <div className="space-y-4">
             <div>
               <h2 className="text-[22px] font-bold text-[#1c1c1e] mb-1">Conditions</h2>
-              <p className="text-[14px] text-[#8e8e93] font-medium">Add optional conditions that must be met.</p>
+              <p className="text-[14px] text-[#8e8e93] font-medium">
+                {ruleType === 'verification'
+                  ? 'Add optional conditions that must be met before sharing.'
+                  : 'Add optional conditions for auto-accepting credentials.'}
+              </p>
             </div>
 
             <div className={`bg-[var(--bg-white)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] overflow-hidden border-2 transition-all duration-200 ${conditions.has('time_of_day') ? 'border-[var(--primary)]' : 'border-transparent'}`}>
@@ -616,8 +623,12 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
               {[
                 ['Type', ruleType === 'verification' ? 'Verification' : 'Issuance'],
                 ['Credential', credentialTypeMode === 'any' ? 'Any' : credentialType || '—'],
-                ['Party', partyMatchType === 'any' ? 'Anyone' : `${partyMatchType}: ${partyValue}`],
-                ['Fields', fieldsMode === 'any' ? 'Any' : explicitFields.join(', ') || 'none'],
+                ruleType === 'verification'
+                  ? ['Verifier', partyMatchType === 'any' ? 'Anyone' : `${partyMatchType}: ${partyValue}`]
+                  : ['Issuer', trustedIssuerMode === 'any' ? 'Any issuer' : trustedIssuerDid || '—'],
+                ...(ruleType === 'verification'
+                  ? [['Fields', fieldsMode === 'any' ? 'Any' : explicitFields.join(', ') || 'none']]
+                  : []),
                 ['Expiry', expiryType === 'never' ? 'Never' : expiryType === 'date' ? expiresAt.slice(0, 10) : `${maxUses} uses`],
                 ['Conditions', conditions.size === 0 ? 'None' : Array.from(conditions).join(', ')],
               ].map(([k, v]) => (
@@ -638,10 +649,17 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-5 pt-4 pb-10 bg-[var(--bg-ios)] z-40 shadow-[0_-1px_0_rgba(0,0,0,0.05)]">
-        <PrimaryButton onClick={goNext} loading={saving && step === TOTAL_STEPS}>
-          {step === TOTAL_STEPS
+        <PrimaryButton onClick={goNext} loading={saving && step === 7}>
+          {step === 7
             ? (editingRuleId ? 'Save Changes' : 'Create Rule')
-            : `Next: ${step === 1 ? 'Credential' : step === 2 ? (ruleType === 'verification' ? 'Party' : 'Issuer') : step === 3 ? step4Label : step === 4 ? 'Conditions' : step === 5 ? 'Expiry' : 'Review'} →`
+            : `Next: ${
+                step === 1 ? 'Credential' :
+                step === 2 ? (ruleType === 'verification' ? 'Verifier' : 'Issuer') :
+                step === 3 ? (ruleType === 'verification' ? 'Allowed Fields' : 'Conditions') :
+                step === 4 ? 'Conditions' :
+                step === 5 ? 'Expiry' :
+                'Review'
+              } →`
           }
         </PrimaryButton>
       </div>
