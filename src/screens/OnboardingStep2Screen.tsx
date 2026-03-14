@@ -105,9 +105,9 @@ export default function OnboardingStep2Screen({
       <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-6 pb-10 pt-4 space-y-4 bg-[var(--bg-ios)]">
         <p className="text-center text-[13px] text-[#8e8e93] leading-relaxed">
           By continuing, you agree to Neoke's{' '}
-          <span className="text-[var(--primary)] font-medium">Terms and Conditions</span>
+          <a href="https://docs.google.com/document/u/1/d/e/2PACX-1vR3WT8LdUgwYcrOYHqz-LSxc1jOXJI3igzbTtmzcVEhPrFVluFyidroOQrfkkeRa88A2OXNiMd5CAj3/pub" target="_blank" rel="noopener noreferrer" className="text-[var(--primary)] font-medium">Terms and Conditions</a>
           {' '}and{' '}
-          <span className="text-[var(--primary)] font-medium">Privacy Policy.</span>
+          <a href="https://docs.google.com/document/u/1/d/e/2PACX-1vSYhg-Z6OyDEaEn-iVDNsEkahSLb8nId3-DLLa5wcn-ZRYHVaUB-Gm-eNwnjiHNctXCYyFU5wLovfdN/pub" target="_blank" rel="noopener noreferrer" className="text-[var(--primary)] font-medium">Privacy Policy.</a>
         </p>
 
         <PrimaryButton

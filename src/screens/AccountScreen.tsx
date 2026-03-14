@@ -471,13 +471,13 @@ export default function AccountScreen({ navigate }: Props) {
             icon={<IconDoc />}
             label="Terms and Conditions"
             right={<IconExternal />}
-            onClick={() => window.open('https://neoke.com/terms', '_blank')}
+            onClick={() => window.open('https://docs.google.com/document/u/1/d/e/2PACX-1vR3WT8LdUgwYcrOYHqz-LSxc1jOXJI3igzbTtmzcVEhPrFVluFyidroOQrfkkeRa88A2OXNiMd5CAj3/pub', '_blank')}
           />
           <ListItem
             icon={<IconDoc />}
             label="Privacy Statement"
             right={<IconExternal />}
-            onClick={() => window.open('https://neoke.com/privacy', '_blank')}
+            onClick={() => window.open('https://docs.google.com/document/u/1/d/e/2PACX-1vSYhg-Z6OyDEaEn-iVDNsEkahSLb8nId3-DLLa5wcn-ZRYHVaUB-Gm-eNwnjiHNctXCYyFU5wLovfdN/pub', '_blank')}
           />
         </ListCard>
 
