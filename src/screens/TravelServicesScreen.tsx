@@ -97,15 +97,20 @@ export default function TravelServicesScreen({ navigate }: Props) {
         listAuditSummary(apiKey, nodeId),
       ]);
 
-      const verDid = rules
+      // Delegation rules are auto-generated one-time rules — hide them from the UI.
+      const isDelegation = (r: ConsentRule) =>
+        (r.label ?? '').startsWith('Delegation —') && r.expiry.type === 'uses';
+      const userRules = rules.filter(r => !isDelegation(r));
+
+      const verDid = userRules
         .filter(r => r.ruleType === 'verification' && r.party.matchType === 'did' && r.party.value)
         .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 
-      const verGlobal = rules.filter(r =>
+      const verGlobal = userRules.filter(r =>
         r.ruleType === 'verification' && r.party.matchType === 'any'
       );
 
-      const issuance = rules
+      const issuance = userRules
         .filter(r => r.ruleType === 'issuance')
         .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 
