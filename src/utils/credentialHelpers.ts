@@ -440,6 +440,15 @@ export function getCandidateLabel(types: string[]): string {
     if (DOC_TYPE_DESCRIPTIONS[t]) return DOC_TYPE_DESCRIPTIONS[t];
   }
   const lastType = types[types.length - 1] ?? '';
+  // URL-based VCT identifiers (OID4VCI): extract the last meaningful path segment
+  if (lastType.startsWith('http://') || lastType.startsWith('https://')) {
+    try {
+      const url = new URL(lastType);
+      const pathParts = url.pathname.split('/').filter(p => p && p !== ':' && /[a-zA-Z]{2,}/.test(p));
+      const lastSegment = pathParts[pathParts.length - 1];
+      if (lastSegment) return humanizeLabel(lastSegment);
+    } catch { /* not a valid URL, fall through */ }
+  }
   const parts = lastType.split('.');
   const meaningful = [...parts].reverse().find((p) => /[a-zA-Z]{2,}/.test(p));
   return meaningful ? humanizeLabel(meaningful) : lastType;

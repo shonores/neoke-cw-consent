@@ -5,7 +5,7 @@ import { getQueueItem, approveQueueItem, rejectQueueItem, createRule, listRules 
 import ConsentRequestView from '../components/ConsentRequestView';
 import CredentialCardFace from '../components/CredentialCardFace';
 import { getLocalCredentials } from '../store/localCredentials';
-import { getCardColor, getCardColorForTypes, getCredentialLabel, getCredentialDescription, getCandidateLabel, extractVerifierName } from '../utils/credentialHelpers';
+import { getCardColor, getCardColorForTypes, getCredentialLabel, getCredentialDescription, getCandidateLabel, parseDisclosedClaim, extractVerifierName } from '../utils/credentialHelpers';
 import type { PendingRequest } from '../types/consentEngine';
 import type { ViewName } from '../types';
 
@@ -360,7 +360,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
           <div className="fixed inset-0 z-[60]" onClick={() => setCredSheet(null)}>
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
             <div
-              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[512px] bg-white rounded-t-[24px] shadow-2xl relative"
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[512px] bg-white rounded-t-[24px]"
               style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}
               onClick={e => e.stopPropagation()}
             >
@@ -461,7 +461,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
                           <div className="bg-[#F2F2F7] rounded-[16px] overflow-hidden">
                             {fields.map((f, i) => (
                               <div key={i} className={`px-4 py-3 ${i < fields.length - 1 ? 'border-b border-[#f1f1f3]' : ''}`}>
-                                <p className="text-[14px] text-[#8e8e93] font-medium">{f}</p>
+                                <p className="text-[14px] text-[#1c1c1e] font-medium">{parseDisclosedClaim(f)}</p>
                               </div>
                             ))}
                           </div>
