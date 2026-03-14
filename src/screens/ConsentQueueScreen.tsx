@@ -43,6 +43,11 @@ function getItemTitle(item: PendingRequest): string {
   if (item.linkType === 'vp_request') {
     return extractVerifierName(item.preview.verifier?.clientId, item.preview.verifier?.name);
   }
+  if (item.linkType === 'delegation_approval') {
+    const from = item.preview.requesterService ?? 'A service';
+    const to = item.preview.recipientService ?? 'another service';
+    return `${from} → ${to}`;
+  }
   return item.preview.issuerName ?? extractVerifierName(item.preview.issuerDid);
 }
 
@@ -52,6 +57,13 @@ function getItemMessage(item: PendingRequest): string {
     const purpose = item.preview.verifier?.purpose;
     if (purpose) return `${service} wants access to your info to ${purpose}.`;
     return `${service} is requesting to verify your credentials.`;
+  }
+  if (item.linkType === 'delegation_approval') {
+    const from = item.preview.requesterService ?? 'A service';
+    const purpose = item.preview.purpose ?? 'data sharing';
+    const credType = item.preview.credentialTypeId;
+    if (credType) return `${from} wants to share your ${credType} for ${purpose}.`;
+    return `${from} wants to share your credentials for ${purpose}.`;
   }
   const issuer = item.preview.issuerName ?? extractVerifierName(item.preview.issuerDid);
   const type = item.preview.credentialTypes?.[0];

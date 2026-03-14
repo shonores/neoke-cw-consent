@@ -65,7 +65,7 @@ export type CreateRulePayload = Omit<ConsentRule, 'id' | 'createdAt' | 'updatedA
 // ============================================================
 
 export type RequestStatus = 'pending' | 'approved' | 'rejected' | 'expired' | 'error';
-export type LinkType = 'vp_request' | 'credential_offer';
+export type LinkType = 'vp_request' | 'credential_offer' | 'delegation_approval';
 
 export interface QueueItemPreview {
   verifier?: {
@@ -85,6 +85,15 @@ export interface QueueItemPreview {
   credentialTypes?: string[];
   requiresPin?: boolean;
   transactionData?: string[];
+  // Delegation approval fields
+  /** The service requesting the delegation (e.g. "AirScout"). */
+  requesterService?: string;
+  /** The service that will receive the delegated data (e.g. "HotelScout"). */
+  recipientService?: string;
+  /** Human-readable purpose shown in the approval prompt. */
+  purpose?: string;
+  /** Optional credential type scoped for the delegation. */
+  credentialTypeId?: string | null;
 }
 
 export interface PendingRequest {

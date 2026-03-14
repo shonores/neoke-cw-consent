@@ -220,7 +220,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
           </div>
           <div>
             <h2 className="text-[#1c1c1e] font-bold text-[28px] leading-tight">
-              {item.linkType === 'credential_offer' ? 'Credential received' : 'Information shared'}
+              {item.linkType === 'credential_offer' ? 'Credential received' : item.linkType === 'delegation_approval' ? 'Delegation approved' : 'Information shared'}
             </h2>
             <p className="text-[#8e8e93] text-[17px] mt-2">Returning to Home…</p>
           </div>
@@ -230,13 +230,16 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
   }
 
   const isVP = item.linkType === 'vp_request';
+  const isDelegation = item.linkType === 'delegation_approval';
   const isResolved = item.status !== 'pending';
   const effectiveExpiry = item.vpRequestExpiresAt ?? item.expiresAt;
   // L6: prefer server-computed flag to avoid clock-drift issues
   const isExpired = item.isExpired ?? (new Date(effectiveExpiry).getTime() < Date.now());
-  const serviceName = isVP
-    ? extractServiceName(item.preview.verifier?.clientId, item.preview.verifier?.name)
-    : extractServiceName(item.preview.issuerDid);
+  const serviceName = isDelegation
+    ? (item.preview.requesterService ?? 'A service')
+    : isVP
+      ? extractServiceName(item.preview.verifier?.clientId, item.preview.verifier?.name)
+      : extractServiceName(item.preview.issuerDid);
 
   // Build credential rows for ConsentRequestView — deduplicated by type
   // For VP requests with matchedCredentials, group by primary type so the user
@@ -272,25 +275,29 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
 
   const localCreds = getLocalCredentials();
 
-  const credentialRows = isVP
-    ? matchedGroups.length > 0
-      ? matchedGroups.map(g => {
-          // Show the currently selected candidate's issuer if we can resolve it
-          const selIdx = credSelections[g.typeKey] ?? 0;
-          const selCand = g.candidates[selIdx] ?? g.candidates[0];
-          return {
-            types: g.types,
-            issuer: selCand?.issuer ?? '',
-            fields: item.preview.requestedFields,
-            candidateCount: g.candidates.length,
-          };
-        })
-      : item.preview.credentialType
-        ? [{ types: [item.preview.credentialType], issuer: item.preview.verifier?.clientId ?? '', fields: item.preview.requestedFields }]
-        : item.preview.requestedFields?.length
-          ? [{ types: [], issuer: item.preview.verifier?.clientId ?? '', fields: item.preview.requestedFields }]
-          : []
-    : (item.preview.credentialTypes ?? []).map(ct => ({ types: [ct], issuer: item.preview.issuerDid ?? '' }));
+  const credentialRows = isDelegation
+    ? item.preview.credentialTypeId
+      ? [{ types: [item.preview.credentialTypeId], issuer: item.preview.recipientService ?? '' }]
+      : []
+    : isVP
+      ? matchedGroups.length > 0
+        ? matchedGroups.map(g => {
+            // Show the currently selected candidate's issuer if we can resolve it
+            const selIdx = credSelections[g.typeKey] ?? 0;
+            const selCand = g.candidates[selIdx] ?? g.candidates[0];
+            return {
+              types: g.types,
+              issuer: selCand?.issuer ?? '',
+              fields: item.preview.requestedFields,
+              candidateCount: g.candidates.length,
+            };
+          })
+        : item.preview.credentialType
+          ? [{ types: [item.preview.credentialType], issuer: item.preview.verifier?.clientId ?? '', fields: item.preview.requestedFields }]
+          : item.preview.requestedFields?.length
+            ? [{ types: [], issuer: item.preview.verifier?.clientId ?? '', fields: item.preview.requestedFields }]
+            : []
+      : (item.preview.credentialTypes ?? []).map(ct => ({ types: [ct], issuer: item.preview.issuerDid ?? '' }));
 
   // Derive the group for the open credential sheet
   const sheetGroup = credSheet ? matchedGroups.find(g => g.typeKey === credSheet.typeKey) : null;
@@ -314,7 +321,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
       <ConsentRequestView
         serviceName={serviceName}
         isVP={isVP}
-        purpose={item.preview.verifier?.purpose}
+        purpose={isDelegation ? item.preview.purpose : item.preview.verifier?.purpose}
         linkedDomains={item.preview.verifier?.linkedDomains}
         credentialRows={credentialRows}
         needsPin={needsPin}
