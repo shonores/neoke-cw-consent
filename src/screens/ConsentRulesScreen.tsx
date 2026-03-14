@@ -46,9 +46,10 @@ function expiryLabel(rule: ConsentRule): string {
 }
 
 function partyLabel(rule: ConsentRule): string {
+  const anyLabel = rule.ruleType === 'issuance' ? 'Any issuer' : 'Any verifier';
   switch (rule.party.matchType) {
-    case 'any': return 'Any party';
-    case 'did': return `DID: ${rule.party.value?.slice(0, 20) ?? ''}…`;
+    case 'any': return anyLabel;
+    case 'did': return `${rule.ruleType === 'issuance' ? 'Issuer' : 'Verifier'}: ${rule.party.value?.slice(0, 24) ?? ''}…`;
     case 'domain': return `Domain: ${rule.party.value ?? ''}`;
     case 'domain_wildcard': return `*.${rule.party.value ?? ''}`;
     default: return '';
@@ -281,7 +282,7 @@ export default function ConsentRulesScreen({ navigate }: Props) {
 
                   {/* Info row */}
                   <p className="text-[13px] text-[#8e8e93] mb-1 font-medium">
-                    <span className="capitalize font-semibold text-[#1c1c1e]">{rule.ruleType}</span>
+                    <span className="font-semibold text-[#1c1c1e]">{rule.ruleType === 'verification' ? 'Sharing' : 'Accepting'}</span>
                     {' · '}{rule.credentialType.matchType === 'exact' ? (rule.credentialType.value ?? 'Any credential') : 'Any credential'}
                     {' · '}{partyLabel(rule)}
                   </p>
