@@ -134,6 +134,8 @@ export interface UserProfile {
   nodeId: string;
   /** Read-only — sourced from identity_directory on the CE. Null if not provisioned via email. */
   email: string | null;
+  /** DID associated with this node — sourced from identity_directory. */
+  did: string | null;
   firstName: string | null;
   lastName: string | null;
   seatPreferences: string[];
