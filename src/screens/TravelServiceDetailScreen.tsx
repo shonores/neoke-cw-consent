@@ -179,7 +179,7 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
     try {
       if (newMode === 'ask') {
         if (serviceRule) {
-          await deleteRule(apiKey, serviceRule.id);
+          await disableRule(apiKey, serviceRule.id);
           setRules(prev => prev.filter(r => r.id !== serviceRule.id));
         }
       } else {
