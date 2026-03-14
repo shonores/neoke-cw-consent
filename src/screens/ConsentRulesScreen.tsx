@@ -116,6 +116,7 @@ export default function ConsentRulesScreen({ navigate }: Props) {
   const [rules, setRules] = useState<ConsentRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [toast, setToast] = useState('');
   const [filter, setFilter] = useState<FilterTab>('all');
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [deletingRule, setDeletingRule] = useState<ConsentRule | null>(null);
@@ -140,13 +141,14 @@ export default function ConsentRulesScreen({ navigate }: Props) {
 
   const handleToggle = async (rule: ConsentRule, enabled: boolean) => {
     setTogglingId(rule.id);
+    setError('');
     try {
       const updated = enabled
         ? await enableRule(apiKey, rule.id)
         : await disableRule(apiKey, rule.id);
       setRules(prev => prev.map(r => r.id === rule.id ? updated : r));
     } catch {
-      // revert silently
+      setToast(`Could not ${enabled ? 'enable' : 'disable'} rule. Please try again.`);
     } finally {
       setTogglingId(null);
     }
@@ -312,6 +314,14 @@ export default function ConsentRulesScreen({ navigate }: Props) {
           </AnimatePresence>
         )}
       </main>
+
+      {/* Transient toast for toggle errors */}
+      {toast && (
+        <div className="fixed bottom-6 left-4 right-4 max-w-[512px] mx-auto z-50 bg-[#1c1c1e] text-white text-[13px] font-medium px-4 py-3 rounded-[16px] flex items-center gap-3 shadow-lg">
+          <span className="flex-1">{toast}</span>
+          <button onClick={() => setToast('')} className="text-white/60 text-[12px] font-semibold">OK</button>
+        </div>
+      )}
 
       {/* Delete confirmation sheet */}
       {deletingRule && (

@@ -105,6 +105,9 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
   const { state } = useAuth();
   const { state: ceState } = useConsentEngine();
   const [deleting, setDeleting] = useState(false);
+  const [showDeleteSheet, setShowDeleteSheet] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const [activityError, setActivityError] = useState('');
   const [tab, setTab] = useState<Tab>('details');
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const [loadingActivity, setLoadingActivity] = useState(false);
@@ -139,26 +142,24 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
       limit: 200,
       order: 'desc',
     })
-      .then(setEvents)
-      .catch(() => setEvents([]))
+      .then(data => { setEvents(data); setActivityError(''); })
+      .catch(() => setActivityError('Could not load activity. Tap to retry.'))
       .finally(() => setLoadingActivity(false));
   }, [tab, ceState.ceEnabled, ceState.ceApiKey, credentialTypeParam, state.nodeIdentifier]);
 
   const handleDelete = async () => {
     if (deleting) return;
-    if (!window.confirm('Are you sure you want to delete this credential?')) return;
-
+    setDeleteError('');
     setDeleting(true);
+    setShowDeleteSheet(false);
     try {
       if (state.token) {
         await deleteCredential(state.token, credential.id);
       }
       deleteLocalCredential(credential.id);
       onCredentialDeleted ? onCredentialDeleted() : onBack();
-    } catch (err) {
-      console.error('Failed to delete credential', err);
-      alert('Failed to delete credential. Please try again.');
-    } finally {
+    } catch {
+      setDeleteError('Could not delete credential. Please try again.');
       setDeleting(false);
     }
   };
@@ -192,7 +193,7 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
           </div>
 
           <IconButton
-            onClick={handleDelete}
+            onClick={() => setShowDeleteSheet(true)}
             disabled={deleting}
             className="hover:bg-red-50 group disabled:opacity-50"
             aria-label="Delete credential"
@@ -291,6 +292,26 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
               <div className="flex justify-center items-center pt-16">
                 <div className="w-6 h-6 border-2 border-[#5B4FE9]/20 border-t-[#5B4FE9] rounded-full animate-spin" />
               </div>
+            ) : activityError ? (
+              <button
+                className="flex flex-col items-center justify-center pt-16 px-8 text-center w-full"
+                onClick={() => {
+                  setActivityError('');
+                  setLoadingActivity(true);
+                  listAuditEvents(ceState.ceApiKey!, { nodeId: state.nodeIdentifier ?? undefined, credentialType: credentialTypeParam, limit: 200, order: 'desc' })
+                    .then(data => { setEvents(data); setActivityError(''); })
+                    .catch(() => setActivityError('Could not load activity. Tap to retry.'))
+                    .finally(() => setLoadingActivity(false));
+                }}
+              >
+                <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mb-3">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#aa281e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/>
+                  </svg>
+                </div>
+                <p className="text-[14px] font-semibold text-[#1c1c1e] mb-1">Could not load activity</p>
+                <p className="text-[13px] text-[#5B4FE9]">Tap to retry</p>
+              </button>
             ) : groups.length === 0 ? (
               <div className="flex flex-col items-center justify-center pt-16 px-8 text-center">
                 <div className="w-14 h-14 rounded-full bg-[#EEF2FF] flex items-center justify-center mb-4">
@@ -345,6 +366,49 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
           </div>
         )}
       </div>
+
+      {/* Delete error banner */}
+      {deleteError && (
+        <div className="fixed bottom-6 left-4 right-4 max-w-[512px] mx-auto z-50 bg-red-50 border border-red-200 rounded-[16px] px-4 py-3 flex items-center gap-3 shadow-lg">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aa281e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+            <circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/>
+          </svg>
+          <p className="text-[13px] text-[#aa281e] flex-1">{deleteError}</p>
+          <button onClick={() => setDeleteError('')} className="text-[#aa281e] text-[13px] font-semibold">OK</button>
+        </div>
+      )}
+
+      {/* Delete confirmation sheet */}
+      {showDeleteSheet && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end" onClick={() => setShowDeleteSheet(false)}>
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          <div
+            className="relative bg-white rounded-t-3xl px-6 pt-4 pb-10 shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="w-9 h-1 bg-[#c7c7cc] rounded-full mx-auto mb-6" />
+            <h3 className="text-[18px] font-bold text-[#1c1c1e] mb-2">Delete credential?</h3>
+            <p className="text-[14px] text-[#8e8e93] mb-6 leading-snug">
+              "{label}" will be permanently removed from your wallet. This cannot be undone.
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="w-full bg-red-500 text-white text-[17px] font-semibold py-4 rounded-full active:opacity-80 disabled:opacity-50 transition-opacity"
+              >
+                {deleting ? 'Deleting…' : 'Delete credential'}
+              </button>
+              <button
+                onClick={() => setShowDeleteSheet(false)}
+                className="w-full bg-white text-[#1c1c1e] text-[15px] font-medium py-4 rounded-full border border-black/[0.08] active:bg-black/5 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }

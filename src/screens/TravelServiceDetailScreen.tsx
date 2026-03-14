@@ -309,7 +309,7 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
         </div>
       ) : error ? (
         <main className="px-4">
-          <div className="bg-red-50 border border-red-200 rounded-[12px] px-4 py-4">
+          <div className="bg-red-50 border border-red-200 rounded-[24px] px-4 py-4">
             <p className="text-[14px] text-[#aa281e] mb-3 font-medium">{error}</p>
             <button onClick={load} className="text-[14px] font-semibold text-[#5B4FE9]">Try again</button>
           </div>

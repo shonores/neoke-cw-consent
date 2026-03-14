@@ -338,7 +338,6 @@ export default function AccountScreen({ navigate }: Props) {
             right={
               <span className="w-2 h-2 rounded-full bg-[#198e41] flex-shrink-0" />
             }
-            onClick={() => {}}
           />
           {/* Consent Engine */}
           <ListItem
@@ -358,7 +357,6 @@ export default function AccountScreen({ navigate }: Props) {
                 <span className={`w-2 h-2 rounded-full flex-shrink-0 ${ceState.ceEnabled && ceState.isConnected ? 'bg-[#198e41]' : 'bg-orange-400'}`} />
               </div>
             }
-            onClick={() => {}}
           />
           {/* CE connect button (only when not enabled) */}
           {!ceState.ceEnabled && (
@@ -382,19 +380,19 @@ export default function AccountScreen({ navigate }: Props) {
             icon={<IconEnvelope />}
             label="Give us feedback"
             right={<IconExternal />}
-            onClick={() => {}}
+            onClick={() => window.open('mailto:feedback@neoke.com', '_blank')}
           />
           <ListItem
             icon={<IconDoc />}
             label="Terms and Conditions"
             right={<IconExternal />}
-            onClick={() => {}}
+            onClick={() => window.open('https://neoke.com/terms', '_blank')}
           />
           <ListItem
             icon={<IconDoc />}
             label="Privacy Statement"
             right={<IconExternal />}
-            onClick={() => {}}
+            onClick={() => window.open('https://neoke.com/privacy', '_blank')}
           />
         </ListCard>
 
