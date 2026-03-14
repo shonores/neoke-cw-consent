@@ -3,6 +3,7 @@ import { apiKeyAuth } from '../api/client';
 import PrimaryButton from '../components/PrimaryButton';
 import NodeStatusChip from '../components/NodeStatusChip';
 import IconButton from '../components/IconButton';
+import { DocViewerSheetWithPresence, TERMS_URL, PRIVACY_URL } from '../components/DocViewerSheet';
 
 interface OnboardingStep2Props {
   nodeIdentifier: string;
@@ -20,6 +21,7 @@ export default function OnboardingStep2Screen({
   const [apiKey, setApiKey] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [docSheet, setDocSheet] = useState<{ url: string; title: string } | null>(null);
 
   let nodeHost = nodeIdentifier;
   try { nodeHost = new URL(nodeBaseUrl).host; } catch { /* keep identifier */ }
@@ -105,9 +107,9 @@ export default function OnboardingStep2Screen({
       <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-6 pb-10 pt-4 space-y-4 bg-[var(--bg-ios)]">
         <p className="text-center text-[13px] text-[#8e8e93] leading-relaxed">
           By continuing, you agree to Neoke's{' '}
-          <a href="https://docs.google.com/document/u/1/d/e/2PACX-1vR3WT8LdUgwYcrOYHqz-LSxc1jOXJI3igzbTtmzcVEhPrFVluFyidroOQrfkkeRa88A2OXNiMd5CAj3/pub" target="_blank" rel="noopener noreferrer" className="text-[var(--primary)] font-medium">Terms and Conditions</a>
+          <button onClick={() => setDocSheet({ url: TERMS_URL, title: 'Terms and Conditions' })} className="text-[var(--primary)] font-medium">Terms and Conditions</button>
           {' '}and{' '}
-          <a href="https://docs.google.com/document/u/1/d/e/2PACX-1vSYhg-Z6OyDEaEn-iVDNsEkahSLb8nId3-DLLa5wcn-ZRYHVaUB-Gm-eNwnjiHNctXCYyFU5wLovfdN/pub" target="_blank" rel="noopener noreferrer" className="text-[var(--primary)] font-medium">Privacy Policy.</a>
+          <button onClick={() => setDocSheet({ url: PRIVACY_URL, title: 'Privacy Policy' })} className="text-[var(--primary)] font-medium">Privacy Policy.</button>
         </p>
 
         <PrimaryButton
@@ -118,6 +120,15 @@ export default function OnboardingStep2Screen({
           Sign in
         </PrimaryButton>
       </div>
+
+      {docSheet && (
+        <DocViewerSheetWithPresence
+          isOpen={!!docSheet}
+          url={docSheet.url}
+          title={docSheet.title}
+          onClose={() => setDocSheet(null)}
+        />
+      )}
     </div>
   );
 }

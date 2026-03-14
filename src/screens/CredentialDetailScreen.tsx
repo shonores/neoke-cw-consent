@@ -395,7 +395,7 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
               <button
                 onClick={handleDelete}
                 disabled={deleting}
-                className="w-full bg-red-500 text-white text-[17px] font-semibold py-4 rounded-full active:opacity-80 disabled:opacity-50 transition-opacity"
+                className="w-full bg-red-100 text-red-700 text-[17px] font-semibold py-4 rounded-full active:opacity-80 disabled:opacity-50 transition-opacity"
               >
                 {deleting ? 'Deleting…' : 'Delete credential'}
               </button>

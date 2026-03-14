@@ -6,6 +6,8 @@ import { useConsentEngine } from '../context/ConsentEngineContext';
 import { getProfile, updateProfile } from '../api/consentEngineClient';
 import type { ViewName } from '../types';
 import type { UserProfile } from '../types';
+import { DocViewerSheetWithPresence, TERMS_URL, PRIVACY_URL } from '../components/DocViewerSheet';
+import FeedbackSheet from '../components/FeedbackSheet';
 
 const variants = {
   initial: { opacity: 0, y: 16 },
@@ -266,6 +268,8 @@ export default function AccountScreen({ navigate }: Props) {
   const { state: ceState, removeCe, refreshHealth, autoConfigureCe } = useConsentEngine();
   const [showDisconnectSheet, setShowDisconnectSheet] = useState(false);
   const [showDeleteSheet, setShowDeleteSheet] = useState(false);
+  const [docSheet, setDocSheet] = useState<{ url: string; title: string } | null>(null);
+  const [showFeedback, setShowFeedback] = useState(false);
 
   // Profile state — loaded from CE, cached locally
   const cached = loadCachedProfile();
@@ -464,20 +468,20 @@ export default function AccountScreen({ navigate }: Props) {
           <ListItem
             icon={<IconEnvelope />}
             label="Give us feedback"
-            right={<IconExternal />}
-            onClick={() => window.open('mailto:feedback@neoke.com', '_blank')}
+            right={<IconChevron />}
+            onClick={() => setShowFeedback(true)}
           />
           <ListItem
             icon={<IconDoc />}
             label="Terms and Conditions"
-            right={<IconExternal />}
-            onClick={() => window.open('https://docs.google.com/document/u/1/d/e/2PACX-1vR3WT8LdUgwYcrOYHqz-LSxc1jOXJI3igzbTtmzcVEhPrFVluFyidroOQrfkkeRa88A2OXNiMd5CAj3/pub', '_blank')}
+            right={<IconChevron />}
+            onClick={() => setDocSheet({ url: TERMS_URL, title: 'Terms and Conditions' })}
           />
           <ListItem
             icon={<IconDoc />}
             label="Privacy Statement"
-            right={<IconExternal />}
-            onClick={() => window.open('https://docs.google.com/document/u/1/d/e/2PACX-1vSYhg-Z6OyDEaEn-iVDNsEkahSLb8nId3-DLLa5wcn-ZRYHVaUB-Gm-eNwnjiHNctXCYyFU5wLovfdN/pub', '_blank')}
+            right={<IconChevron />}
+            onClick={() => setDocSheet({ url: PRIVACY_URL, title: 'Privacy Statement' })}
           />
         </ListCard>
 
@@ -617,6 +621,15 @@ export default function AccountScreen({ navigate }: Props) {
           </div>
         </div>
       )}
+
+      <DocViewerSheetWithPresence
+        isOpen={!!docSheet}
+        url={docSheet?.url ?? ''}
+        title={docSheet?.title ?? ''}
+        onClose={() => setDocSheet(null)}
+      />
+
+      <FeedbackSheet isOpen={showFeedback} onClose={() => setShowFeedback(false)} />
     </motion.div>
   );
 }
