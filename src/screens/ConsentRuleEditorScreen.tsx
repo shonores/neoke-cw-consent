@@ -183,7 +183,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
       } else {
         await createRule(apiKey, payload);
       }
-      navigate('consent_rules');
+      navigate('travel_services');
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Could not save rule.');
     } finally {
@@ -204,7 +204,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
   const goBack = () => {
     if (step === 5 && ruleType === 'issuance') { setStep(3); return; }
     if (step > 1) setStep(prev => (prev - 1) as Step);
-    else navigate('consent_rules');
+    else navigate('travel_services');
   };
 
   if (loadingExisting) {

@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { listRules, listAuditSummary } from '../api/consentEngineClient';
 import { serviceNameFromRuleLabel, extractVerifierName } from '../utils/credentialHelpers';
 import PrimaryButton from '../components/PrimaryButton';
+import IconButton from '../components/IconButton';
 import type { ConsentRule } from '../types/consentEngine';
 import type { ViewName } from '../types';
 
@@ -15,6 +16,8 @@ const variants = {
   animate: { opacity: 1, y: 0, transition: { duration: 0.22, ease: 'easeOut' as const } },
   exit: { opacity: 0, y: -8, transition: { duration: 0.14 } },
 };
+
+type FilterTab = 'all' | 'verification' | 'issuance';
 
 interface Props {
   navigate: (view: ViewName, extra?: { selectedServiceDid?: string; editingRuleId?: string | null }) => void;
@@ -79,6 +82,7 @@ export default function TravelServicesScreen({ navigate }: Props) {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [filter, setFilter] = useState<FilterTab>('all');
   const [verificationDidRules, setVerificationDidRules] = useState<ConsentRule[]>([]);
   const [verificationGlobalRules, setVerificationGlobalRules] = useState<ConsentRule[]>([]);
   const [issuanceRules, setIssuanceRules] = useState<ConsentRule[]>([]);
@@ -93,22 +97,18 @@ export default function TravelServicesScreen({ navigate }: Props) {
         listAuditSummary(apiKey, nodeId),
       ]);
 
-      // Verification: DID-specific rules (Always / Never)
       const verDid = rules
         .filter(r => r.ruleType === 'verification' && r.party.matchType === 'did' && r.party.value)
         .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 
-      // Verification: global rules ("any" party)
       const verGlobal = rules.filter(r =>
         r.ruleType === 'verification' && r.party.matchType === 'any'
       );
 
-      // Issuance rules (all)
       const issuance = rules
         .filter(r => r.ruleType === 'issuance')
         .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 
-      // "Ask" services: verifier DIDs seen in audit but with no rule
       const ruleDidSet = new Set(verDid.map(r => r.party.value!));
       const askList: Array<{ did: string; name: string; lastSeen: string }> = [];
       for (const entry of summary) {
@@ -124,7 +124,7 @@ export default function TravelServicesScreen({ navigate }: Props) {
       setIssuanceRules(issuance);
       setAskServices(askList);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not load services.');
+      setError(err instanceof Error ? err.message : 'Could not load rules.');
     } finally {
       setLoading(false);
     }
@@ -137,28 +137,53 @@ export default function TravelServicesScreen({ navigate }: Props) {
     return () => clearInterval(id);
   }, [load]);
 
-  const isEmpty = !loading && !error &&
-    verificationDidRules.length === 0 &&
-    verificationGlobalRules.length === 0 &&
-    issuanceRules.length === 0 &&
-    askServices.length === 0;
+  const hasVerification = verificationGlobalRules.length > 0 || verificationDidRules.length > 0 || askServices.length > 0;
+  const hasIssuance = issuanceRules.length > 0;
+  const isEmpty = !loading && !error && !hasVerification && !hasIssuance;
+
+  const showVerification = filter === 'all' || filter === 'verification';
+  const showIssuance = filter === 'all' || filter === 'issuance';
 
   return (
     <motion.div variants={variants} initial="initial" animate="animate" exit="exit"
       className="flex-1 flex flex-col bg-[#F2F2F7] min-h-screen">
-      <nav className="sticky top-0 z-10 bg-[#F2F2F7] px-5 pt-14 pb-4 flex items-center gap-3">
-        <button
-          onClick={() => navigate('account')}
-          className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M15 18l-6-6 6-6" />
+
+      {/* Nav */}
+      <nav className="sticky top-0 z-10 bg-[#F2F2F7] px-5 pt-14 pb-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('account')}
+            className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+          <h1 className="text-[28px] font-bold text-[#1c1c1e] leading-8">Consent Rules</h1>
+        </div>
+        <IconButton onClick={() => navigate('consent_rule_editor', { editingRuleId: null })} aria-label="New Rule">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
-        </button>
-        <h1 className="text-[28px] font-bold text-[#1c1c1e] leading-8">Consent Rules</h1>
+        </IconButton>
       </nav>
 
-      <main className="flex-1 px-4 pb-36 space-y-5">
+      {/* Filter tabs */}
+      <div className="px-5 mb-4">
+        <div className="flex bg-black/5 rounded-[12px] p-1 gap-1">
+          {(['all', 'verification', 'issuance'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setFilter(tab)}
+              className={`flex-1 py-2 text-[13px] font-medium rounded-lg transition-colors capitalize ${filter === tab ? 'bg-white text-[#1c1c1e] shadow-sm' : 'text-[#8e8e93]'}`}
+            >
+              {tab === 'all' ? 'All' : tab === 'verification' ? 'Verification' : 'Issuance'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <main className="flex-1 px-4 space-y-5" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 140px)' }}>
         {loading ? (
           <div className="bg-white rounded-[24px] border border-[#f1f1f3]">
             {[1, 2, 3].map(i => (
@@ -192,7 +217,7 @@ export default function TravelServicesScreen({ navigate }: Props) {
         ) : (
           <>
             {/* ── Verification: global rules ── */}
-            {verificationGlobalRules.length > 0 && (
+            {showVerification && verificationGlobalRules.length > 0 && (
               <div className="space-y-2">
                 <p className="text-[11px] font-semibold text-[#8e8e93] uppercase tracking-wider px-1">Sharing · Active for all requesters</p>
                 {verificationGlobalRules.map(rule => (
@@ -220,7 +245,7 @@ export default function TravelServicesScreen({ navigate }: Props) {
             )}
 
             {/* ── Verification: DID-specific rules ── */}
-            {verificationDidRules.length > 0 && (
+            {showVerification && verificationDidRules.length > 0 && (
               <div className="space-y-2">
                 <p className="text-[11px] font-semibold text-[#8e8e93] uppercase tracking-wider px-1">Sharing · By verifier</p>
                 <div className="bg-white rounded-[24px] border border-[#f1f1f3] overflow-hidden divide-y divide-[#F2F2F7]">
@@ -246,8 +271,8 @@ export default function TravelServicesScreen({ navigate }: Props) {
               </div>
             )}
 
-            {/* ── Verification: Ask (no rule yet) ── */}
-            {askServices.length > 0 && (
+            {/* ── Verification: Ask (no rule) ── */}
+            {showVerification && askServices.length > 0 && (
               <div className="space-y-2">
                 <p className="text-[11px] font-semibold text-[#8e8e93] uppercase tracking-wider px-1">Sharing · Asking each time</p>
                 <div className="bg-white rounded-[24px] border border-black/[0.04] overflow-hidden divide-y divide-[#F2F2F7]">
@@ -270,8 +295,16 @@ export default function TravelServicesScreen({ navigate }: Props) {
               </div>
             )}
 
+            {/* ── Empty state per filter ── */}
+            {showVerification && filter === 'verification' && !hasVerification && (
+              <div className="bg-white rounded-[24px] border border-[#f1f1f3] p-8 flex flex-col items-center text-center">
+                <p className="text-[17px] font-bold text-[#1c1c1e] mb-2">No verification rules</p>
+                <p className="text-[14px] text-[#8e8e93] leading-relaxed">Rules for sharing credentials will appear here.</p>
+              </div>
+            )}
+
             {/* ── Issuance rules ── */}
-            {issuanceRules.length > 0 && (
+            {showIssuance && issuanceRules.length > 0 && (
               <div className="space-y-2">
                 <p className="text-[11px] font-semibold text-[#8e8e93] uppercase tracking-wider px-1">Receiving · Auto-accept rules</p>
                 <div className="bg-white rounded-[24px] border border-[#f1f1f3] overflow-hidden divide-y divide-[#F2F2F7]">
@@ -293,14 +326,25 @@ export default function TravelServicesScreen({ navigate }: Props) {
                 </div>
               </div>
             )}
+
+            {/* ── Empty state per filter ── */}
+            {showIssuance && filter === 'issuance' && !hasIssuance && (
+              <div className="bg-white rounded-[24px] border border-[#f1f1f3] p-8 flex flex-col items-center text-center">
+                <p className="text-[17px] font-bold text-[#1c1c1e] mb-2">No issuance rules</p>
+                <p className="text-[14px] text-[#8e8e93] leading-relaxed">Rules for auto-accepting credentials will appear here.</p>
+              </div>
+            )}
           </>
         )}
       </main>
 
-      {/* Fixed bottom CTA */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-[512px] mx-auto px-5 pt-4 pb-10 bg-[#F2F2F7] z-40 shadow-[0_-1px_0_rgba(0,0,0,0.05)]">
+      {/* Fixed CTA — sits above the tab bar */}
+      <div
+        className="fixed left-0 right-0 max-w-[512px] mx-auto px-5 pt-3 pb-3 bg-[#F2F2F7] z-40 shadow-[0_-1px_0_rgba(0,0,0,0.05)]"
+        style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 64px)' }}
+      >
         <PrimaryButton onClick={() => navigate('consent_rule_editor', { editingRuleId: null })}>
-          New Consent Rule
+          New Rule
         </PrimaryButton>
       </div>
     </motion.div>

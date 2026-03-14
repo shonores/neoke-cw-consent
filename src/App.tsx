@@ -9,7 +9,6 @@ import PresentScreen from './screens/PresentScreen';
 import AccountScreen from './screens/AccountScreen';
 import OnboardingStep1Screen from './screens/OnboardingStep1Screen';
 import OnboardingStep2Screen from './screens/OnboardingStep2Screen';
-import ConsentRulesScreen from './screens/ConsentRulesScreen';
 import ConsentRuleEditorScreen from './screens/ConsentRuleEditorScreen';
 import ConsentQueueScreen from './screens/ConsentQueueScreen';
 import ConsentQueueDetailScreen from './screens/ConsentQueueDetailScreen';
@@ -41,7 +40,7 @@ function TabBar({
   const homeActive = currentView === 'dashboard';
   const scanActive = currentView === 'receive' || currentView === 'present';
   const accountActive = currentView === 'account';
-  const consentActive = ['consent_rules', 'consent_queue', 'consent_queue_detail', 'audit_log', 'consent_rule_editor'].includes(currentView);
+  const consentActive = ['travel_services', 'consent_queue', 'consent_queue_detail', 'audit_log', 'consent_rule_editor'].includes(currentView);
 
   return (
     <div
@@ -208,7 +207,7 @@ function AppInner() {
       case 'account': return { view: 'account' };
       case 'activity': return { view: 'audit_log' };
       case 'inbox': return id ? { view: 'consent_queue_detail', queueItemId: id } : { view: 'consent_queue' };
-      case 'rules': return id !== null ? { view: 'consent_rule_editor', ruleId: id || undefined } : { view: 'consent_rules' };
+      case 'rules': return id !== null ? { view: 'consent_rule_editor', ruleId: id || undefined } : { view: 'travel_services' };
       case 'travel': return did ? { view: 'travel_service_detail', serviceDid: did } : { view: 'travel_services' };
       case 'scan': return { view: 'receive' };
       case 'home':
@@ -242,7 +241,7 @@ function AppInner() {
         case 'audit_log': hash = '#activity'; break;
         case 'consent_queue': hash = '#inbox'; break;
         case 'consent_queue_detail': hash = `#inbox?id=${e?.selectedQueueItemId ?? ''}`; break;
-        case 'consent_rules': hash = '#rules'; break;
+        case 'consent_rules': hash = '#travel'; break;
         case 'consent_rule_editor': hash = `#rules?id=${e?.editingRuleId ?? ''}`; break;
         case 'travel_services': hash = '#travel'; break;
         case 'travel_service_detail': hash = `#travel?did=${encodeURIComponent(e?.selectedServiceDid ?? '')}`; break;
@@ -296,7 +295,7 @@ function AppInner() {
 
   // Refresh pending count when returning to consent views
   useEffect(() => {
-    if (['consent_queue', 'consent_rules', 'audit_log'].includes(currentView)) {
+    if (['consent_queue', 'travel_services', 'audit_log'].includes(currentView)) {
       refreshPendingCount();
     }
   }, [currentView, refreshPendingCount]);
@@ -360,7 +359,7 @@ function AppInner() {
   }
 
   // ── Authenticated — main wallet ──────────────────────────────────────────
-  const showTabBar = ['dashboard', 'account', 'consent_rules', 'consent_queue', 'audit_log', 'travel_services', 'receive'].includes(currentView);
+  const showTabBar = ['dashboard', 'account', 'consent_queue', 'audit_log', 'travel_services', 'receive'].includes(currentView);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F2F2F7] w-full max-w-lg mx-auto">
@@ -416,10 +415,6 @@ function AppInner() {
             key="account"
             navigate={navigate}
           />
-        )}
-
-        {currentView === 'consent_rules' && (
-          <ConsentRulesScreen key="consent_rules" navigate={navigate} />
         )}
 
         {currentView === 'consent_rule_editor' && (
