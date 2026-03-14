@@ -484,7 +484,7 @@ function AppInner() {
           currentView={currentView}
           onNavigate={navigate}
           ceEnabled={ceEnabled}
-          pendingCount={ceState.pendingCount}
+          pendingCount={ceState.unseenPendingCount ?? ceState.pendingCount}
           ceDisconnected={ceEnabled && !ceState.isConnected}
         />
       )}

@@ -80,6 +80,8 @@ export interface QueueItemPreview {
   credentialFormat?: string;
   matchedCredentials?: Array<{ id: string; type: string; issuer: string }>;
   issuerDid?: string;
+  /** Human-readable issuer name supplied by the issuing service (e.g. "AirScout Airlines"). */
+  issuerName?: string;
   credentialTypes?: string[];
   requiresPin?: boolean;
   transactionData?: string[];

@@ -43,7 +43,7 @@ function getItemTitle(item: PendingRequest): string {
   if (item.linkType === 'vp_request') {
     return extractVerifierName(item.preview.verifier?.clientId, item.preview.verifier?.name);
   }
-  return extractVerifierName(item.preview.issuerDid);
+  return item.preview.issuerName ?? extractVerifierName(item.preview.issuerDid);
 }
 
 function getItemMessage(item: PendingRequest): string {
@@ -53,7 +53,7 @@ function getItemMessage(item: PendingRequest): string {
     if (purpose) return `${service} wants access to your info to ${purpose}.`;
     return `${service} is requesting to verify your credentials.`;
   }
-  const issuer = extractVerifierName(item.preview.issuerDid);
+  const issuer = item.preview.issuerName ?? extractVerifierName(item.preview.issuerDid);
   const type = item.preview.credentialTypes?.[0];
   return type
     ? `${issuer} wants to offer you a ${type}.`
@@ -194,7 +194,7 @@ function SwipeableInboxItem({
 }
 
 export default function ConsentQueueScreen({ navigate }: Props) {
-  const { state, refreshPendingCount } = useConsentEngine();
+  const { state, refreshPendingCount, setUnseenPendingCount } = useConsentEngine();
   const { state: authState } = useAuth();
   const apiKey = state.ceApiKey ?? '';
   const nodeId = authState.nodeIdentifier ?? '';
@@ -207,6 +207,15 @@ export default function ConsentQueueScreen({ navigate }: Props) {
   const [clearing, setClearing] = useState(false);
   const loadedOnceRef = useRef(false);
 
+  // Persist seen item IDs per node so badge count drops when items are opened.
+  const seenStorageKey = `ce_seen_queue_${nodeId}`;
+  const getSeenIds = (): Set<string> => {
+    try { return new Set(JSON.parse(localStorage.getItem(seenStorageKey) ?? '[]')); } catch { return new Set(); }
+  };
+  const saveSeenIds = (ids: Set<string>) => {
+    try { localStorage.setItem(seenStorageKey, JSON.stringify([...ids])); } catch { /* */ }
+  };
+
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     setError('');
@@ -214,12 +223,21 @@ export default function ConsentQueueScreen({ navigate }: Props) {
       const data = await listQueue(apiKey);
       setItems(data);
       await refreshPendingCount();
+      // Compute unseen count: pending items the user hasn't opened yet
+      const pendingItems = data.filter(i => i.status === 'pending' && !i.isExpired);
+      const seenIds = getSeenIds();
+      // Clean up seen IDs that are no longer pending
+      const activePendingIds = new Set(pendingItems.map(i => i.id));
+      const trimmed = new Set([...seenIds].filter(id => activePendingIds.has(id)));
+      saveSeenIds(trimmed);
+      setUnseenPendingCount(pendingItems.filter(i => !trimmed.has(i.id)).length);
     } catch (err) {
       if (!silent) setError(err instanceof Error ? err.message : 'Could not load inbox.');
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [apiKey, refreshPendingCount]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiKey, refreshPendingCount, setUnseenPendingCount, seenStorageKey]);
 
   // Stable ref so SSE / count effects don't need 'load' as a dependency
   const loadRef = useRef(load);
@@ -337,7 +355,15 @@ export default function ConsentQueueScreen({ navigate }: Props) {
                   <SwipeableInboxItem
                     key={item.id}
                     item={item}
-                    onClick={() => navigate('consent_queue_detail', { selectedQueueItemId: item.id })}
+                    onClick={() => {
+                      // Mark as seen so the badge decrements immediately
+                      const seenIds = getSeenIds();
+                      seenIds.add(item.id);
+                      saveSeenIds(seenIds);
+                      const remaining = pendingItems.filter(i => !seenIds.has(i.id)).length;
+                      setUnseenPendingCount(remaining);
+                      navigate('consent_queue_detail', { selectedQueueItemId: item.id });
+                    }}
                     onDelete={() => handleDelete(item.id)}
                   />
                 ))}

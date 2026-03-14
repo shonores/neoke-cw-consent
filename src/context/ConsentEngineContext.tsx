@@ -31,6 +31,12 @@ interface ConsentEngineState {
   sseAuditCount: number;
   /** Increments on each queue.item.created/resolved SSE push so ConsentQueueScreen can react immediately. */
   sseQueueCount: number;
+  /**
+   * Local unread count — the number of pending items the user hasn't seen yet.
+   * null = fall back to server pendingCount for the badge.
+   * Set by ConsentQueueScreen after loading items.
+   */
+  unseenPendingCount: number | null;
 }
 
 interface ConsentEngineContextValue {
@@ -42,6 +48,11 @@ interface ConsentEngineContextValue {
   toggleCe: (enabled: boolean) => void;
   refreshHealth: () => Promise<void>;
   refreshPendingCount: () => Promise<void>;
+  /**
+   * Called by ConsentQueueScreen after loading the items list to set the unread badge count.
+   * Pass null to fall back to the server-sourced pendingCount.
+   */
+  setUnseenPendingCount: (count: number | null) => void;
 }
 
 const ConsentEngineContext = createContext<ConsentEngineContextValue | null>(null);
@@ -52,6 +63,7 @@ type CEAction =
   | { type: 'TOGGLE'; enabled: boolean }
   | { type: 'SET_HEALTH'; isConnected: boolean; pendingCount: number }
   | { type: 'SET_PENDING_COUNT'; count: number }
+  | { type: 'SET_UNSEEN_COUNT'; count: number | null }
   | { type: 'SSE_AUDIT' }
   | { type: 'SSE_QUEUE' }
   | { type: 'RESET' };
@@ -65,6 +77,7 @@ const defaultState: ConsentEngineState = {
   lastChecked: null,
   sseAuditCount: 0,
   sseQueueCount: 0,
+  unseenPendingCount: null,
 };
 
 function ceReducer(state: ConsentEngineState, action: CEAction): ConsentEngineState {
@@ -79,6 +92,8 @@ function ceReducer(state: ConsentEngineState, action: CEAction): ConsentEngineSt
       return { ...state, isConnected: action.isConnected, pendingCount: action.pendingCount, lastChecked: Date.now() };
     case 'SET_PENDING_COUNT':
       return { ...state, pendingCount: action.count, lastChecked: Date.now() };
+    case 'SET_UNSEEN_COUNT':
+      return { ...state, unseenPendingCount: action.count };
     case 'SSE_AUDIT':
       return { ...state, sseAuditCount: state.sseAuditCount + 1 };
     case 'SSE_QUEUE':
@@ -98,7 +113,7 @@ function initCeState(): ConsentEngineState {
       setCeBaseUrl(ceUrl);
       // Always use the hardcoded CE API key — localStorage may have an old value
       localStorage.setItem(CE_SK.CE_APIKEY, DEFAULT_CE_APIKEY);
-      return { ceUrl, ceEnabled, ceApiKey: DEFAULT_CE_APIKEY, isConnected: false, pendingCount: 0, lastChecked: null, sseAuditCount: 0, sseQueueCount: 0 };
+      return { ceUrl, ceEnabled, ceApiKey: DEFAULT_CE_APIKEY, isConnected: false, pendingCount: 0, lastChecked: null, sseAuditCount: 0, sseQueueCount: 0, unseenPendingCount: null };
     }
   } catch { /* */ }
   return defaultState;
@@ -340,8 +355,12 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
     }
   }, [refreshHealth]);
 
+  const setUnseenPendingCount = useCallback((count: number | null) => {
+    dispatch({ type: 'SET_UNSEEN_COUNT', count });
+  }, []);
+
   return (
-    <ConsentEngineContext.Provider value={{ state, configureCe, autoConfigureCe, removeCe, toggleCe, refreshHealth, refreshPendingCount }}>
+    <ConsentEngineContext.Provider value={{ state, configureCe, autoConfigureCe, removeCe, toggleCe, refreshHealth, refreshPendingCount, setUnseenPendingCount }}>
       {children}
     </ConsentEngineContext.Provider>
   );
