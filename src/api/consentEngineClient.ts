@@ -7,6 +7,7 @@ import type {
   NodeCredentialType,
   IntakeResult,
 } from '../types/consentEngine';
+import type { UserProfile } from '../types';
 
 // ============================================================
 // Module-level state
@@ -365,6 +366,23 @@ export async function listAuditSummary(apiKey: string, nodeId: string, opts?: { 
     lastSharedAt: e.lastSharedAt ?? '',
     count: e.count ?? 0,
   }));
+}
+
+// ============================================================
+// User profile
+// ============================================================
+export async function getProfile(apiKey: string): Promise<UserProfile> {
+  return ceRequest<UserProfile>('/profile', apiKey);
+}
+
+export async function updateProfile(
+  apiKey: string,
+  data: Partial<Omit<UserProfile, 'nodeId' | 'email'>>
+): Promise<UserProfile> {
+  return ceRequest<UserProfile>('/profile', apiKey, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
 }
 
 // ============================================================
