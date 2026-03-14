@@ -267,6 +267,10 @@ export function extractVerifierName(clientId?: string, name?: string): string {
     const last = parts[parts.length - 1];
     return last.length > 16 ? last.slice(0, 8) + '…' + last.slice(-4) : last;
   }
+  try {
+    const url = new URL(clientId);
+    if (url.protocol === 'https:' || url.protocol === 'http:') return url.hostname;
+  } catch { /* not a URL */ }
   return clientId.length > 20 ? clientId.slice(0, 10) + '…' + clientId.slice(-6) : clientId;
 }
 
