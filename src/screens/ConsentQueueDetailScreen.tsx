@@ -80,26 +80,45 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
     setShowPinSheet(false);
 
     try {
-      if (alwaysRule && item.linkType === 'vp_request') {
+      if (alwaysRule) {
         try {
-            const rulePayload = {
-            nodeId: item.nodeId,
-            ruleType: 'verification' as const,
-            enabled: true,
-            label: `Always: ${item.preview.verifier?.name ?? extractServiceName(item.preview.verifier?.clientId)}`,
-            party: {
-              matchType: (item.preview.verifier?.clientId ? 'did' : 'any') as 'did' | 'any',
-              value: item.preview.verifier?.clientId,
-            },
-            credentialType: {
-              matchType: (item.preview.credentialType ? 'exact' : 'any') as 'exact' | 'any',
-              value: item.preview.credentialType,
-            },
-            allowedFields: {
-              matchType: 'any' as const,
-            },
-            expiry: { type: 'never' as const },
-          };
+          let rulePayload;
+          if (item.linkType === 'vp_request') {
+            rulePayload = {
+              nodeId: item.nodeId,
+              ruleType: 'verification' as const,
+              enabled: true,
+              label: `Always: ${item.preview.verifier?.name ?? extractServiceName(item.preview.verifier?.clientId)}`,
+              party: {
+                matchType: (item.preview.verifier?.clientId ? 'did' : 'any') as 'did' | 'any',
+                value: item.preview.verifier?.clientId,
+              },
+              credentialType: {
+                matchType: (item.preview.credentialType ? 'exact' : 'any') as 'exact' | 'any',
+                value: item.preview.credentialType,
+              },
+              allowedFields: { matchType: 'any' as const },
+              expiry: { type: 'never' as const },
+            };
+          } else {
+            const issuerDid = item.preview.issuerDid;
+            const credType = (item.preview.credentialTypes ?? [])[0];
+            rulePayload = {
+              nodeId: item.nodeId,
+              ruleType: 'issuance' as const,
+              enabled: true,
+              label: `Always accept: ${extractServiceName(issuerDid)}`,
+              party: {
+                matchType: (issuerDid ? 'did' : 'any') as 'did' | 'any',
+                value: issuerDid,
+              },
+              credentialType: {
+                matchType: (credType ? 'exact' : 'any') as 'exact' | 'any',
+                value: credType,
+              },
+              expiry: { type: 'never' as const },
+            };
+          }
           const existing = await listRules(apiKey).catch(() => []);
           const alreadyExists = existing.some(r =>
             r.enabled &&
@@ -109,7 +128,8 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
             r.credentialType.value === rulePayload.credentialType.value
           );
           if (!alreadyExists) {
-            await createRule(apiKey, rulePayload);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await createRule(apiKey, rulePayload as any);
           }
         } catch { /* rule creation failure is non-fatal; still approve */ }
       }
@@ -299,7 +319,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
         actionsDisabled={isExpired || isResolved}
         actionError={actionError}
         onShare={() => handleShareClick(false)}
-        onAlwaysShare={isVP ? () => handleShareClick(true) : undefined}
+        onAlwaysShare={!isResolved && !isExpired ? () => handleShareClick(true) : undefined}
         onReject={handleReject}
         onCredentialClick={matchedGroups.some(g => g.candidates.length > 1) ? (idx) => {
           const g = matchedGroups[idx];

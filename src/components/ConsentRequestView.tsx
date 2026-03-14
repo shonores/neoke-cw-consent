@@ -272,13 +272,13 @@ export default function ConsentRequestView({
           )}
         </button>
 
-        {isVP && onAlwaysShare && !actionsDisabled && (
+        {onAlwaysShare && !actionsDisabled && (
           <button
             onClick={onAlwaysShare}
             disabled={sharing}
             className="w-full bg-[#5843de]/10 text-[#5843de] text-[16px] font-semibold rounded-[12px] py-4 active:opacity-80 transition-opacity disabled:opacity-60"
           >
-            Always share with {serviceName}
+            {isVP ? `Always share with ${serviceName}` : `Always accept from ${serviceName}`}
           </button>
         )}
 
