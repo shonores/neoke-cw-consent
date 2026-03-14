@@ -68,8 +68,8 @@ function getItemMessage(item: PendingRequest): string {
   const issuer = extractServiceName(item.preview.issuerDid);
   const type = item.preview.credentialTypes?.[0];
   return type
-    ? `${issuer} is offering you a ${type}.`
-    : `${issuer} is offering you a credential.`;
+    ? `${issuer} wants to send you a ${type}.`
+    : `${issuer} wants to send you a credential.`;
 }
 
 function ServiceAvatar() {

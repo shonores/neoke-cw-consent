@@ -93,8 +93,8 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
 
     const uriType = detectUriType(trimmed);
 
-    // Presentation requests → CE intake (if configured); credential offers always go direct
-    if (uriType === 'present') {
+    // Route through CE intake when configured — both presentation and credential offer requests
+    if (uriType === 'present' || uriType === 'receive') {
       if (onRouteToCe && isCeConfigured() && ceState.ceEnabled && ceState.ceApiKey) {
         onRouteToCe(trimmed);
         return;
@@ -102,8 +102,11 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
       if (isCeConfigured() && ceState.ceEnabled) {
         setCeBypassed(true);
       }
-      navigate('present', { pendingUri: trimmed });
-      return;
+      if (uriType === 'present') {
+        navigate('present', { pendingUri: trimmed });
+        return;
+      }
+      // CE not configured — fall through to direct receive flow below
     }
     if (uriType === 'unknown') {
       setError(

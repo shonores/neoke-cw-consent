@@ -220,7 +220,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
           </div>
           <div>
             <h2 className="text-[#28272e] font-bold text-[28px] leading-tight">
-              {item.linkType === 'credential_offer' ? 'Credential saved' : 'Information shared'}
+              {item.linkType === 'credential_offer' ? 'Credential received' : 'Information shared'}
             </h2>
             <p className="text-[#868496] text-[17px] mt-2">Returning to Home…</p>
           </div>

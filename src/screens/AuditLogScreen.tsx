@@ -71,7 +71,9 @@ function getEventContent(event: AuditEvent): { title: string; description: strin
     case 'queued':
       return {
         title: service,
-        description: `${service} is requesting to verify your identity${credType}. Review and respond.`,
+        description: event.linkType === 'credential_offer'
+          ? `${service} wants to send you a credential${credType}. Check your inbox.`
+          : `${service} is requesting to verify your identity${credType}. Review and respond.`,
       };
     case 'auto_presented':
       return {

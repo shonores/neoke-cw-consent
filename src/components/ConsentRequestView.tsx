@@ -193,7 +193,7 @@ export default function ConsentRequestView({
         {credentialRows.length > 0 ? (
           <div>
             <SectionLabel>
-              {isVP ? 'Credentials to share' : 'Credential offered'}
+              {isVP ? 'Credentials to share' : 'Credential offered to you'}
             </SectionLabel>
             <div className="space-y-3">
               {credentialRows.map((row, i) => (
@@ -263,12 +263,12 @@ export default function ConsentRequestView({
           {sharing ? (
             <span className="flex items-center justify-center gap-2">
               <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              {isVP ? 'Sharing…' : 'Accepting…'}
+              {isVP ? 'Sharing…' : 'Receiving…'}
             </span>
           ) : actionsDisabled ? (
-            'Request expired'
+            isVP ? 'Request expired' : 'Offer expired'
           ) : (
-            isVP ? 'Share information' : 'Accept credential'
+            isVP ? 'Share information' : 'Receive credential'
           )}
         </button>
 
@@ -278,7 +278,7 @@ export default function ConsentRequestView({
             disabled={sharing}
             className="w-full bg-[#5843de]/10 text-[#5843de] text-[16px] font-semibold rounded-[12px] py-4 active:opacity-80 transition-opacity disabled:opacity-60"
           >
-            {isVP ? `Always share with ${serviceName}` : `Always accept from ${serviceName}`}
+            {isVP ? `Always share with ${serviceName}` : `Always receive from ${serviceName}`}
           </button>
         )}
 
@@ -287,7 +287,7 @@ export default function ConsentRequestView({
           disabled={sharing}
           className="w-full text-[#5843de] text-[16px] font-medium py-3.5 rounded-[12px] border border-[#5843de]/25 active:opacity-60 transition-opacity disabled:opacity-40"
         >
-          Don't share
+          {isVP ? "Don't share" : 'Maybe later'}
         </button>
 
         <p className="text-[11px] text-[#868496] text-center leading-4">
