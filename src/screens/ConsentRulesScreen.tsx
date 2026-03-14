@@ -160,8 +160,9 @@ export default function ConsentRulesScreen({ navigate }: Props) {
     setDeleteLoading(true);
     try {
       await deleteRule(apiKey, deletingRule.id);
-      setRules(prev => prev.filter(r => r.id !== deletingRule.id));
       setDeletingRule(null);
+      setToast('Rule deleted');
+      await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not delete rule.');
       setDeletingRule(null);
