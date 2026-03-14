@@ -318,6 +318,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
         actionState={isResolved ? 'idle' : actionState}
         actionsDisabled={isExpired || isResolved}
         actionError={actionError}
+        logoUri={item.preview.verifier?.logoUri}
         transactionData={item.preview.transactionData}
         onShare={() => handleShareClick(false)}
         onAlwaysShare={!isResolved && !isExpired ? () => handleShareClick(true) : undefined}

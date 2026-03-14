@@ -73,6 +73,7 @@ export interface QueueItemPreview {
     name?: string;
     purpose?: string;
     linkedDomains?: string[];
+    logoUri?: string;
   };
   requestedFields?: string[];
   credentialType?: string;
