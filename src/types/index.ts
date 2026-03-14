@@ -128,6 +128,21 @@ export interface NavState {
 }
 
 // ============================================================
+// User profile
+// ============================================================
+export interface UserProfile {
+  nodeId: string;
+  /** Read-only — sourced from identity_directory on the CE. Null if not provisioned via email. */
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  seatPreferences: string[];
+  dietaryRequirements: string[];
+  preferredCuisines: string[];
+  accessibilityNeeds: string[];
+}
+
+// ============================================================
 // App errors
 // ============================================================
 export interface AppError {

@@ -3,7 +3,9 @@ import { motion } from 'framer-motion';
 import { clearLocalCredentials } from '../store/localCredentials';
 import { useAuth } from '../context/AuthContext';
 import { useConsentEngine } from '../context/ConsentEngineContext';
+import { getProfile, updateProfile } from '../api/consentEngineClient';
 import type { ViewName } from '../types';
+import type { UserProfile } from '../types';
 
 const variants = {
   initial: { opacity: 0, y: 16 },
@@ -152,6 +154,15 @@ function IconChevron() {
   );
 }
 
+function IconLock() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+      <rect x="5" y="11" width="14" height="10" rx="2" stroke="#8e8e93" strokeWidth="2"/>
+      <path d="M8 11V7a4 4 0 018 0v4" stroke="#8e8e93" strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
 // ─── Primitives ───────────────────────────────────────────────────────────────
 
 function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
@@ -198,32 +209,33 @@ function ListItem({
       </div>
       <div className="flex-1 min-w-0">
         <p className={`text-[16px] font-medium leading-6 ${labelColor}`}>{label}</p>
-        {sublabel && <p className="text-[13px] text-[#8e8e93] leading-5">{sublabel}</p>}
+        {sublabel && <p className="text-[13px] text-[#8e8e93] leading-5 truncate">{sublabel}</p>}
       </div>
       {right ?? <IconChevron />}
     </button>
   );
 }
 
-// ─── Personal info storage ────────────────────────────────────────────────────
+// ─── Local cache ──────────────────────────────────────────────────────────────
 
-const PROFILE_KEY = 'neoke_profile';
-interface ProfileData { firstName: string; lastName: string; email: string }
-function loadProfile(): ProfileData {
+const PROFILE_CACHE_KEY = 'neoke_profile_cache';
+
+function loadCachedProfile(): Partial<UserProfile> {
   try {
-    const raw = localStorage.getItem(PROFILE_KEY);
-    if (raw) return JSON.parse(raw) as ProfileData;
+    const raw = localStorage.getItem(PROFILE_CACHE_KEY);
+    if (raw) return JSON.parse(raw) as Partial<UserProfile>;
   } catch { /* */ }
-  return { firstName: '', lastName: '', email: '' };
-}
-function saveProfile(data: ProfileData) {
-  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(data)); } catch { /* */ }
+  return {};
 }
 
-// ─── InfoRow ──────────────────────────────────────────────────────────────────
+function cacheProfile(data: Partial<UserProfile>) {
+  try { localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(data)); } catch { /* */ }
+}
+
+// ─── InfoRow — static display row ────────────────────────────────────────────
 
 function InfoRow({ label, value, onEdit, divider = true }: {
-  label: string; value: string; onEdit: () => void; divider?: boolean;
+  label: string; value: string; onEdit?: () => void; divider?: boolean;
 }) {
   return (
     <div className={`flex items-center gap-3 px-4 py-4 ${divider ? 'border-b border-[#f1f1f3]' : ''}`}>
@@ -231,12 +243,18 @@ function InfoRow({ label, value, onEdit, divider = true }: {
         <p className="text-[16px] font-semibold text-[#1c1c1e] leading-6">{label}</p>
         <p className="text-[14px] text-[#8e8e93] leading-5 truncate">{value || '—'}</p>
       </div>
-      <button
-        onClick={onEdit}
-        className="flex-shrink-0 px-3 py-1.5 bg-[#EEF2FF] text-[#5B4FE9] text-[14px] font-medium rounded-full active:opacity-70 transition-opacity"
-      >
-        Edit
-      </button>
+      {onEdit ? (
+        <button
+          onClick={onEdit}
+          className="flex-shrink-0 px-3 py-1.5 bg-[#EEF2FF] text-[#5B4FE9] text-[14px] font-medium rounded-full active:opacity-70 transition-opacity"
+        >
+          Edit
+        </button>
+      ) : (
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <IconLock />
+        </div>
+      )}
     </div>
   );
 }
@@ -249,36 +267,55 @@ export default function AccountScreen({ navigate }: Props) {
   const [showDisconnectSheet, setShowDisconnectSheet] = useState(false);
   const [showDeleteSheet, setShowDeleteSheet] = useState(false);
 
-  // Personal info
-  const [profile, setProfile] = useState<ProfileData>(loadProfile);
+  // Profile state — loaded from CE, cached locally
+  const cached = loadCachedProfile();
+  const [profile, setProfile] = useState<Partial<UserProfile>>(cached);
+  const [profileLoading, setProfileLoading] = useState(false);
+
+  // Name edit state
   const [showEditName, setShowEditName] = useState(false);
-  const [showEditEmail, setShowEditEmail] = useState(false);
   const [draftFirst, setDraftFirst] = useState('');
   const [draftLast, setDraftLast] = useState('');
-  const [draftEmail, setDraftEmail] = useState('');
+  const [nameSaving, setNameSaving] = useState(false);
 
-  useEffect(() => { setProfile(loadProfile()); }, []);
+  const apiKey = ceState.ceApiKey ?? '';
+  const ceReady = ceState.ceEnabled && ceState.isConnected && !!apiKey;
+
+  // Load profile from CE on mount
+  useEffect(() => {
+    if (!ceReady) return;
+    setProfileLoading(true);
+    getProfile(apiKey)
+      .then(data => {
+        setProfile(data);
+        cacheProfile(data);
+      })
+      .catch(() => { /* use cached data */ })
+      .finally(() => setProfileLoading(false));
+  }, [ceReady, apiKey]);
 
   const openEditName = () => {
-    setDraftFirst(profile.firstName);
-    setDraftLast(profile.lastName);
+    setDraftFirst(profile.firstName ?? '');
+    setDraftLast(profile.lastName ?? '');
     setShowEditName(true);
   };
-  const openEditEmail = () => {
-    setDraftEmail(profile.email);
-    setShowEditEmail(true);
-  };
-  const saveName = () => {
-    const updated = { ...profile, firstName: draftFirst.trim(), lastName: draftLast.trim() };
+
+  const saveName = async () => {
+    setNameSaving(true);
+    const updates = { firstName: draftFirst.trim() || null, lastName: draftLast.trim() || null };
+    // Optimistic local update
+    const updated = { ...profile, ...updates };
     setProfile(updated);
-    saveProfile(updated);
+    cacheProfile(updated);
     setShowEditName(false);
-  };
-  const saveEmail = () => {
-    const updated = { ...profile, email: draftEmail.trim() };
-    setProfile(updated);
-    saveProfile(updated);
-    setShowEditEmail(false);
+    if (ceReady) {
+      try {
+        const saved = await updateProfile(apiKey, updates);
+        setProfile(saved);
+        cacheProfile(saved);
+      } catch { /* local update stays */ }
+    }
+    setNameSaving(false);
   };
 
   const displayName = [profile.firstName, profile.lastName].filter(Boolean).join(' ');
@@ -289,6 +326,20 @@ export default function AccountScreen({ navigate }: Props) {
     }
     return state.nodeIdentifier ?? '—';
   })();
+
+  // Preference sublabels
+  const seatSublabel = profile.seatPreferences?.length
+    ? profile.seatPreferences.join(', ')
+    : undefined;
+  const dietarySublabel = profile.dietaryRequirements?.length
+    ? profile.dietaryRequirements.join(', ')
+    : undefined;
+  const cuisinesSublabel = profile.preferredCuisines?.length
+    ? profile.preferredCuisines.join(', ')
+    : undefined;
+  const accessibilitySublabel = profile.accessibilityNeeds?.length
+    ? profile.accessibilityNeeds.join(', ')
+    : undefined;
 
   return (
     <motion.div
@@ -305,9 +356,23 @@ export default function AccountScreen({ navigate }: Props) {
         {/* ── Personal info ────────────────────────────────────── */}
         <SectionHeader title="Personal info" />
         <div className="mx-4 bg-white rounded-[24px] overflow-hidden">
-          <InfoRow label="Name" value={displayName} onEdit={openEditName} />
-          <InfoRow label="Email" value={profile.email} onEdit={openEditEmail} divider={false} />
+          <InfoRow
+            label="Name"
+            value={displayName || (profileLoading ? 'Loading…' : '—')}
+            onEdit={openEditName}
+          />
+          {/* Email is read-only — sourced from identity directory */}
+          <InfoRow
+            label="Email"
+            value={profile.email ?? (profileLoading ? 'Loading…' : '—')}
+            divider={false}
+          />
         </div>
+        {profile.email == null && !profileLoading && ceReady && (
+          <p className="text-[12px] text-[#8e8e93] px-5 mt-2 leading-4">
+            Email is linked to your identity. Contact your administrator to update it.
+          </p>
+        )}
 
         {/* ── General ──────────────────────────────────────────── */}
         <SectionHeader title="General" />
@@ -318,10 +383,30 @@ export default function AccountScreen({ navigate }: Props) {
         {/* ── Travel preferences ───────────────────────────────── */}
         <SectionHeader title="Travel preferences" />
         <ListCard>
-          <ListItem icon={<IconSeat />} label="In flight seat preferences" onClick={() => navigate('profile_seat')} />
-          <ListItem icon={<IconDining />} label="Dietary requirements" onClick={() => navigate('profile_dietary')} />
-          <ListItem icon={<IconCuisines />} label="Preferred cuisines" onClick={() => navigate('profile_cuisines')} />
-          <ListItem icon={<IconAccessibility />} label="Accessibility needs" onClick={() => navigate('profile_accessibility')} />
+          <ListItem
+            icon={<IconSeat />}
+            label="In flight seat preferences"
+            sublabel={seatSublabel}
+            onClick={() => navigate('profile_seat')}
+          />
+          <ListItem
+            icon={<IconDining />}
+            label="Dietary requirements"
+            sublabel={dietarySublabel}
+            onClick={() => navigate('profile_dietary')}
+          />
+          <ListItem
+            icon={<IconCuisines />}
+            label="Preferred cuisines"
+            sublabel={cuisinesSublabel}
+            onClick={() => navigate('profile_cuisines')}
+          />
+          <ListItem
+            icon={<IconAccessibility />}
+            label="Accessibility needs"
+            sublabel={accessibilitySublabel}
+            onClick={() => navigate('profile_accessibility')}
+          />
         </ListCard>
 
         {/* ── Consent management ───────────────────────────────── */}
@@ -459,48 +544,10 @@ export default function AccountScreen({ navigate }: Props) {
               </button>
               <button
                 onClick={saveName}
-                className="flex-1 py-4 bg-[#5B4FE9] text-white text-[16px] font-medium rounded-full active:opacity-80"
+                disabled={nameSaving}
+                className="flex-1 py-4 bg-[#5B4FE9] text-white text-[16px] font-medium rounded-full active:opacity-80 disabled:opacity-50"
               >
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Edit email sheet ─────────────────────────────────────── */}
-      {showEditEmail && (
-        <div className="fixed inset-0 z-[60]" onClick={() => setShowEditEmail(false)}>
-          <div className="absolute inset-0 bg-black/40" />
-          <div
-            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[512px] bg-white rounded-t-[24px] p-6"
-            style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="w-9 h-1 bg-[#d7d6dc] rounded-full mx-auto mb-5" />
-            <h3 className="text-[18px] font-bold text-[#1c1c1e] mb-5">Edit your email</h3>
-            <div className="mb-6">
-              <label className="text-[12px] text-[#8e8e93] font-medium block mb-1">Email address</label>
-              <input
-                type="email"
-                value={draftEmail}
-                onChange={e => setDraftEmail(e.target.value)}
-                placeholder="your@email.com"
-                className="w-full bg-white border border-[#d7d6dc] rounded-[8px] px-4 py-3 text-[16px] text-[#1c1c1e] placeholder-[#8e8e93] focus:outline-none focus:border-[#5B4FE9] focus:ring-1 focus:ring-[#5B4FE9]/10 transition-colors"
-              />
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowEditEmail(false)}
-                className="flex-1 py-4 bg-[#EEF2FF] text-[#5B4FE9] text-[16px] font-medium rounded-full active:opacity-70"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={saveEmail}
-                className="flex-1 py-4 bg-[#5B4FE9] text-white text-[16px] font-medium rounded-full active:opacity-80"
-              >
-                Save
+                {nameSaving ? 'Saving…' : 'Save'}
               </button>
             </div>
           </div>

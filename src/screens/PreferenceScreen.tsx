@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import ScreenNav from '../components/ScreenNav';
+import { useConsentEngine } from '../context/ConsentEngineContext';
+import { getProfile, updateProfile } from '../api/consentEngineClient';
 import type { ViewName } from '../types';
 
 const variants = {
@@ -9,7 +11,7 @@ const variants = {
   exit: { opacity: 0, x: -32, transition: { duration: 0.14 } },
 };
 
-// ─── Preferences storage ─────────────────────────────────────────────────────
+// ─── Preferences storage (localStorage fallback) ──────────────────────────────
 
 const STORAGE_KEY = 'neoke_travel_preferences';
 
@@ -22,7 +24,7 @@ interface StoredPreferences {
   seat: string[];
 }
 
-function loadPref(key: PrefKey): string[] {
+function loadLocalPref(key: PrefKey): string[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
@@ -33,7 +35,7 @@ function loadPref(key: PrefKey): string[] {
   return [];
 }
 
-function savePref(key: PrefKey, values: string[]): void {
+function saveLocalPref(key: PrefKey, values: string[]): void {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     const prefs: Partial<StoredPreferences> = raw ? JSON.parse(raw) : {};
@@ -41,6 +43,14 @@ function savePref(key: PrefKey, values: string[]): void {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
   } catch { /* ignore */ }
 }
+
+// Map PrefKey → UserProfile field name
+const PREF_TO_PROFILE_FIELD: Record<PrefKey, 'dietaryRequirements' | 'preferredCuisines' | 'accessibilityNeeds' | 'seatPreferences'> = {
+  dietary: 'dietaryRequirements',
+  cuisines: 'preferredCuisines',
+  accessibility: 'accessibilityNeeds',
+  seat: 'seatPreferences',
+};
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -124,7 +134,28 @@ interface Props {
 
 export default function PreferenceScreen({ prefKey, navigate }: Props) {
   const config = PREFERENCE_CONFIGS[prefKey];
-  const [selected, setSelected] = useState<string[]>(() => loadPref(prefKey));
+  const { state: ceState } = useConsentEngine();
+  const apiKey = ceState.ceApiKey ?? '';
+  const ceReady = ceState.ceEnabled && ceState.isConnected && !!apiKey;
+
+  const [selected, setSelected] = useState<string[]>(() => loadLocalPref(prefKey));
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Load from CE on mount if connected (CE is source of truth)
+  useEffect(() => {
+    if (!ceReady) return;
+    setLoading(true);
+    getProfile(apiKey)
+      .then(data => {
+        const field = PREF_TO_PROFILE_FIELD[prefKey];
+        const values = data[field] ?? [];
+        setSelected(values);
+        saveLocalPref(prefKey, values); // keep local cache in sync
+      })
+      .catch(() => { /* use localStorage values already loaded */ })
+      .finally(() => setLoading(false));
+  }, [ceReady, apiKey, prefKey]);
 
   const toggle = (option: string) => {
     setSelected(prev =>
@@ -132,8 +163,18 @@ export default function PreferenceScreen({ prefKey, navigate }: Props) {
     );
   };
 
-  const handleSave = () => {
-    savePref(prefKey, selected);
+  const handleSave = async () => {
+    setSaving(true);
+    // Always save locally
+    saveLocalPref(prefKey, selected);
+    // Save to CE if connected
+    if (ceReady) {
+      try {
+        const field = PREF_TO_PROFILE_FIELD[prefKey];
+        await updateProfile(apiKey, { [field]: selected });
+      } catch { /* local save already done */ }
+    }
+    setSaving(false);
     navigate('account');
   };
 
@@ -155,34 +196,42 @@ export default function PreferenceScreen({ prefKey, navigate }: Props) {
           <p className="text-[16px] text-[#8e8e93] leading-6">{config.subtitle}</p>
         </div>
 
-        {/* Chip groups */}
-        <div className="space-y-5">
-          {config.groups.map((group, gi) => (
-            <div key={gi} className="space-y-3">
-              {group.label && (
-                <p className="text-[16px] font-semibold text-[#1c1c1e] leading-6">{group.label}</p>
-              )}
-              <div className="flex flex-wrap gap-2">
-                {group.options.map(option => {
-                  const isSelected = selected.includes(option);
-                  return (
-                    <button
-                      key={option}
-                      onClick={() => toggle(option)}
-                      className={`px-4 py-2.5 rounded-full text-[16px] font-medium leading-6 transition-colors active:scale-95 ${
-                        isSelected
-                          ? 'bg-[#d4d1ff] text-[#1c1c1e]'
-                          : 'bg-[#f1f1f3] text-[#1c1c1e]'
-                      }`}
-                    >
-                      {option}
-                    </button>
-                  );
-                })}
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-10 bg-white/60 rounded-full animate-pulse w-32" />
+            ))}
+          </div>
+        ) : (
+          /* Chip groups */
+          <div className="space-y-5">
+            {config.groups.map((group, gi) => (
+              <div key={gi} className="space-y-3">
+                {group.label && (
+                  <p className="text-[16px] font-semibold text-[#1c1c1e] leading-6">{group.label}</p>
+                )}
+                <div className="flex flex-wrap gap-2">
+                  {group.options.map(option => {
+                    const isSelected = selected.includes(option);
+                    return (
+                      <button
+                        key={option}
+                        onClick={() => toggle(option)}
+                        className={`px-4 py-2.5 rounded-full text-[16px] font-medium leading-6 transition-colors active:scale-95 ${
+                          isSelected
+                            ? 'bg-[#d4d1ff] text-[#1c1c1e]'
+                            : 'bg-[#f1f1f3] text-[#1c1c1e]'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </main>
 
       {/* Footer buttons */}
@@ -198,9 +247,10 @@ export default function PreferenceScreen({ prefKey, navigate }: Props) {
         </button>
         <button
           onClick={handleSave}
-          className="flex-1 py-4 bg-[#5B4FE9] text-white text-[16px] font-medium rounded-full active:opacity-70 transition-opacity"
+          disabled={saving}
+          className="flex-1 py-4 bg-[#5B4FE9] text-white text-[16px] font-medium rounded-full active:opacity-70 transition-opacity disabled:opacity-50"
         >
-          Save
+          {saving ? 'Saving…' : 'Save'}
         </button>
       </div>
     </motion.div>
