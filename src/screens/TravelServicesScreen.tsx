@@ -4,6 +4,7 @@ import { useConsentEngine } from '../context/ConsentEngineContext';
 import { useAuth } from '../context/AuthContext';
 import { listRules, listAuditSummary } from '../api/consentEngineClient';
 import { serviceNameFromRuleLabel, extractVerifierName } from '../utils/credentialHelpers';
+import PrimaryButton from '../components/PrimaryButton';
 import type { ConsentRule } from '../types/consentEngine';
 import type { ViewName } from '../types';
 
@@ -16,7 +17,7 @@ const variants = {
 };
 
 interface Props {
-  navigate: (view: ViewName, extra?: { selectedServiceDid?: string }) => void;
+  navigate: (view: ViewName, extra?: { selectedServiceDid?: string; editingRuleId?: string | null }) => void;
 }
 
 function nameForRule(rule: ConsentRule): string {
@@ -247,6 +248,13 @@ export default function TravelServicesScreen({ navigate }: Props) {
           </>
         )}
       </main>
+
+      {/* Fixed bottom CTA */}
+      <div className="fixed bottom-0 left-0 right-0 max-w-[512px] mx-auto px-5 pt-4 pb-10 bg-[#F2F2F7] z-40 shadow-[0_-1px_0_rgba(0,0,0,0.05)]">
+        <PrimaryButton onClick={() => navigate('consent_rule_editor', { editingRuleId: null })}>
+          New Consent Rule
+        </PrimaryButton>
+      </div>
     </motion.div>
   );
 }
