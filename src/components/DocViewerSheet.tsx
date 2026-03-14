@@ -53,9 +53,9 @@ function DocViewerSheetInner({ url, title, onClose }: Props) {
         </div>
       </div>
 
-      {/* Content */}
+      {/* Content — ?embedded=true strips Google's nav chrome */}
       <iframe
-        src={url}
+        src={`${url}?embedded=true`}
         title={title}
         className="flex-1 w-full border-0"
       />
