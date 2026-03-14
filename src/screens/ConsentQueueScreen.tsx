@@ -273,8 +273,10 @@ export default function ConsentQueueScreen({ navigate }: Props) {
     }
   };
 
-  const pendingItems = items.filter(i => i.status === 'pending');
-  const resolvedItems = items.filter(i => i.status !== 'pending');
+  // Only count/display pending items that haven't expired yet as actionable.
+  // Expired-but-pending items are non-actionable — treat them like resolved ones.
+  const pendingItems = items.filter(i => i.status === 'pending' && !i.isExpired);
+  const resolvedItems = items.filter(i => i.status !== 'pending' || i.isExpired);
 
   return (
     <motion.div variants={variants} initial="initial" animate="animate" exit="exit"
