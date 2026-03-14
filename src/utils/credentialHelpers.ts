@@ -58,6 +58,23 @@ const CLAIM_LABELS: Record<string, Record<string, string>> = {
     age_over_18: 'Age Over 18',
     nationality: 'Nationality',
   },
+  // org.iso.23220.1 — base namespace used in DCQL queries for PhotoID
+  'org.iso.23220.1': {
+    family_name: 'Family Name',
+    given_name: 'Given Name',
+    birth_date: 'Date of Birth',
+    document_number: 'Document Number',
+    portrait: 'Photo',
+    expiry_date: 'Expiry Date',
+    issue_date: 'Issue Date',
+    issuing_authority: 'Issuing Authority',
+    issuing_country: 'Issuing Country',
+    nationality: 'Nationality',
+    sex: 'Sex',
+    age_over_18: 'Age Over 18',
+    resident_address: 'Address',
+    birth_place: 'Place of Birth',
+  },
 };
 
 const DOC_TYPE_DESCRIPTIONS: Record<string, string> = {
@@ -428,10 +445,18 @@ export function formatDate(dateStr: string): string {
 /** Parse "namespace:key" claim string into a human label. */
 export function parseDisclosedClaim(claim: string): string {
   const colonIdx = claim.indexOf(':');
-  if (colonIdx < 0) return humanizeLabel(claim);
-  const namespace = claim.slice(0, colonIdx);
-  const key = claim.slice(colonIdx + 1);
-  return getClaimLabel(namespace, key);
+  if (colonIdx >= 0) {
+    const namespace = claim.slice(0, colonIdx);
+    const key = claim.slice(colonIdx + 1);
+    return getClaimLabel(namespace, key);
+  }
+  // Dot-separated path (e.g. "electronicPassport.dataGroup1.holdersName") — humanize last segment
+  if (claim.includes('.')) {
+    const parts = claim.split('.');
+    const lastPart = parts[parts.length - 1];
+    if (lastPart && /[a-zA-Z]{2,}/.test(lastPart)) return humanizeLabel(lastPart);
+  }
+  return humanizeLabel(claim);
 }
 
 /** Get a readable label for a VP candidate type array. */
