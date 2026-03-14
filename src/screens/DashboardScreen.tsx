@@ -15,9 +15,8 @@ const STALE_THRESHOLD_MS = 5 * 60 * 1000;
 
 export default function DashboardScreen({ navigate, refreshSignal }: DashboardScreenProps) {
   const { state, markExpired } = useAuth();
-  // Initialize with local credentials to avoid flicker
-  const [credentials, setCredentials] = useState<Credential[]>(getLocalCredentials());
-  const [loading, setLoading] = useState(false);
+  const [credentials, setCredentials] = useState<Credential[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [usingLocalFallback, setUsingLocalFallback] = useState(false);
 

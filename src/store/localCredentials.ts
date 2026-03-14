@@ -3,6 +3,12 @@ import type { Credential } from '../types';
 const STORAGE_KEY = 'neoke_credentials';
 const COUNT_KEY = 'neoke_credentials_count';
 
+/**
+ * How long to keep a locally-saved credential visible even if the server
+ * hasn't indexed it yet (e.g. node delay after issuance).
+ */
+const PENDING_GRACE_MS = 5 * 60 * 1000; // 5 minutes
+
 /** Last known credential count — survives cache clears, used for skeleton sizing */
 export function getLocalCredentialCount(): number {
   try {
@@ -28,7 +34,10 @@ export function getLocalCredentials(): Credential[] {
 
 export function saveLocalCredential(credential: Credential): void {
   const existing = getLocalCredentials();
-  const updated = [credential, ...existing.filter((c) => c.id !== credential.id)];
+  // Tag with save time so mergeWithLocalCredentials can keep recently-received
+  // credentials visible even if the node hasn't indexed them yet.
+  const tagged = { ...credential, _savedAt: Date.now() };
+  const updated = [tagged, ...existing.filter((c) => c.id !== credential.id)];
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   persistCount(updated);
 }
@@ -41,6 +50,8 @@ export function deleteLocalCredential(id: string): void {
 
 export function clearLocalCredentials(): void {
   localStorage.removeItem(STORAGE_KEY);
+  // COUNT_KEY is intentionally NOT cleared — it persists so the skeleton
+  // on the next mount shows the right number of placeholder cards.
 }
 
 /**
@@ -48,13 +59,15 @@ export function clearLocalCredentials(): void {
  * with locally stored credentials (richer field data from the receive flow).
  * Writes the merged list back to localStorage so it stays in sync.
  *
- * If serverCreds is empty, the local store is cleared to match the server.
+ * Credentials saved locally within PENDING_GRACE_MS are kept even if the
+ * server hasn't returned them yet — handles the window between issuance and
+ * the node indexing the credential in its discovery endpoint.
  */
 export function mergeWithLocalCredentials(serverCreds: Credential[]): Credential[] {
   const local = getLocalCredentials();
+  const serverIds = new Set(serverCreds.map(c => c.id));
 
   const merged = serverCreds.map((serverCred) => {
-    // Match by exact credential ID first (most precise)
     const localMatch = local.find((lc) => lc.id === serverCred.id);
 
     if (localMatch) {
@@ -70,7 +83,6 @@ export function mergeWithLocalCredentials(serverCreds: Credential[]): Credential
           (localMatch._availableClaims as string[] | undefined),
         namespaces: serverCred.namespaces ?? localMatch.namespaces,
         // Server-parsed credentialSubject (e.g. SD-JWT claims) takes precedence
-        // over whatever the local copy has, which may be stale or empty.
         credentialSubject: serverCred.credentialSubject ?? localMatch.credentialSubject,
         displayMetadata: serverCred.displayMetadata ?? localMatch.displayMetadata,
       };
@@ -78,8 +90,21 @@ export function mergeWithLocalCredentials(serverCreds: Credential[]): Credential
     return serverCred;
   });
 
-  // Write back so localStorage mirrors the server exactly
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-  persistCount(merged);
-  return merged;
+  // Preserve credentials that were received locally but the server hasn't
+  // returned yet (e.g. node indexing delay after issuance). Only kept for
+  // PENDING_GRACE_MS — after that, if the server still doesn't return them,
+  // they're treated as gone.
+  const now = Date.now();
+  const pendingLocal = local.filter(lc => {
+    if (serverIds.has(lc.id)) return false; // already in server response
+    const savedAt = lc._savedAt as number | undefined;
+    return savedAt !== undefined && now - savedAt < PENDING_GRACE_MS;
+  });
+
+  const result = [...merged, ...pendingLocal];
+
+  // Write back so localStorage mirrors the authoritative + pending state
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
+  persistCount(result);
+  return result;
 }
