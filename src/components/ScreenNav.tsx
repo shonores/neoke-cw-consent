@@ -8,15 +8,17 @@ interface ScreenNavProps {
   right?: ReactNode;
   /** Override for back button aria-label. Defaults to "Go back". */
   backLabel?: string;
+  /** Whether the nav sticks to the top while scrolling. Defaults to true. */
+  sticky?: boolean;
 }
 
 /**
  * Standard screen navigation header used across all screens.
  * Produces a consistent 44px-tall nav with optional back button and right action.
  */
-export default function ScreenNav({ title, onBack, right, backLabel = 'Go back' }: ScreenNavProps) {
+export default function ScreenNav({ title, onBack, right, backLabel = 'Go back', sticky = true }: ScreenNavProps) {
   return (
-    <nav className={`sticky top-0 z-10 bg-[#F2F2F7] px-5 pt-14 pb-4 flex items-center ${right ? 'justify-between' : 'gap-3'}`}>
+    <nav className={`${sticky ? 'sticky top-0 z-10' : ''} bg-[#F2F2F7] px-5 pt-14 pb-4 flex items-center ${right ? 'justify-between' : 'gap-3'}`}>
       <div className="flex items-center gap-3">
         {onBack && (
           <button

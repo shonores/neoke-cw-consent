@@ -629,7 +629,7 @@ if (stage === 'error') {
 
   return (
     <div className="flex flex-col min-h-screen bg-[var(--bg-ios)]">
-      <nav className="sticky top-0 z-10 bg-[var(--bg-ios)] px-5 pt-14 pb-4 flex items-center gap-3">
+      <nav className="bg-[var(--bg-ios)] px-5 pt-14 pb-4 flex items-center gap-3">
         <button
           onClick={() => navigate('dashboard')}
           className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"

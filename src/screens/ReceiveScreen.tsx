@@ -320,6 +320,7 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
       <ScreenNav
         title="Scan QR Code"
         onBack={initialUri ? () => navigate('dashboard') : undefined}
+        sticky={false}
       />
 
       {/* CE bypass notice */}
