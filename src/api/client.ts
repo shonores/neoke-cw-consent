@@ -245,18 +245,24 @@ export function extractDisplayMetadataFromDoc(data: unknown): import('../types')
     if (!obj || typeof obj !== 'object') continue;
     const o = obj as Record<string, unknown>;
 
+    const rendering = o['rendering'] as Record<string, unknown> | undefined;
+    const renderingSimple = rendering?.['simple'] as Record<string, unknown> | undefined;
     const bg =
       (typeof o['backgroundColor'] === 'string' ? o['backgroundColor'] : undefined) ??
-      (typeof o['background_color'] === 'string' ? o['background_color'] : undefined);
+      (typeof o['background_color'] === 'string' ? o['background_color'] : undefined) ??
+      (typeof renderingSimple?.['background_color'] === 'string' ? renderingSimple['background_color'] as string : undefined);
     const fg =
       (typeof o['textColor'] === 'string' ? o['textColor'] : undefined) ??
-      (typeof o['text_color'] === 'string' ? o['text_color'] : undefined);
+      (typeof o['text_color'] === 'string' ? o['text_color'] : undefined) ??
+      (typeof renderingSimple?.['text_color'] === 'string' ? renderingSimple['text_color'] as string : undefined);
+    const svgTemplates = rendering?.['svg_templates'] as Array<Record<string, unknown>> | undefined;
     const logo =
       (typeof o['logoUrl'] === 'string' ? o['logoUrl'] : undefined) ??
       (typeof o['logo_url'] === 'string' ? o['logo_url'] : undefined) ??
       (typeof (o['logo'] as Record<string, unknown> | undefined)?.['uri'] === 'string'
         ? (o['logo'] as Record<string, unknown>)['uri'] as string
-        : undefined);
+        : undefined) ??
+      (typeof svgTemplates?.[0]?.['uri'] === 'string' ? svgTemplates[0]['uri'] as string : undefined);
     const label =
       (typeof o['label'] === 'string' ? o['label'] : undefined) ??
       (typeof o['name'] === 'string' ? o['name'] : undefined);
@@ -288,6 +294,10 @@ interface StoredCredentialRaw {
       background_color?: string;
       text_color?: string;
       logo?: { uri?: string };
+      rendering?: {
+        simple?: { background_color?: string; text_color?: string };
+        svg_templates?: Array<{ uri?: string }>;
+      };
     }>;
     nameSpaces?: Record<string, Record<string, unknown>>;
     statusRef?: { idx: number; uri: string };
@@ -500,11 +510,11 @@ export async function fetchStoredCredentials(token: string): Promise<Credential[
       credentialSubject,
       displayMetadata: display
         ? {
-          backgroundColor: display.background_color,
-          textColor: display.text_color,
+          backgroundColor: display.background_color ?? display.rendering?.simple?.background_color,
+          textColor: display.text_color ?? display.rendering?.simple?.text_color,
           label: display.name,
           description: display.description,
-          logoUrl: display.logo?.uri,
+          logoUrl: display.logo?.uri ?? display.rendering?.svg_templates?.[0]?.uri,
         }
         : undefined,
     } as Credential;
@@ -524,6 +534,10 @@ interface CredentialTypeRaw {
     background_color?: string;
     text_color?: string;
     logo?: { uri?: string };
+    rendering?: {
+      simple?: { background_color?: string; text_color?: string };
+      svg_templates?: Array<{ uri?: string }>;
+    };
   }>;
 }
 
@@ -541,11 +555,11 @@ async function loadTypeDisplayMap(token: string): Promise<Map<string, import('..
       const display = t.credentialDisplay?.find((d) => d.locale?.startsWith('en')) ?? t.credentialDisplay?.[0];
       if (display) {
         map.set(t.docType, {
-          backgroundColor: display.background_color,
-          textColor: display.text_color,
+          backgroundColor: display.background_color ?? display.rendering?.simple?.background_color,
+          textColor: display.text_color ?? display.rendering?.simple?.text_color,
           label: display.name,
           description: display.description,
-          logoUrl: display.logo?.uri,
+          logoUrl: display.logo?.uri ?? display.rendering?.svg_templates?.[0]?.uri,
         });
       }
     }
