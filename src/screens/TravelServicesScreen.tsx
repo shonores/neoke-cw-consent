@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
 import { useAuth } from '../context/AuthContext';
-import { listRules, listAuditEvents } from '../api/consentEngineClient';
-import { serviceNameFromRuleLabel, serviceNameFromEvent, extractVerifierName } from '../utils/credentialHelpers';
+import { listRules, listAuditSummary } from '../api/consentEngineClient';
+import { serviceNameFromRuleLabel, extractVerifierName } from '../utils/credentialHelpers';
 import type { ConsentRule } from '../types/consentEngine';
 import type { ViewName } from '../types';
 
@@ -73,9 +73,9 @@ export default function TravelServicesScreen({ navigate }: Props) {
     setLoading(true);
     setError('');
     try {
-      const [rules, events] = await Promise.all([
+      const [rules, summary] = await Promise.all([
         listRules(apiKey),
-        listAuditEvents(apiKey, { nodeId, limit: 100, order: 'desc' }),
+        listAuditSummary(apiKey, nodeId),
       ]);
 
       // All DID-specific verification rules — enabled (Always) and disabled (Never)
@@ -90,19 +90,19 @@ export default function TravelServicesScreen({ navigate }: Props) {
       // Build set of DIDs that have rules
       const ruleDidSet = new Set(did.map(r => r.party.value!));
 
-      // Derive "ask" services from audit events (services without a rule)
-      const seen = new Map<string, { name: string; lastSeen: string }>();
-      for (const e of events) {
-        const vDid = e.verifierDid;
-        if (!vDid || ruleDidSet.has(vDid) || seen.has(vDid)) continue;
-        const name = serviceNameFromEvent(e);
+      // Derive "ask" services from audit summary (services without a rule)
+      const askList: Array<{ did: string; name: string; lastSeen: string }> = [];
+      for (const entry of summary) {
+        const vDid = entry.verifierDid;
+        if (!vDid || ruleDidSet.has(vDid)) continue;
+        const name = extractVerifierName(vDid);
         if (!name || name === 'Unknown service') continue;
-        seen.set(vDid, { name, lastSeen: e.timestamp });
+        askList.push({ did: vDid, name, lastSeen: entry.lastSharedAt });
       }
 
       setDidRules(did);
       setGlobalRules(globals);
-      setAskServices(Array.from(seen.entries()).map(([did, { name, lastSeen }]) => ({ did, name, lastSeen })));
+      setAskServices(askList);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load services.');
     } finally {

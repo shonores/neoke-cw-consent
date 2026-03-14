@@ -35,6 +35,8 @@ const CE_ERROR_MESSAGES: Record<string, string> = {
   REQUEST_EXPIRED: 'This request has expired and can no longer be processed.',
   REQUEST_STILL_PENDING: 'Cannot delete an active pending request. Reject it first.',
   NODE_DISCONNECTED: 'The Consent Engine is not connected to your wallet node.',
+  NODE_RESPOND_FAILED: 'Your wallet node could not respond to the request. Please try again.',
+  NODE_RECEIVE_FAILED: 'Your wallet node could not receive the credential. Please try again.',
   INVALID_API_KEY: 'Invalid API key. Please check your credentials.',
 };
 

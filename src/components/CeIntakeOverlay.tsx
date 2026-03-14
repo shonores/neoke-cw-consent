@@ -35,7 +35,8 @@ function Spinner() {
  * Shows a "Processing" screen immediately, then transitions to success or falls back.
  */
 export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback, onReviewQueue }: Props) {
-  const [phase, setPhase] = useState<'processing' | 'success'>('processing');
+  const [phase, setPhase] = useState<'processing' | 'success' | 'error'>('processing');
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -49,8 +50,15 @@ export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback
           setPhase('success');
           setTimeout(() => { if (!cancelled) onDismiss(); }, 1800);
         } else {
-          // rejected (e.g. preview_failed) — fall back to manual consent flow
-          onFallback(rawLink, detectLinkType(rawLink));
+          // Distinguish: preview_failed means the link itself is expired/invalid
+          // (manual consent will also fail). Other rejections fall back to manual.
+          const reason = (result as { reason?: string }).reason ?? '';
+          if (reason === 'preview_failed') {
+            setErrorMsg('This QR code has expired or is no longer valid. Ask for a new one.');
+            setPhase('error');
+          } else {
+            onFallback(rawLink, detectLinkType(rawLink));
+          }
         }
       } catch {
         if (cancelled) return;
@@ -80,7 +88,7 @@ export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback
               <p className="text-[#8e8e93] text-[17px] mt-2">Checking your consent rules…</p>
             </div>
           </motion.div>
-        ) : (
+        ) : phase === 'success' ? (
           <motion.div
             key="success"
             initial={{ opacity: 0, scale: 0.92 }}
@@ -100,6 +108,36 @@ export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback
               <h2 className="text-[#1c1c1e] font-bold text-[28px] leading-tight">Information shared</h2>
               <p className="text-[#8e8e93] text-[17px] mt-2">Returning to Home…</p>
             </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="error"
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+            className="flex flex-col items-center gap-6"
+          >
+            <motion.div
+              initial={{ scale: 0.5 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', damping: 16, stiffness: 400 }}
+              className="w-24 h-24 bg-red-50 border border-red-100 rounded-full flex items-center justify-center"
+            >
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <circle cx="12" cy="12" r="10" stroke="#ef4444" strokeWidth="1.5" />
+                <path d="M12 8v4M12 16h.01" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            </motion.div>
+            <div>
+              <h2 className="text-[#1c1c1e] font-bold text-[28px] leading-tight">Link expired</h2>
+              <p className="text-[#8e8e93] text-[17px] mt-2 max-w-[260px]">{errorMsg}</p>
+            </div>
+            <button
+              onClick={onDismiss}
+              className="px-8 py-3 rounded-full bg-[#1c1c1e] text-white text-[15px] font-semibold active:opacity-80 transition-opacity"
+            >
+              Close
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
