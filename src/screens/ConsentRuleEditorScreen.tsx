@@ -65,6 +65,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
   const [expiresAt, setExpiresAt] = useState('');
   const [maxUses, setMaxUses] = useState(10);
   const [label, setLabel] = useState('');
+  const [ruleEnabled, setRuleEnabled] = useState(true);
 
   const [credentialTypes, setCredentialTypes] = useState<NodeCredentialType[]>([]);
   const [availableClaims, setAvailableClaims] = useState<NodeCredentialType['claims']>([]);
@@ -81,6 +82,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
         const rule = rules.find(r => r.id === editingRuleId);
         if (rule) {
           setRuleType(rule.ruleType);
+          setRuleEnabled(rule.enabled);
           setLabel(rule.label ?? '');
           if (rule.credentialType.matchType === 'exact' && rule.credentialType.value) {
             setCredentialTypeMode('specific');
@@ -150,7 +152,7 @@ export default function ConsentRuleEditorScreen({ navigate, editingRuleId }: Pro
       const payload: CreateRulePayload = {
         nodeId: authState.nodeIdentifier || '',
         ruleType,
-        enabled: true,
+        enabled: ruleEnabled,
         label: label.trim() || 'Untitled Rule',
         party: {
           matchType: partyMatchType,
