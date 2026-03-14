@@ -175,7 +175,7 @@ export default function ConsentRequestView({
         {/* ── Transaction data ─────────────────────────────────── */}
         {transactionData && transactionData.length > 0 && (
           <div>
-            <SectionLabel>Transaction</SectionLabel>
+            <SectionLabel>Reason</SectionLabel>
             <div className="bg-white rounded-[16px] overflow-hidden border border-[#f1f1f3]">
               {transactionData.map((item, i) => (
                 <div

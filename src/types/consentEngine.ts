@@ -81,6 +81,7 @@ export interface QueueItemPreview {
   issuerDid?: string;
   credentialTypes?: string[];
   requiresPin?: boolean;
+  transactionData?: string[];
 }
 
 export interface PendingRequest {
