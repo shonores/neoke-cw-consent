@@ -127,7 +127,9 @@ export type AuditAction =
   | 'manually_rejected'
   | 'queued'
   | 'rejected'
-  | 'expired';
+  | 'expired'
+  | 'delegation_created'
+  | 'delegation_redeemed';
 
 export interface AuditEvent {
   id: string;

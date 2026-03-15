@@ -162,7 +162,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
               ruleType: 'issuance' as const,
               action: 'auto_execute' as const,
               enabled: true,
-              label: `Always accept: ${extractServiceNameForLabel(issuerDid)}`,
+              label: `Always accept: ${item.preview.issuerName ?? extractServiceNameForLabel(issuerDid)}`,
               party: {
                 matchType: (issuerDid ? 'did' : 'any') as 'did' | 'any',
                 value: issuerDid,

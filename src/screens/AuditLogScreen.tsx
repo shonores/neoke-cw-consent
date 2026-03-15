@@ -105,6 +105,16 @@ function getEventContent(event: AuditEvent): { title: string; description: strin
         title: service,
         description: `A credential was automatically received from ${service}${credType}.`,
       };
+    case 'delegation_created':
+      return {
+        title: service,
+        description: `You approved sharing your credentials with ${service}${credType}.`,
+      };
+    case 'delegation_redeemed':
+      return {
+        title: service,
+        description: `Your credentials were shared with ${service} via delegation${credType}.`,
+      };
     default:
       return { title: service, description: `Activity from ${service}.` };
   }
@@ -124,13 +134,17 @@ function statusMeta(action: AuditAction): { label: string; type: 'pill' | 'text-
       return { label: 'Shared successfully', type: 'text-green' };
     case 'auto_received':
       return { label: 'Received successfully', type: 'text-green' };
+    case 'delegation_created':
+      return { label: 'Delegation approved', type: 'text-green' };
+    case 'delegation_redeemed':
+      return { label: 'Shared via delegation', type: 'text-green' };
     default:
       return null;
   }
 }
 
 function ServiceAvatar({ action }: { action: AuditAction }) {
-  const isShare = action === 'auto_presented' || action === 'manually_approved' || action === 'queued';
+  const isShare = action === 'auto_presented' || action === 'manually_approved' || action === 'queued' || action === 'delegation_created' || action === 'delegation_redeemed';
   const isReceive = action === 'auto_received';
   const isRejected = action === 'rejected' || action === 'manually_rejected';
   const isExpired = action === 'expired';
@@ -236,7 +250,7 @@ function EventDetailSheet({
   onNavigateToService: (did: string) => void;
 }) {
   const service = serviceNameFromEvent(event);
-  const isShared = event.action === 'auto_presented' || event.action === 'manually_approved';
+  const isShared = event.action === 'auto_presented' || event.action === 'manually_approved' || event.action === 'delegation_created' || event.action === 'delegation_redeemed';
   const isDeclined = event.action === 'rejected' || event.action === 'manually_rejected';
   const fields = (event.allowedFields && event.allowedFields.length > 0)
     ? event.allowedFields

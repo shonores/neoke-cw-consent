@@ -337,10 +337,12 @@ export function serviceNameFromRuleLabel(label?: string | null): string | null {
 /**
  * Best-effort service name from an audit event.
  * Priority:
- *   1. ruleLabel  — set at approval time, contains the human-readable name
- *   2. verifierName — CE-supplied field (populated from client_metadata.client_name in VP JWT)
- *   3. extractVerifierName(verifierDid) — works for did:web / x509_san_dns; returns
- *      'Unknown service' for opaque x509_hash identifiers
+ *   1. verifierName — CE-supplied authoritative name (client_metadata.client_name, issuerNameHint,
+ *      or recipientService for delegation). Takes priority over rule label because labels may
+ *      contain stale hostnames (e.g. "Always accept: airscout.id-node.neoke.com").
+ *   2. ruleLabel  — set at approval time, stripped of mode prefix
+ *   3. extractVerifierName(verifierDid/issuerDid) — works for did:web / x509_san_dns
+ *   4. partyDomain — last resort (requesterService domain for delegation, linked domain for VP)
  */
 export function serviceNameFromEvent(event: {
   ruleLabel?: string | null;
@@ -349,10 +351,10 @@ export function serviceNameFromEvent(event: {
   issuerDid?: string | null;
   partyDomain?: string | null;
 }): string {
-  const fromLabel = serviceNameFromRuleLabel(event.ruleLabel);
-  if (fromLabel) return fromLabel;
   const fromVerifierName = event.verifierName?.trim();
   if (fromVerifierName) return fromVerifierName;
+  const fromLabel = serviceNameFromRuleLabel(event.ruleLabel);
+  if (fromLabel) return fromLabel;
   // extractVerifierName returns 'Unknown service' for missing/opaque ids — skip it if
   // partyDomain is available as a better fallback for delegation events
   const did = event.verifierDid ?? event.issuerDid ?? undefined;
