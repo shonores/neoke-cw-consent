@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 import { useConsentEngine } from '../context/ConsentEngineContext';
 import { getQueueItem, approveQueueItem, rejectQueueItem, createRule, updateRule, listRules } from '../api/consentEngineClient';
+import { receiveCredential, fetchKeys } from '../api/client';
 import ConsentRequestView from '../components/ConsentRequestView';
 import CredentialCardFace from '../components/CredentialCardFace';
 import { getLocalCredentials } from '../store/localCredentials';
@@ -77,6 +79,7 @@ function extractServiceNameForLabel(did?: string, name?: string): string {
 
 
 export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Props) {
+  const { state: authState } = useAuth();
   const { state, refreshPendingCount } = useConsentEngine();
   const apiKey = state.ceApiKey ?? '';
 
@@ -211,7 +214,24 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
       const credSelectionsParam = Object.keys(credSelections).length > 0
         ? Object.fromEntries(Object.entries(credSelections).map(([k, v]) => [k, String(v)]))
         : undefined;
-      await approveQueueItem(apiKey, item.id, txCode, credSelectionsParam);
+      try {
+        await approveQueueItem(apiKey, item.id, txCode, credSelectionsParam);
+      } catch (ceErr) {
+        // CE approve failed — for credential offers, try wallet-direct receive as fallback.
+        // This handles cases where the wallet node requires bindingMode:'jwk' but the CE
+        // doesn't know to retry with it (e.g. external EUDI issuers like hopae.app).
+        if (item.linkType === 'credential_offer' && item.rawLink && authState.token) {
+          let keyId = '';
+          try {
+            const keys = await fetchKeys(authState.token);
+            if (keys.length > 0) keyId = keys[0].id;
+          } catch { /* proceed without keyId */ }
+          await receiveCredential(authState.token, item.rawLink, keyId);
+          // Direct receive succeeded — fall through to success
+        } else {
+          throw ceErr;
+        }
+      }
       await refreshPendingCount();
       setActionState('done');
       setTimeout(() => navigate('dashboard'), 1800);
