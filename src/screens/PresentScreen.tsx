@@ -401,23 +401,13 @@ if (stage === 'error') {
 
     return (
       <div className="flex flex-col min-h-screen bg-[var(--bg-ios)] overflow-x-hidden">
-        <nav className="sticky top-0 z-10 bg-[var(--bg-ios)] px-5 pt-14 pb-3">
-          <button
-            onClick={() => setStage('scan')}
-            className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-          </button>
-        </nav>
-
         <ConsentRequestView
           serviceName={verifierName}
           isVP={true}
           purpose={purpose}
           credentialRows={credentialRows}
           actionState="idle"
+          onBack={() => setStage('scan')}
           onShare={handleShare}
           onAlwaysShare={ceState.ceEnabled && ceState.ceApiKey ? handleAlwaysShare : undefined}
           onReject={() => setStage('scan')}

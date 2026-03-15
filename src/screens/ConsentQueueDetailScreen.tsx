@@ -382,29 +382,17 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
     <motion.div variants={variants} initial="initial" animate="animate" exit="exit"
       className="flex-1 flex flex-col bg-[var(--bg-ios)] min-h-screen">
 
-      <nav className="sticky top-0 z-10 bg-[#F2F2F7] px-5 pt-14 pb-3">
-        <button onClick={() => navigate('consent_queue')} aria-label="Go back"
-          className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </button>
-      </nav>
-
       {isDelegation ? (
         <>
-          {/* Delegation header — pinned above scroll area */}
-          <div className="px-5 pt-3 pb-4">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-[#EEF2FF] rounded-full flex items-center justify-center flex-shrink-0">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path d="M17 8l4 4-4 4M7 16l-4-4 4-4" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M21 12H3" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <p className="text-[12px] font-semibold uppercase tracking-wider text-[#8e8e93]">Data sharing request</p>
-            </div>
-            <h2 className="text-[24px] font-semibold text-[#1c1c1e] leading-[30px]">
+          {/* Delegation: inline back + title header */}
+          <div className="sticky top-0 z-10 bg-[var(--bg-ios)] px-5 pt-14 pb-3 flex items-start gap-3">
+            <button onClick={() => navigate('consent_queue')} aria-label="Go back"
+              className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center flex-shrink-0 mt-0.5 hover:bg-black/10 active:bg-black/[0.15] transition-colors">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+            <h2 className="text-[18px] font-semibold text-[#1c1c1e] leading-snug flex-1 min-w-0 pt-1">
               <span className="text-[#5B4FE9]">{serviceName}</span>
               {' is requesting you to share information with '}
               <span className="font-bold">{item.preview.recipientService ?? 'another service'}</span>
@@ -533,6 +521,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
         actionError={actionError}
         logoUri={item.preview.verifier?.logoUri}
         transactionData={item.preview.transactionData}
+        onBack={() => navigate('consent_queue')}
         onShare={() => handleShareClick(false)}
         onAlwaysShare={!isResolved && !isExpired ? () => handleShareClick(true) : undefined}
         onReject={handleReject}

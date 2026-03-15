@@ -41,6 +41,8 @@ export interface ConsentRequestViewProps {
   onReject: () => void;
   /** Extra content rendered at the top (e.g. expiry or resolved banners) */
   extras?: ReactNode;
+  /** When provided, renders a back button inline with the header */
+  onBack?: () => void;
   /** Verifier logo URL (from client_metadata.logo_uri) */
   logoUri?: string;
   /** Transaction data strings (from transaction_data in VP request JWT) */
@@ -141,20 +143,32 @@ export default function ConsentRequestView({
   logoUri,
   transactionData,
   onCredentialClick,
+  onBack,
 }: ConsentRequestViewProps) {
   const localCreds = getLocalCredentials();
   const sharing = actionState === 'sharing';
 
   return (
     <>
-      {/* ── Verifier header — pinned above scroll area ─────────── */}
-      <div className="px-5 pt-3 pb-4">
+      {/* ── Sticky header row: [back] [logo] [title] ──────────── */}
+      <div className="sticky top-0 z-10 bg-[var(--bg-ios)] px-5 pt-14 pb-3 flex items-start gap-3">
+        {onBack && (
+          <button
+            onClick={onBack}
+            aria-label="Go back"
+            className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center flex-shrink-0 mt-0.5 hover:bg-black/10 active:bg-black/[0.15] transition-colors"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+        )}
         {logoUri && (
-          <div className="w-12 h-12 rounded-[14px] bg-white border border-[#f1f1f3] shadow-sm flex items-center justify-center overflow-hidden mb-3">
-            <img src={logoUri} alt="" className="w-10 h-10 object-contain" />
+          <div className="w-10 h-10 rounded-[12px] bg-white border border-[#f1f1f3] shadow-sm flex items-center justify-center overflow-hidden flex-shrink-0 mt-0.5">
+            <img src={logoUri} alt="" className="w-8 h-8 object-contain" />
           </div>
         )}
-        <h2 className="text-[24px] font-semibold text-[#1c1c1e] leading-[28px]">
+        <h2 className="text-[18px] font-semibold text-[#1c1c1e] leading-snug flex-1 min-w-0 pt-1">
           <span className="text-[#5B4FE9]">{serviceName}</span>
           {' '}
           {isVP
