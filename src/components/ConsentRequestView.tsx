@@ -143,7 +143,7 @@ export default function ConsentRequestView({
 
   return (
     <>
-      <main className="flex-1 px-5 pb-52 overflow-y-auto space-y-5">
+      <main className="flex-1 px-5 pt-4 pb-52 overflow-y-auto space-y-5">
         {extras}
 
         {/* ── Verifier header ──────────────────────────────────── */}

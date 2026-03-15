@@ -15,6 +15,7 @@ import {
   parseIssuerLabel,
   getClaimLabel,
   humanizeLabel,
+  extractVerifierName,
 } from '../utils/credentialHelpers';
 import { getLocalCredentials } from '../store/localCredentials';
 import QRScanner from '../components/QRScanner';
@@ -306,7 +307,7 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
         });
         const uniqueFields = [...new Set(allFields)];
 
-        const verifierName = vpExtras.clientName ?? preview.verifier.name ?? parseIssuerLabel(preview.verifier.clientId);
+        const verifierName = extractVerifierName(preview.verifier.clientId, vpExtras.clientName ?? preview.verifier.name);
         const payload: CreateRulePayload = {
           nodeId: state.nodeIdentifier ?? '',
           label: `Always share with ${verifierName}`,
@@ -407,7 +408,7 @@ if (stage === 'error') {
   }
 
   if (stage === 'consent' && preview) {
-    const verifierName = vpExtras.clientName ?? preview.verifier.name ?? parseIssuerLabel(preview.verifier.clientId);
+    const verifierName = extractVerifierName(preview.verifier.clientId, vpExtras.clientName ?? preview.verifier.name);
     const purpose = vpExtras.clientPurpose ?? preview.verifier.purpose;
     const credentialRows = preview.queries.map(q => {
       const cand = q.candidates.find(c => c.index === selections[q.queryId]) ?? q.candidates[0];
@@ -433,7 +434,7 @@ if (stage === 'error') {
 
     return (
       <div className="flex flex-col min-h-screen bg-[var(--bg-ios)] overflow-x-hidden">
-        <nav className="px-5 pt-14 pb-4">
+        <nav className="px-5 pt-14 pb-0">
           <button
             onClick={() => setStage('scan')}
             className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"

@@ -239,7 +239,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
     ? (item.preview.requesterService ?? 'A service')
     : isVP
       ? extractServiceName(item.preview.verifier?.clientId, item.preview.verifier?.name)
-      : extractServiceName(item.preview.issuerDid);
+      : extractServiceName(item.preview.issuerDid, item.preview.issuerName ?? undefined);
 
   // Build credential rows for ConsentRequestView — deduplicated by type
   // For VP requests with matchedCredentials, group by primary type so the user
@@ -309,7 +309,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
     <motion.div variants={variants} initial="initial" animate="animate" exit="exit"
       className="flex-1 flex flex-col bg-[var(--bg-ios)] min-h-screen">
 
-      <nav className="sticky top-0 z-10 bg-[#F2F2F7] px-5 pt-14 pb-4">
+      <nav className="bg-[#F2F2F7] px-5 pt-14 pb-0">
         <button onClick={() => navigate('consent_queue')}
           className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
