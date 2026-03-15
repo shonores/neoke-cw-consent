@@ -65,6 +65,16 @@ function extractServiceName(did?: string, name?: string): string {
   return extractVerifierName(did, name);
 }
 
+/** Returns a service name suitable for a rule label. Falls back to the raw identifier
+ * rather than "Unknown service" so stored labels stay meaningful for future matching. */
+function extractServiceNameForLabel(did?: string, name?: string): string {
+  const resolved = extractVerifierName(did, name);
+  if (resolved !== 'Unknown service') return resolved;
+  // For opaque identifiers, use a truncated form of the raw id rather than "Unknown service"
+  if (did) return did.length > 24 ? did.slice(0, 12) + '…' + did.slice(-8) : did;
+  return 'Unknown';
+}
+
 
 export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Props) {
   const { state, refreshPendingCount } = useConsentEngine();
@@ -132,7 +142,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
               ruleType: 'verification' as const,
               action: 'auto_execute' as const,
               enabled: true,
-              label: `Always: ${item.preview.verifier?.name ?? extractServiceName(item.preview.verifier?.clientId)}`,
+              label: `Always: ${item.preview.verifier?.name ?? extractServiceNameForLabel(item.preview.verifier?.clientId)}`,
               party: {
                 matchType: (item.preview.verifier?.clientId ? 'did' : 'any') as 'did' | 'any',
                 value: item.preview.verifier?.clientId,
@@ -152,7 +162,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
               ruleType: 'issuance' as const,
               action: 'auto_execute' as const,
               enabled: true,
-              label: `Always accept: ${extractServiceName(issuerDid)}`,
+              label: `Always accept: ${extractServiceNameForLabel(issuerDid)}`,
               party: {
                 matchType: (issuerDid ? 'did' : 'any') as 'did' | 'any',
                 value: issuerDid,
@@ -395,7 +405,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
             <h2 className="text-[18px] font-semibold text-[#1c1c1e] leading-snug flex-1 min-w-0 pt-1">
               <span className="text-[#5B4FE9]">{serviceName}</span>
               {' is requesting you to share information with '}
-              <span className="font-bold">{item.preview.recipientService ?? 'another service'}</span>
+              <span className="font-bold">{item.preview.recipientService ?? 'Unknown service'}</span>
             </h2>
           </div>
 
@@ -448,7 +458,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
                         <div className="mr-4 w-10 h-10 rounded-[10px] flex-shrink-0" style={{ backgroundColor }} />
                         <div className="flex-1 min-w-0">
                           <p className="text-[16px] font-bold text-[#1c1c1e] truncate">{label}</p>
-                          <p className="text-[13px] text-[#8e8e93] truncate font-medium">Shared with {row.issuer || item.preview.recipientService}</p>
+                          <p className="text-[13px] text-[#8e8e93] truncate font-medium">Shared with {row.issuer || item.preview.recipientService || 'Unknown service'}</p>
                         </div>
                         <svg width="7" height="12" viewBox="0 0 7 12" fill="none" className="ml-2 flex-shrink-0">
                           <path d="M1 1l5 5-5 5" stroke="#c7c7cc" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
@@ -659,11 +669,18 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
                   const description = sheetLocalCred ? getCredentialDescription(sheetLocalCred) : undefined;
                   const logoUrl = sheetLocalCred?.displayMetadata?.logoUrl;
                   const requestedFieldNames = item.preview.requestedFields ?? [];
-                  const resolvedFields = sheetLocalCred && requestedFieldNames.length > 0
+                  const allLocalFields = sheetLocalCred
+                    ? extractFields(sheetLocalCred).map(f => ({ label: f.label, value: f.value !== undefined ? String(f.value) : '' })).filter(f => f.value)
+                    : [];
+                  const requestedResolved = sheetLocalCred && requestedFieldNames.length > 0
                     ? getRequestedFields(sheetLocalCred, requestedFieldNames)
+                    : null;
+                  const resolvedFields = requestedResolved && requestedResolved.length > 0
+                    ? requestedResolved
                     : sheetLocalCred
-                      ? extractFields(sheetLocalCred).map(f => ({ label: f.label, value: f.value !== undefined ? String(f.value) : '' })).filter(f => f.value)
+                      ? allLocalFields
                       : requestedFieldNames.map(f => ({ label: parseDisclosedClaim(f), value: '' }));
+                  const fieldsLabel = requestedResolved && requestedResolved.length > 0 ? 'Requested fields' : 'Credential fields';
                   return (
                     <div className="px-5 pt-3 pb-2 max-h-[70vh] overflow-y-auto">
                       <h3 className="text-[20px] font-bold text-[#1c1c1e] mb-4">{label}</h3>
@@ -672,7 +689,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
                       </div>
                       {resolvedFields.length > 0 ? (
                         <div>
-                          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8e8e93] px-1 mb-2">Requested fields</p>
+                          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8e8e93] px-1 mb-2">{fieldsLabel}</p>
                           <div className="bg-[#F2F2F7] rounded-[16px] overflow-hidden">
                             {resolvedFields.map((f, i) => (
                               <div key={i} className={`flex justify-between items-start px-4 py-3 ${i < resolvedFields.length - 1 ? 'border-b border-[#f1f1f3]' : ''}`}>
