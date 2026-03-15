@@ -161,11 +161,16 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
         ? { nodeId, order: 'desc' as const, limit: 50, offset: 0 }
         : { nodeId, verifierDid, order: 'desc' as const, limit: 50, offset: 0 };
       const rulesOpts = (isGlobalRule || isIssuanceRule) ? undefined : { partyDid: verifierDid };
-      const [filtered, fetchedRules] = await Promise.all([
+      const [fetchedEvents, fetchedRules] = await Promise.all([
         listAuditEvents(apiKey, auditOpts),
         listRules(apiKey, rulesOpts),
       ]);
-      setEvents(filtered);
+      // For issuance rules, only show credential offer events — not delegation or vp_request events
+      // that belong to unrelated services but get returned because there's no issuerDid filter on the CE API.
+      const relevantEvents = isIssuanceRule
+        ? fetchedEvents.filter(e => e.linkType === 'credential_offer')
+        : fetchedEvents;
+      setEvents(relevantEvents);
       setRules(fetchedRules);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load data.');
