@@ -347,12 +347,17 @@ export function serviceNameFromEvent(event: {
   verifierName?: string | null;
   verifierDid?: string | null;
   issuerDid?: string | null;
+  partyDomain?: string | null;
 }): string {
-  return (
-    serviceNameFromRuleLabel(event.ruleLabel) ??
-    (event.verifierName?.trim() || null) ??
-    extractVerifierName(event.verifierDid ?? event.issuerDid ?? undefined)
-  );
+  const fromLabel = serviceNameFromRuleLabel(event.ruleLabel);
+  if (fromLabel) return fromLabel;
+  const fromVerifierName = event.verifierName?.trim();
+  if (fromVerifierName) return fromVerifierName;
+  // extractVerifierName returns 'Unknown service' for missing/opaque ids — skip it if
+  // partyDomain is available as a better fallback for delegation events
+  const did = event.verifierDid ?? event.issuerDid ?? undefined;
+  if (did) return extractVerifierName(did);
+  return event.partyDomain?.trim() || 'Unknown service';
 }
 
 // ============================================================

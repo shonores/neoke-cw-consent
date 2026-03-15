@@ -140,6 +140,8 @@ export interface AuditEvent {
   verifierDid?: string;
   /** Human-readable verifier name — populated by CE from client_metadata.client_name */
   verifierName?: string | null;
+  /** For delegation events: the primary service domain (e.g. "AirScout Airlines", "HotelScout") */
+  partyDomain?: string | null;
   issuerDid?: string;
   credentialType?: string;
   requestedFields?: string[];
