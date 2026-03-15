@@ -275,9 +275,12 @@ export default function PresentScreen({ navigate, initialUri, onPresented, onRou
         const uniqueFields = [...new Set(allFields)];
 
         const verifierName = extractVerifierName(preview.verifier.clientId, vpExtras.clientName ?? preview.verifier.name);
+        const labelName = verifierName === 'Unknown service'
+          ? (preview.verifier.clientId ? preview.verifier.clientId.slice(0, 24) + (preview.verifier.clientId.length > 24 ? '…' : '') : 'Unknown')
+          : verifierName;
         const payload: CreateRulePayload = {
           nodeId: state.nodeIdentifier ?? '',
-          label: `Always share with ${verifierName}`,
+          label: `Always share with ${labelName}`,
           ruleType: 'verification',
           enabled: true,
           party: { matchType: 'did', value: preview.verifier.clientId },
