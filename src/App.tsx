@@ -392,7 +392,7 @@ function AppInner() {
             navigate={navigate}
             onCredentialReceived={() => setRefreshSignal((s) => s + 1)}
             initialUri={pendingUri}
-            onRouteToCe={ceEnabled && ceApiKey ? (uri) => {
+            onRouteToCe={ceEnabled && ceApiKey && pendingUri !== ceBypassedUri ? (uri) => {
               setCeProcessingUri(uri);
               navigate('dashboard');
             } : undefined}
