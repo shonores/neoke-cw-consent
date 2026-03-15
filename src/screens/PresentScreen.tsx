@@ -13,9 +13,8 @@ import {
   getCredentialLabel,
   getCredentialDescription,
   parseIssuerLabel,
-  getClaimLabel,
-  humanizeLabel,
   extractVerifierName,
+  getRequestedFields,
 } from '../utils/credentialHelpers';
 import { getLocalCredentials } from '../store/localCredentials';
 import QRScanner from '../components/QRScanner';
@@ -90,38 +89,6 @@ async function parseVpExtras(uri: string): Promise<VpExtras> {
   return {};
 }
 
-/** Extract field values from a local credential matching the disclosed field names */
-function getRequestedFields(cred: Credential, disclosedFields: string[]): Array<{ label: string; value: string }> {
-  const result: Array<{ label: string; value: string }> = [];
-  for (const field of disclosedFields) {
-    const colonIdx = field.indexOf(':');
-    const ns = colonIdx >= 0 ? field.slice(0, colonIdx) : '';
-    const key = colonIdx >= 0 ? field.slice(colonIdx + 1) : field;
-    const label = getClaimLabel(ns, key) || humanizeLabel(key);
-    // Try namespaced lookup
-    if (ns && cred.namespaces?.[ns] !== undefined) {
-      const val = (cred.namespaces[ns] as Record<string, unknown>)[key];
-      if (val !== undefined) { result.push({ label, value: String(val) }); continue; }
-    }
-    // Try any namespace
-    if (cred.namespaces) {
-      let found = false;
-      for (const [nsKey, nsData] of Object.entries(cred.namespaces)) {
-        const val = (nsData as Record<string, unknown>)[key];
-        if (val !== undefined) {
-          result.push({ label: getClaimLabel(nsKey, key) || humanizeLabel(key), value: String(val) });
-          found = true; break;
-        }
-      }
-      if (found) continue;
-    }
-    // Try credentialSubject
-    if (cred.credentialSubject?.[key] !== undefined) {
-      result.push({ label, value: String(cred.credentialSubject[key]) });
-    }
-  }
-  return result;
-}
 
 function IconCamera() {
   return (
@@ -434,7 +401,7 @@ if (stage === 'error') {
 
     return (
       <div className="flex flex-col min-h-screen bg-[var(--bg-ios)] overflow-x-hidden">
-        <nav className="px-5 pt-14 pb-0">
+        <nav className="sticky top-0 z-10 bg-[var(--bg-ios)] px-5 pt-14 pb-3">
           <button
             onClick={() => setStage('scan')}
             className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors"
@@ -576,7 +543,7 @@ if (stage === 'error') {
                   ? getCardColor(cred)
                   : candidate ? getCardColorForTypes(candidate.type) : { backgroundColor: '#5B4FE9', textColor: '#ffffff' };
                 const label = cred ? getCredentialLabel(cred) : getCandidateLabel(candidate?.type ?? []);
-                const description = cred?.displayMetadata?.description;
+                const description = cred ? getCredentialDescription(cred) : undefined;
                 const logoUrl = cred?.displayMetadata?.logoUrl;
                 const fields = cred && candidate?.claims?.disclosed?.length
                   ? getRequestedFields(cred, candidate.claims.disclosed)

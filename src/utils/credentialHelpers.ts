@@ -467,6 +467,46 @@ export function formatDate(dateStr: string): string {
 // VP candidate helpers
 // ============================================================
 
+/**
+ * Extract claim values from a credential for a list of disclosed field identifiers.
+ * Field format: "namespace:key" (e.g. "org.iso.18013.5.1:family_name") or plain "key".
+ * Returns only the fields that have a value; skips absent ones.
+ */
+export function getRequestedFields(
+  cred: Credential,
+  disclosedFields: string[],
+): Array<{ label: string; value: string }> {
+  const result: Array<{ label: string; value: string }> = [];
+  for (const field of disclosedFields) {
+    const colonIdx = field.indexOf(':');
+    const ns  = colonIdx >= 0 ? field.slice(0, colonIdx) : '';
+    const key = colonIdx >= 0 ? field.slice(colonIdx + 1) : field;
+    const label = getClaimLabel(ns, key) || humanizeLabel(key);
+    // Exact namespace lookup
+    if (ns && cred.namespaces?.[ns] !== undefined) {
+      const val = (cred.namespaces[ns] as Record<string, unknown>)[key];
+      if (val !== undefined) { result.push({ label, value: String(val) }); continue; }
+    }
+    // Any namespace fallback
+    if (cred.namespaces) {
+      let found = false;
+      for (const [nsKey, nsData] of Object.entries(cred.namespaces)) {
+        const val = (nsData as Record<string, unknown>)[key];
+        if (val !== undefined) {
+          result.push({ label: getClaimLabel(nsKey, key) || humanizeLabel(key), value: String(val) });
+          found = true; break;
+        }
+      }
+      if (found) continue;
+    }
+    // credentialSubject fallback
+    if (cred.credentialSubject?.[key] !== undefined) {
+      result.push({ label, value: String(cred.credentialSubject[key]) });
+    }
+  }
+  return result;
+}
+
 /** Parse "namespace:key" claim string into a human label. */
 export function parseDisclosedClaim(claim: string): string {
   const colonIdx = claim.indexOf(':');

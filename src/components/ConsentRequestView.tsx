@@ -143,24 +143,24 @@ export default function ConsentRequestView({
 
   return (
     <>
-      <main className="flex-1 px-5 pt-4 pb-52 overflow-y-auto space-y-5">
-        {extras}
+      {/* ── Verifier header — pinned above scroll area ─────────── */}
+      <div className="px-5 pt-3 pb-4">
+        {logoUri && (
+          <div className="w-12 h-12 rounded-[14px] bg-white border border-[#f1f1f3] shadow-sm flex items-center justify-center overflow-hidden mb-3">
+            <img src={logoUri} alt="" className="w-10 h-10 object-contain" />
+          </div>
+        )}
+        <h2 className="text-[24px] font-semibold text-[#1c1c1e] leading-[28px]">
+          <span className="text-[#5B4FE9]">{serviceName}</span>
+          {' '}
+          {isVP
+            ? 'wants you to share the following credentials'
+            : 'is offering you a credential'}
+        </h2>
+      </div>
 
-        {/* ── Verifier header ──────────────────────────────────── */}
-        <div className="pb-1">
-          {logoUri && (
-            <div className="w-12 h-12 rounded-[14px] bg-white border border-[#f1f1f3] shadow-sm flex items-center justify-center overflow-hidden mb-3">
-              <img src={logoUri} alt="" className="w-10 h-10 object-contain" />
-            </div>
-          )}
-          <h2 className="text-[24px] font-semibold text-[#1c1c1e] leading-[28px]">
-            <span className="text-[#5B4FE9]">{serviceName}</span>
-            {' '}
-            {isVP
-              ? 'wants you to share the following credentials'
-              : 'is offering you a credential'}
-          </h2>
-        </div>
+      <main className="flex-1 px-5 pt-0 pb-52 overflow-y-auto space-y-5">
+        {extras}
 
         {/* ── Reason ───────────────────────────────────────────── */}
         {purpose && (

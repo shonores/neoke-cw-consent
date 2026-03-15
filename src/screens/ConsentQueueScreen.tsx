@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
 import { useAuth } from '../context/AuthContext';
 import { listQueue, deleteQueueItem, clearQueueItems } from '../api/consentEngineClient';
-import { extractVerifierName } from '../utils/credentialHelpers';
+import { extractVerifierName, getCandidateLabel } from '../utils/credentialHelpers';
 import type { PendingRequest } from '../types/consentEngine';
 import type { ViewName } from '../types';
 
@@ -62,13 +62,13 @@ function getItemMessage(item: PendingRequest): string {
     const from = item.preview.requesterService ?? 'A service';
     const purpose = item.preview.purpose ?? 'data sharing';
     const credType = item.preview.credentialTypeId;
-    if (credType) return `${from} wants to share your ${credType} for ${purpose}.`;
+    if (credType) return `${from} wants to share your ${getCandidateLabel([credType])} for ${purpose}.`;
     return `${from} wants to share your credentials for ${purpose}.`;
   }
   const issuer = item.preview.issuerName ?? extractVerifierName(item.preview.issuerDid);
   const type = item.preview.credentialTypes?.[0];
   return type
-    ? `${issuer} wants to offer you a ${type}.`
+    ? `${issuer} wants to offer you a ${getCandidateLabel([type])}.`
     : `${issuer} wants to offer you a credential.`;
 }
 

@@ -65,13 +65,15 @@ export default function OnboardingStep1Screen({ savedNodeId, pendingAction, onCo
 
       {/* Form */}
       <div className="px-6">
+        <label htmlFor="node-id" className="sr-only">Node identifier</label>
         <input
+          id="node-id"
           type="text"
           value={nodeId}
           onChange={(e) => { setNodeId(e.target.value); setError(''); }}
           onKeyDown={(e) => e.key === 'Enter' && handleContinue()}
-          placeholder="Node identifier  (e.g. b2b-poc)"
-          className="w-full bg-white border border-black/[0.08] rounded-[12px] px-4 py-4 text-[16px] text-[#1c1c1e] placeholder-[#c7c7cc] focus:outline-none focus:border-[#5B4FE9] shadow-sm transition-colors"
+          placeholder="Node identifier (e.g. b2b-poc)"
+          className="w-full bg-white border border-black/[0.08] rounded-[12px] px-4 py-4 text-[16px] text-[#1c1c1e] placeholder-[#999] focus:outline-none focus:ring-2 focus:ring-[#5B4FE9] focus:ring-offset-1 shadow-sm transition-colors"
           autoCapitalize="none"
           autoComplete="off"
           autoCorrect="off"

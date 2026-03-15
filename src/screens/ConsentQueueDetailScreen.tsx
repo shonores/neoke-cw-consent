@@ -5,7 +5,8 @@ import { getQueueItem, approveQueueItem, rejectQueueItem, createRule, updateRule
 import ConsentRequestView from '../components/ConsentRequestView';
 import CredentialCardFace from '../components/CredentialCardFace';
 import { getLocalCredentials } from '../store/localCredentials';
-import { getCardColor, getCardColorForTypes, getCredentialLabel, getCredentialDescription, getCandidateLabel, parseDisclosedClaim, extractVerifierName } from '../utils/credentialHelpers';
+import { getCardColor, getCardColorForTypes, getCredentialLabel, getCredentialDescription, getCandidateLabel, parseDisclosedClaim, extractVerifierName, getRequestedFields, extractFields } from '../utils/credentialHelpers';
+import type { Credential } from '../types';
 import type { PendingRequest } from '../types/consentEngine';
 import type { ViewName } from '../types';
 
@@ -80,8 +81,10 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
   // credSelections: typeKey → 0-based index within that type's candidate group
   // Sent to CE as { credentialType: candidateIndex } e.g. { "org.iso.23220.photoid.1": "1" }
   const [credSelections, setCredSelections] = useState<Record<string, number>>({});
-  // credSheet: the open credential detail/picker sheet
+  // credSheet: the open credential detail/picker sheet (VP flow)
   const [credSheet, setCredSheet] = useState<{ typeKey: string; view: 'options' | 'change' | 'details' } | null>(null);
+  // detailSheet: simple credential detail sheet for issuance and delegation rows
+  const [detailSheet, setDetailSheet] = useState<{ localCred: Credential | null; types: string[]; requestedFields?: string[] } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -369,7 +372,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
     <motion.div variants={variants} initial="initial" animate="animate" exit="exit"
       className="flex-1 flex flex-col bg-[var(--bg-ios)] min-h-screen">
 
-      <nav className="bg-[#F2F2F7] px-5 pt-14 pb-0">
+      <nav className="sticky top-0 z-10 bg-[#F2F2F7] px-5 pt-14 pb-3">
         <button onClick={() => navigate('consent_queue')} aria-label="Go back"
           className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -380,7 +383,25 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
 
       {isDelegation ? (
         <>
-          <main className="flex-1 px-5 pt-4 pb-52 overflow-y-auto space-y-5">
+          {/* Delegation header — pinned above scroll area */}
+          <div className="px-5 pt-3 pb-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-[#EEF2FF] rounded-full flex items-center justify-center flex-shrink-0">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M17 8l4 4-4 4M7 16l-4-4 4-4" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M21 12H3" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <p className="text-[12px] font-semibold uppercase tracking-wider text-[#8e8e93]">Data sharing request</p>
+            </div>
+            <h2 className="text-[24px] font-semibold text-[#1c1c1e] leading-[30px]">
+              <span className="text-[#5B4FE9]">{serviceName}</span>
+              {' is requesting you to share information with '}
+              <span className="font-bold">{item.preview.recipientService ?? 'another service'}</span>
+            </h2>
+          </div>
+
+          <main className="flex-1 px-5 pt-0 pb-52 overflow-y-auto space-y-5">
             {/* Status banners */}
             {item.status === 'pending' && isExpired && (
               <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-[12px] px-4 py-3">
@@ -401,24 +422,6 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
               </div>
             )}
 
-            {/* Header */}
-            <div className="pb-1">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-[#EEF2FF] rounded-full flex items-center justify-center flex-shrink-0">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <path d="M17 8l4 4-4 4M7 16l-4-4 4-4" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M21 12H3" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round"/>
-                  </svg>
-                </div>
-                <p className="text-[12px] font-semibold uppercase tracking-wider text-[#8e8e93]">Data sharing request</p>
-              </div>
-              <h2 className="text-[24px] font-semibold text-[#1c1c1e] leading-[30px]">
-                <span className="text-[#5B4FE9]">{serviceName}</span>
-                {' is requesting you to share information with '}
-                <span className="font-bold">{item.preview.recipientService ?? 'another service'}</span>
-              </h2>
-            </div>
-
             {/* Purpose */}
             {item.preview.purpose && (
               <div>
@@ -435,16 +438,24 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8e8e93] px-1 mb-2">Credential to share</p>
                 <div className="space-y-3">
                   {credentialRows.map((row, i) => {
-                    const { backgroundColor } = getCardColorForTypes(row.types);
-                    const label = getCandidateLabel(row.types);
+                    const localMatch = localCreds.find(lc => row.types.some(t => lc.type?.includes(t)));
+                    const { backgroundColor } = localMatch ? getCardColor(localMatch) : getCardColorForTypes(row.types);
+                    const label = localMatch ? getCredentialLabel(localMatch) : getCandidateLabel(row.types);
                     return (
-                      <div key={i} className="bg-white rounded-[16px] flex items-center px-4 py-4 border border-[#f1f1f3] shadow-sm">
+                      <button
+                        key={i}
+                        onClick={() => setDetailSheet({ localCred: localMatch ?? null, types: row.types })}
+                        className="w-full bg-white rounded-[16px] flex items-center px-4 py-4 border border-[#f1f1f3] shadow-sm active:bg-[#F2F2F7] transition-colors text-left"
+                      >
                         <div className="mr-4 w-10 h-10 rounded-[10px] flex-shrink-0" style={{ backgroundColor }} />
                         <div className="flex-1 min-w-0">
                           <p className="text-[16px] font-bold text-[#1c1c1e] truncate">{label}</p>
                           <p className="text-[13px] text-[#8e8e93] truncate font-medium">Shared with {row.issuer || item.preview.recipientService}</p>
                         </div>
-                      </div>
+                        <svg width="7" height="12" viewBox="0 0 7 12" fill="none" className="ml-2 flex-shrink-0">
+                          <path d="M1 1l5 5-5 5" stroke="#c7c7cc" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
                     );
                   })}
                 </div>
@@ -515,10 +526,19 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
         onShare={() => handleShareClick(false)}
         onAlwaysShare={!isResolved && !isExpired ? () => handleShareClick(true) : undefined}
         onReject={handleReject}
-        onCredentialClick={isVP && matchedGroups.length > 0 ? (idx) => {
-          const g = matchedGroups[idx];
-          if (g) setCredSheet({ typeKey: g.typeKey, view: g.candidates.length > 1 ? 'options' : 'details' });
-        } : undefined}
+        onCredentialClick={(idx) => {
+          if (isVP && matchedGroups.length > 0) {
+            const g = matchedGroups[idx];
+            if (g) setCredSheet({ typeKey: g.typeKey, view: g.candidates.length > 1 ? 'options' : 'details' });
+          } else {
+            // Issuance: show credential detail with available fields
+            const row = credentialRows[idx];
+            if (row) {
+              const localCred = localCreds.find(lc => row.types.some(t => lc.type?.includes(t)));
+              setDetailSheet({ localCred: localCred ?? null, types: row.types });
+            }
+          }
+        }}
         extras={
           <>
             {item.status === 'pending' && isExpired && (
@@ -639,20 +659,30 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
                   const label = sheetLocalCred ? getCredentialLabel(sheetLocalCred) : getCandidateLabel(sheetGroup?.types ?? []);
                   const description = sheetLocalCred ? getCredentialDescription(sheetLocalCred) : undefined;
                   const logoUrl = sheetLocalCred?.displayMetadata?.logoUrl;
-                  const fields = item.preview.requestedFields ?? [];
+                  const requestedFieldNames = item.preview.requestedFields ?? [];
+                  const resolvedFields = sheetLocalCred && requestedFieldNames.length > 0
+                    ? getRequestedFields(sheetLocalCred, requestedFieldNames)
+                    : sheetLocalCred
+                      ? extractFields(sheetLocalCred).map(f => ({ label: f.label, value: f.value !== undefined ? String(f.value) : '' })).filter(f => f.value)
+                      : requestedFieldNames.map(f => ({ label: parseDisclosedClaim(f), value: '' }));
                   return (
                     <div className="px-5 pt-3 pb-2 max-h-[70vh] overflow-y-auto">
                       <h3 className="text-[20px] font-bold text-[#1c1c1e] mb-4">{label}</h3>
                       <div className="rounded-[16px] overflow-hidden mb-4">
                         <CredentialCardFace label={label} description={description} bgColor={backgroundColor} textColor={textColor} logoUrl={logoUrl} />
                       </div>
-                      {fields.length > 0 ? (
+                      {resolvedFields.length > 0 ? (
                         <div>
                           <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8e8e93] px-1 mb-2">Requested fields</p>
                           <div className="bg-[#F2F2F7] rounded-[16px] overflow-hidden">
-                            {fields.map((f, i) => (
-                              <div key={i} className={`px-4 py-3 ${i < fields.length - 1 ? 'border-b border-[#f1f1f3]' : ''}`}>
-                                <p className="text-[14px] text-[#1c1c1e] font-medium">{parseDisclosedClaim(f)}</p>
+                            {resolvedFields.map((f, i) => (
+                              <div key={i} className={`flex justify-between items-start px-4 py-3 ${i < resolvedFields.length - 1 ? 'border-b border-[#f1f1f3]' : ''}`}>
+                                <p className="text-[14px] text-[#8e8e93] font-medium">{f.label}</p>
+                                {f.value ? (
+                                  <p className="text-[14px] text-[#1c1c1e] font-medium text-right ml-4 max-w-[55%]">{f.value}</p>
+                                ) : (
+                                  <p className="text-[13px] text-[#c7c7cc] italic ml-4">—</p>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -666,6 +696,71 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
                   );
                 })()
               )}
+            </div>
+            </FocusTrap>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Simple credential detail sheet — issuance and delegation rows */}
+      <AnimatePresence>
+        {detailSheet && (
+          <div className="fixed inset-0 z-[60]" onClick={() => setDetailSheet(null)}>
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+            <FocusTrap onClose={() => setDetailSheet(null)}>
+            <div
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[512px] bg-white rounded-t-[24px]"
+              style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-4 pt-3 pb-1">
+                <div className="w-9 h-1 bg-[#d7d6dc] rounded-full mx-auto" />
+                <button
+                  onClick={() => setDetailSheet(null)}
+                  className="absolute right-4 top-3 w-8 h-8 rounded-full bg-black/[0.06] flex items-center justify-center active:bg-black/10 transition-colors"
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M1 1l12 12M13 1L1 13" stroke="#8e8e93" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              </div>
+              {(() => {
+                const lc = detailSheet.localCred;
+                const { backgroundColor, textColor } = lc ? getCardColor(lc) : getCardColorForTypes(detailSheet.types);
+                const sheetLabel = lc ? getCredentialLabel(lc) : getCandidateLabel(detailSheet.types);
+                const sheetDesc = lc ? getCredentialDescription(lc) : undefined;
+                const sheetLogo = lc?.displayMetadata?.logoUrl;
+                const resolvedFields = lc
+                  ? extractFields(lc)
+                      .map(f => ({ label: f.label, value: f.value !== undefined ? String(f.value) : '' }))
+                      .filter(f => f.value)
+                  : [];
+                return (
+                  <div className="px-5 pt-3 pb-2 max-h-[70vh] overflow-y-auto">
+                    <h3 className="text-[20px] font-bold text-[#1c1c1e] mb-4">{sheetLabel}</h3>
+                    <div className="rounded-[16px] overflow-hidden mb-4">
+                      <CredentialCardFace label={sheetLabel} description={sheetDesc} bgColor={backgroundColor} textColor={textColor} logoUrl={sheetLogo} />
+                    </div>
+                    {resolvedFields.length > 0 ? (
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8e8e93] px-1 mb-2">Credential fields</p>
+                        <div className="bg-[#F2F2F7] rounded-[16px] overflow-hidden">
+                          {resolvedFields.map((f, i) => (
+                            <div key={i} className={`flex justify-between items-start px-4 py-3 ${i < resolvedFields.length - 1 ? 'border-b border-[#f1f1f3]' : ''}`}>
+                              <p className="text-[14px] text-[#8e8e93] font-medium">{f.label}</p>
+                              <p className="text-[14px] text-[#1c1c1e] font-medium text-right ml-4 max-w-[55%]">{f.value}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-[14px] text-[#8e8e93] text-center py-2">
+                        {lc ? 'No field data available locally' : 'Credential not yet in wallet'}
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
             </FocusTrap>
           </div>
