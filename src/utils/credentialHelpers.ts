@@ -82,6 +82,9 @@ const DOC_TYPE_DESCRIPTIONS: Record<string, string> = {
   'org.iso.18013.5.1': "Mobile driver's licence",
   'org.iso.18013.5.1.mDL': "Mobile driver's licence",
   'eu.europa.ec.eudi.pid.1': 'EU Digital Identity credential',
+  // credential_configuration_id aliases (OID4VCI config keys, not VCT type URIs)
+  'sdjwt-epassport-copy': 'ePassport Copy',
+  'ePassportCopyCredential': 'ePassport Copy',
 };
 
 // Per-docType display colours (background / text)
@@ -92,8 +95,9 @@ const DOC_TYPE_COLORS: Record<string, { backgroundColor: string; textColor: stri
   'eu.europa.ec.eudi.pid.1': { backgroundColor: '#1e40af', textColor: '#ffffff' },
   // ePassport copy credential (VCT-based type, b2b-poc node)
   'https://b2b-poc.id-node.neoke.com/:/vct/ePassportCopyCredential': { backgroundColor: '#1e3a5f', textColor: '#ffffff' },
-  // Partial-key match via type segment: also handled in getCardColorForTypes
   'ePassportCopyCredential': { backgroundColor: '#1e3a5f', textColor: '#ffffff' },
+  // credential_configuration_id alias used by AirScout delegation
+  'sdjwt-epassport-copy': { backgroundColor: '#1e3a5f', textColor: '#ffffff' },
 };
 
 // ============================================================
@@ -495,14 +499,45 @@ function normalizeType(t: string): string {
 }
 
 /**
- * Returns true if any of `credTypes` matches `queryType` — first by exact
- * string equality, then by normalised comparison (case + separators stripped).
+ * Normalizes a type to a "semantic slug" by stripping:
+ *   - OID4VCI format prefixes: sdjwt-, mdoc-, jwt-, dc-, vc-
+ *   - Trailing "Credential" or "credential" suffix
+ * This lets "sdjwt-epassport-copy" match "ePassportCopyCredential".
+ */
+function normalizeTypeSlug(t: string): string {
+  // Resolve URL segment first
+  if (t.startsWith('http://') || t.startsWith('https://')) {
+    try {
+      const url = new URL(t);
+      const segments = url.pathname.split('/').filter(s => s && /[a-zA-Z]{2,}/.test(s));
+      const last = segments[segments.length - 1];
+      if (last) t = last;
+    } catch { /* fall through */ }
+  }
+  return t
+    .replace(/^(sdjwt|mdoc|jwt|dc|vc)-/i, '')  // strip format prefix
+    .replace(/credential$/i, '')                  // strip "Credential" suffix
+    .toLowerCase()
+    .replace(/[-_.]/g, '');
+}
+
+/**
+ * Returns true if any of `credTypes` matches `queryType`:
+ *   1. Exact string match
+ *   2. Normalised match (case + separators stripped, URL → last segment)
+ *   3. Semantic slug match (also strips format prefix + "Credential" suffix)
+ *      — resolves "sdjwt-epassport-copy" ↔ "ePassportCopyCredential" mismatches
  */
 export function credTypeMatches(credTypes: string[] | undefined, queryType: string): boolean {
   if (!credTypes) return false;
   if (credTypes.includes(queryType)) return true;
   const norm = normalizeType(queryType);
-  return credTypes.some(ct => normalizeType(ct) === norm);
+  if (credTypes.some(ct => normalizeType(ct) === norm)) return true;
+  // Slug-level match: strips format prefix and "Credential" suffix so
+  // credential_configuration_ids (e.g. "sdjwt-epassport-copy") match
+  // their corresponding VCT type names (e.g. "ePassportCopyCredential")
+  const slug = normalizeTypeSlug(queryType);
+  return slug.length > 2 && credTypes.some(ct => normalizeTypeSlug(ct) === slug);
 }
 
 /**
