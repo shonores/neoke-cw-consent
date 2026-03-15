@@ -31,7 +31,9 @@ function nameForRule(rule: ConsentRule): string {
 }
 
 function issuanceRuleName(rule: ConsentRule): string {
-  if (rule.label) return rule.label;
+  const fromLabel = serviceNameFromRuleLabel(rule.label);
+  if (fromLabel) return fromLabel;
+  if (rule.party.value) return extractVerifierName(rule.party.value);
   if (rule.credentialType.matchType === 'exact' && rule.credentialType.value) return rule.credentialType.value;
   return 'Any credential';
 }
@@ -68,12 +70,6 @@ function ruleMode(rule: ConsentRule): 'always' | 'ask' | 'never' {
   return 'always'; // auto_execute
 }
 
-function IssuancePill({ enabled }: { enabled: boolean }) {
-  if (enabled) {
-    return <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full flex-shrink-0 bg-green-50 text-green-700">Auto-accept</span>;
-  }
-  return <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full flex-shrink-0 bg-[#F2F2F7] text-[#8e8e93]">Manual</span>;
-}
 
 const Chevron = () => (
   <svg width="7" height="12" viewBox="0 0 7 12" fill="none" className="flex-shrink-0 ml-1">
@@ -345,7 +341,7 @@ export default function TravelServicesScreen({ navigate }: Props) {
             {/* ── Issuance rules ── */}
             {showIssuance && issuanceRules.length > 0 && (
               <div className="space-y-2">
-                <p className="text-[11px] font-semibold text-[#8e8e93] uppercase tracking-wider px-1">Receiving · Auto-accept rules</p>
+                <p className="text-[11px] font-semibold text-[#8e8e93] uppercase tracking-wider px-1">Receiving · By issuer</p>
                 <div className="bg-white rounded-[24px] border border-[#f1f1f3] overflow-hidden divide-y divide-[#F2F2F7]">
                   {issuanceRules.map(rule => (
                     <button
@@ -358,7 +354,7 @@ export default function TravelServicesScreen({ navigate }: Props) {
                         <p className="text-[16px] font-semibold text-[#1c1c1e] leading-6 truncate">{issuanceRuleName(rule)}</p>
                         <p className="text-[13px] text-[#8e8e93] leading-5">{issuanceRuleSubtitle(rule)}</p>
                       </div>
-                      <IssuancePill enabled={rule.enabled} />
+                      <VerificationPill mode={ruleMode(rule)} />
                       <Chevron />
                     </button>
                   ))}
