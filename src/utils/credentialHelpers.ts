@@ -405,6 +405,24 @@ const INTERNAL_CREDENTIAL_FIELDS = new Set([
   'vct', 'cnf', 'status', '_sd', '_sd_alg',
 ]);
 
+/** Base64 pattern — used to detect binary-encoded values (photos, biometric data, keys). */
+const BASE64_RE = /^[A-Za-z0-9+/]{100,}={0,2}$/;
+
+/**
+ * Returns true only for values that can be shown as a human-readable string:
+ * - primitives: string (non-empty, not base64 binary), number, boolean
+ * - excludes: null, undefined, objects, arrays, and binary-encoded strings
+ */
+export function isHumanReadableValue(value: unknown): boolean {
+  if (value === null || value === undefined) return false;
+  if (typeof value === 'boolean' || typeof value === 'number') return true;
+  if (typeof value !== 'string') return false; // objects / arrays
+  const s = value.trim();
+  if (!s) return false;
+  if (BASE64_RE.test(s)) return false; // binary blob (portrait, biometric, public key, etc.)
+  return true;
+}
+
 export function extractFields(credential: Credential): CredentialField[] {
   const fields: CredentialField[] = [];
 

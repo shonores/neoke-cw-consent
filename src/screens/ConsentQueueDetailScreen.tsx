@@ -5,7 +5,7 @@ import { getQueueItem, approveQueueItem, rejectQueueItem, createRule, updateRule
 import ConsentRequestView from '../components/ConsentRequestView';
 import CredentialCardFace from '../components/CredentialCardFace';
 import { getLocalCredentials } from '../store/localCredentials';
-import { getCardColor, getCardColorForTypes, getCredentialLabel, getCredentialDescription, getCandidateLabel, parseDisclosedClaim, extractVerifierName, getRequestedFields, extractFields, findLocalCredByTypes } from '../utils/credentialHelpers';
+import { getCardColor, getCardColorForTypes, getCredentialLabel, getCredentialDescription, getCandidateLabel, parseDisclosedClaim, extractVerifierName, getRequestedFields, extractFields, findLocalCredByTypes, isHumanReadableValue } from '../utils/credentialHelpers';
 import type { Credential } from '../types';
 import type { PendingRequest } from '../types/consentEngine';
 import type { ViewName } from '../types';
@@ -666,7 +666,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
                   const logoUrl = sheetLocalCred?.displayMetadata?.logoUrl;
                   const requestedFieldNames = item.preview.requestedFields ?? [];
                   const allLocalFields = sheetLocalCred
-                    ? extractFields(sheetLocalCred).map(f => ({ label: f.label, value: f.value !== undefined ? String(f.value) : '' })).filter(f => f.value)
+                    ? extractFields(sheetLocalCred).filter(f => isHumanReadableValue(f.value)).map(f => ({ label: f.label, value: String(f.value) }))
                     : [];
                   const requestedResolved = sheetLocalCred && requestedFieldNames.length > 0
                     ? getRequestedFields(sheetLocalCred, requestedFieldNames)
@@ -743,9 +743,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
                 const sheetDesc = lc ? getCredentialDescription(lc) : undefined;
                 const sheetLogo = lc?.displayMetadata?.logoUrl;
                 const resolvedFields = lc
-                  ? extractFields(lc)
-                      .map(f => ({ label: f.label, value: f.value !== undefined ? String(f.value) : '' }))
-                      .filter(f => f.value)
+                  ? extractFields(lc).filter(f => isHumanReadableValue(f.value)).map(f => ({ label: f.label, value: String(f.value) }))
                   : [];
                 return (
                   <div className="px-5 pt-3 pb-2 max-h-[70vh] overflow-y-auto">

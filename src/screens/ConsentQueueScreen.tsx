@@ -294,8 +294,9 @@ export default function ConsentQueueScreen({ navigate }: Props) {
 
   const handleClearAll = async () => {
     setClearing(true);
-    // Optimistically remove only resolved/expired items — pending items cannot be bulk-deleted
-    setItems(prev => prev.filter(i => i.status === 'pending'));
+    // Optimistically remove resolved and expired items.
+    // Expired-but-pending items (isExpired=true) are included since the CE now clears them too.
+    setItems(prev => prev.filter(i => i.status === 'pending' && !i.isExpired));
     try {
       await clearQueueItems(apiKey, nodeId);
       await refreshPendingCount();
