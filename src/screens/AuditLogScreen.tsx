@@ -349,6 +349,7 @@ const SWIPE_REVEAL = 72;
 function SwipeableActivityItem({ children, onDelete }: { children: React.ReactNode; onDelete: () => void }) {
   const [offset, setOffset] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const startX = useRef(0);
   const startOffset = useRef(0);
   const dragging = useRef(false);
@@ -360,6 +361,7 @@ function SwipeableActivityItem({ children, onDelete }: { children: React.ReactNo
     startX.current = e.touches[0].clientX;
     startOffset.current = offset;
     dragging.current = true;
+    setIsDragging(true);
   };
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!dragging.current) return;
@@ -368,6 +370,7 @@ function SwipeableActivityItem({ children, onDelete }: { children: React.ReactNo
   };
   const handleTouchEnd = () => {
     dragging.current = false;
+    setIsDragging(false);
     if (offset < -SWIPE_REVEAL / 2) snapOpen(); else snapClosed();
   };
 
@@ -383,7 +386,7 @@ function SwipeableActivityItem({ children, onDelete }: { children: React.ReactNo
         </button>
       </div>
       <div
-        style={{ transform: `translateX(${offset}px)`, transition: dragging.current ? 'none' : 'transform 0.2s ease', background: 'white' }}
+        style={{ transform: `translateX(${offset}px)`, transition: isDragging ? 'none' : 'transform 0.2s ease', background: 'white' }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}

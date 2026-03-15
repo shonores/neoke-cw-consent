@@ -281,6 +281,7 @@ export default function AccountScreen({ navigate }: Props) {
   // Load profile from CE on mount
   useEffect(() => {
     if (!ceReady) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setProfileLoading(true);
     getProfile(apiKey)
       .then(data => {

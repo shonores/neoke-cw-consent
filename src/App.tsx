@@ -274,6 +274,7 @@ function AppInner() {
 
         // Issuance (credential offer) always goes directly to wallet — CE not involved
         if (ceEnabled && ceApiKey && deepLinkType !== 'receive') {
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           navigate('dashboard');
           setCeProcessingUri(deepLinkUri);
           return;
@@ -305,6 +306,7 @@ function AppInner() {
     if (!state.token) return;
     const parsed = parseHash();
     if (parsed.view !== 'dashboard') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       navigate(parsed.view, {
         selectedServiceDid: parsed.serviceDid,
         selectedQueueItemId: parsed.queueItemId,

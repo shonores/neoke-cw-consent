@@ -67,7 +67,7 @@ function ceFriendlyError(status: number, body: unknown): string {
 
     detail = String(errObj['message'] ?? '');
     if (Array.isArray(errObj['details'])) {
-      const msgs = errObj['details'].map((d: any) => `${d.path?.join('.')}: ${d.message}`).join(', ');
+      const msgs = errObj['details'].map((d: { path?: string[]; message?: string }) => `${d.path?.join('.')}: ${d.message}`).join(', ');
       if (msgs) detail += ` (${msgs})`;
     }
   } else {
@@ -115,7 +115,7 @@ async function ceRequest<T>(
       headers,
       cache: 'no-store',
     });
-  } catch (e) {
+  } catch {
     throw new CeApiError(
       'Unable to connect to the Consent Engine. Please check your network.'
     );
@@ -335,9 +335,11 @@ export async function listAuditEvents(
   if (opts?.verifierDid) params.set('verifierDid', opts.verifierDid);
   if (opts?.credentialType) params.set('credentialType', opts.credentialType);
   const qs = params.toString() ? `?${params.toString()}` : '';
-  const result = await ceRequest<any>(`/audit${qs}`, apiKey);
+  type RawAuditEvent = AuditEvent & { partyDid?: string };
+  type AuditEventsResult = RawAuditEvent[] | { events: RawAuditEvent[] };
+  const result = await ceRequest<AuditEventsResult>(`/audit${qs}`, apiKey);
   const raw = Array.isArray(result) ? result : (result.events ?? []);
-  return raw.map((e: any) => ({
+  return raw.map((e: RawAuditEvent) => ({
     ...e,
     // Fields are now direct from CE; keep legacy fallbacks for old events in DB
     verifierDid: e.verifierDid ?? e.partyDid,
@@ -359,9 +361,11 @@ export async function clearAuditEvents(apiKey: string, nodeId: string): Promise<
 export async function listAuditSummary(apiKey: string, nodeId: string, opts?: { verifierDid?: string }): Promise<AuditSummaryEntry[]> {
   const params = new URLSearchParams({ nodeId });
   if (opts?.verifierDid) params.set('verifierDid', opts.verifierDid);
-  const result = await ceRequest<any>(`/audit/summary?${params.toString()}`, apiKey);
+  type RawSummaryEntry = { verifierDid?: string; lastSharedAt?: string; count?: number };
+  type AuditSummaryResult = RawSummaryEntry[] | { summary: RawSummaryEntry[] };
+  const result = await ceRequest<AuditSummaryResult>(`/audit/summary?${params.toString()}`, apiKey);
   const raw = Array.isArray(result) ? result : (result.summary ?? []);
-  return raw.map((e: any) => ({
+  return raw.map((e: RawSummaryEntry) => ({
     verifierDid: e.verifierDid ?? '',
     lastSharedAt: e.lastSharedAt ?? '',
     count: e.count ?? 0,
@@ -389,7 +393,8 @@ export async function updateProfile(
 // Discovery
 // ============================================================
 export async function listNodeCredentialTypes(apiKey: string): Promise<NodeCredentialType[]> {
-  const result = await ceRequest<any>('/credential-types', apiKey);
+  type NodeCredentialTypesResult = NodeCredentialType[] | { credentialTypes?: NodeCredentialType[]; types?: NodeCredentialType[] };
+  const result = await ceRequest<NodeCredentialTypesResult>('/credential-types', apiKey);
   if (Array.isArray(result)) return result;
   return result.credentialTypes ?? result.types ?? [];
 }

@@ -95,7 +95,6 @@ export default function OnboardingStep2Screen({
           className="w-full bg-white border border-black/[0.08] rounded-[12px] px-4 py-4 text-[16px] text-[#1c1c1e] placeholder-[#c7c7cc] focus:outline-none focus:border-[#5B4FE9] shadow-sm transition-colors"
           autoComplete="off"
           disabled={loading}
-          // eslint-disable-next-line jsx-a11y/no-autofocus
           autoFocus
         />
         {error && (

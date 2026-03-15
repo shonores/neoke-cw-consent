@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
 import { getQueueItem, approveQueueItem, rejectQueueItem, createRule, updateRule, listRules } from '../api/consentEngineClient';
@@ -18,6 +18,46 @@ const variants = {
 interface Props {
   navigate: (view: ViewName, extra?: Record<string, unknown>) => void;
   queueItemId: string;
+}
+
+function FocusTrap({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  useEffect(() => { onCloseRef.current = onClose; });
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const prevFocus = document.activeElement as HTMLElement | null;
+
+    const focusable = () => Array.from(
+      el.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+    );
+    (focusable()[0] ?? el).focus();
+
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { onCloseRef.current(); return; }
+      if (e.key !== 'Tab') return;
+      const items = focusable();
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault(); last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault(); first.focus();
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => {
+      document.removeEventListener('keydown', handler);
+      prevFocus?.focus();
+    };
+  }, []);
+
+  return <div ref={ref}>{children}</div>;
 }
 
 function extractServiceName(did?: string, name?: string): string {
@@ -210,7 +250,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
       <motion.div variants={variants} initial="initial" animate="animate" exit="exit"
         className="flex-1 flex flex-col bg-[var(--bg-ios)] min-h-screen">
         <nav className="sticky top-0 z-10 bg-[var(--bg-ios)] px-5 pt-14 pb-4">
-          <button onClick={() => navigate('consent_queue')}
+          <button onClick={() => navigate('consent_queue')} aria-label="Go back"
             className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 18l-6-6 6-6" />
@@ -330,7 +370,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
       className="flex-1 flex flex-col bg-[var(--bg-ios)] min-h-screen">
 
       <nav className="bg-[#F2F2F7] px-5 pt-14 pb-0">
-        <button onClick={() => navigate('consent_queue')}
+        <button onClick={() => navigate('consent_queue')} aria-label="Go back"
           className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center hover:bg-black/10 active:bg-black/[0.15] transition-colors">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 18l-6-6 6-6" />
@@ -509,6 +549,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
         {credSheet && sheetGroup && (
           <div className="fixed inset-0 z-[60]" onClick={() => setCredSheet(null)}>
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+            <FocusTrap onClose={() => setCredSheet(null)}>
             <div
               className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[512px] bg-white rounded-t-[24px]"
               style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}
@@ -626,6 +667,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
                 })()
               )}
             </div>
+            </FocusTrap>
           </div>
         )}
       </AnimatePresence>
@@ -635,6 +677,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
         {showPinSheet && (
           <div className="fixed inset-0 z-[60]" onClick={() => setShowPinSheet(false)}>
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+            <FocusTrap onClose={() => setShowPinSheet(false)}>
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[512px] bg-white rounded-t-[32px] shadow-2xl p-6"
               onClick={e => e.stopPropagation()}>
               <div className="w-10 h-1 bg-[#c7c7cc] rounded-full mx-auto mb-5" />
@@ -657,6 +700,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
                 </button>
               </div>
             </div>
+            </FocusTrap>
           </div>
         )}
       </AnimatePresence>

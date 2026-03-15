@@ -135,6 +135,7 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
   // Fetch activity when the tab is opened
   useEffect(() => {
     if (tab !== 'activity' || !ceState.ceEnabled || !ceState.ceApiKey) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoadingActivity(true);
     listAuditEvents(ceState.ceApiKey, {
       nodeId: state.nodeIdentifier ?? undefined,
@@ -157,7 +158,7 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
         await deleteCredential(state.token, credential.id);
       }
       deleteLocalCredential(credential.id);
-      onCredentialDeleted ? onCredentialDeleted() : onBack();
+      if (onCredentialDeleted) { onCredentialDeleted(); } else { onBack(); }
     } catch {
       setDeleteError('Could not delete credential. Please try again.');
       setDeleting(false);

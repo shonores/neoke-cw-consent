@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import ScreenNav from '../components/ScreenNav';
@@ -145,6 +146,7 @@ export default function PreferenceScreen({ prefKey, navigate }: Props) {
   // Load from CE on mount if connected (CE is source of truth)
   useEffect(() => {
     if (!ceReady) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     getProfile(apiKey)
       .then(data => {

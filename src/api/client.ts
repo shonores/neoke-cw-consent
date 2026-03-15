@@ -125,7 +125,7 @@ async function request<T>(
       headers,
       cache: 'no-store', // never serve a cached response for wallet API calls
     });
-  } catch (e) {
+  } catch {
     throw new ApiError(
       'Unable to connect to the wallet server. Please check your network and try again.'
     );
