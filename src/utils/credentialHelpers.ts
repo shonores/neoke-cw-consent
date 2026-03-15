@@ -90,6 +90,10 @@ const DOC_TYPE_COLORS: Record<string, { backgroundColor: string; textColor: stri
   'org.iso.18013.5.1.mDL':  { backgroundColor: '#991b1b', textColor: '#ffffff' },
   'org.iso.23220.photoid.1': { backgroundColor: '#1d4ed8', textColor: '#ffffff' },
   'eu.europa.ec.eudi.pid.1': { backgroundColor: '#1e40af', textColor: '#ffffff' },
+  // ePassport copy credential (VCT-based type, b2b-poc node)
+  'https://b2b-poc.id-node.neoke.com/:/vct/ePassportCopyCredential': { backgroundColor: '#1e3a5f', textColor: '#ffffff' },
+  // Partial-key match via type segment: also handled in getCardColorForTypes
+  'ePassportCopyCredential': { backgroundColor: '#1e3a5f', textColor: '#ffffff' },
 };
 
 // ============================================================
@@ -213,6 +217,15 @@ export function getCardColor(credential: Credential): { backgroundColor: string;
   }
   for (const t of credential.type ?? []) {
     if (DOC_TYPE_COLORS[t]) return DOC_TYPE_COLORS[t];
+    // URL-based VCT — match on last meaningful path segment
+    if (t.startsWith('http://') || t.startsWith('https://')) {
+      try {
+        const url = new URL(t);
+        const parts = url.pathname.split('/').filter(p => p && p !== ':' && /[a-zA-Z]{2,}/.test(p));
+        const segment = parts[parts.length - 1];
+        if (segment && DOC_TYPE_COLORS[segment]) return DOC_TYPE_COLORS[segment];
+      } catch { /* not a valid URL */ }
+    }
   }
   // Gradient fallback
   const g = getCardGradient(credential);
@@ -223,6 +236,15 @@ export function getCardColor(credential: Credential): { backgroundColor: string;
 export function getCardColorForTypes(types: string[]): { backgroundColor: string; textColor: string } {
   for (const t of types) {
     if (DOC_TYPE_COLORS[t]) return DOC_TYPE_COLORS[t];
+    // URL-based VCT — match on last meaningful path segment
+    if (t.startsWith('http://') || t.startsWith('https://')) {
+      try {
+        const url = new URL(t);
+        const parts = url.pathname.split('/').filter(p => p && p !== ':' && /[a-zA-Z]{2,}/.test(p));
+        const segment = parts[parts.length - 1];
+        if (segment && DOC_TYPE_COLORS[segment]) return DOC_TYPE_COLORS[segment];
+      } catch { /* not a valid URL */ }
+    }
   }
   // Hash-based gradient fallback
   const str = types[0] ?? 'default';

@@ -138,7 +138,13 @@ export default function ConsentRulesScreen({ navigate }: Props) {
 
   useEffect(() => { load(); }, [load]);
 
-  const filtered = filter === 'all' ? rules : rules.filter(r => r.ruleType === filter);
+  const filtered = (filter === 'all' ? rules : rules.filter(r => r.ruleType === filter))
+    .slice()
+    .sort((a, b) => {
+      // always (enabled) → never (disabled)
+      if (a.enabled !== b.enabled) return a.enabled ? -1 : 1;
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
 
   const handleToggle = async (rule: ConsentRule, enabled: boolean) => {
     setTogglingId(rule.id);

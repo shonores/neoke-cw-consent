@@ -130,9 +130,11 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
 
   const mode: ShareMode = !serviceRule
     ? 'ask'
-    : serviceRule.enabled
-      ? 'always'
-      : 'never';
+    : serviceRule.action === 'queue'
+      ? 'ask'
+      : serviceRule.action === 'reject'
+        ? 'never'
+        : 'always'; // auto_execute
 
   const ruleExplicitFields: string[] = serviceRule?.allowedFields?.matchType === 'explicit'
     ? (serviceRule.allowedFields.fields ?? [])
@@ -177,32 +179,33 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
     setSaving(true);
     setShowModeSheet(false);
     try {
-      if (newMode === 'ask') {
-        if (serviceRule) {
-          await disableRule(apiKey, serviceRule.id);
-          setRules(prev => prev.filter(r => r.id !== serviceRule.id));
-        }
+      const action = newMode === 'always' ? 'auto_execute' : newMode === 'never' ? 'reject' : 'queue';
+      const label = newMode === 'always'
+        ? `Always share with ${serviceName}`
+        : newMode === 'never'
+          ? `Block ${serviceName}`
+          : `Ask each time — ${serviceName}`;
+
+      if (!serviceRule) {
+        // No existing rule — create one (even for 'ask', so it overrides global delegation rules)
+        const payload: CreateRulePayload = {
+          nodeId,
+          label,
+          ruleType: 'verification',
+          enabled: true,
+          action,
+          party: isGlobalRule ? { matchType: 'any' } : { matchType: 'did', value: verifierDid },
+          credentialType: { matchType: 'any' },
+          allowedFields: allFields.length > 0
+            ? { matchType: 'explicit', fields: allFields }
+            : { matchType: 'any' },
+          expiry: { type: 'never' },
+        };
+        const created = await createRule(apiKey, payload);
+        setRules(prev => [...prev, created]);
       } else {
-        const enabled = newMode === 'always';
-        if (!serviceRule) {
-          const payload: CreateRulePayload = {
-            nodeId,
-            label: enabled ? `Always share with ${serviceName}` : `Block ${serviceName}`,
-            ruleType: 'verification',
-            enabled,
-            party: isGlobalRule ? { matchType: 'any' } : { matchType: 'did', value: verifierDid },
-            credentialType: { matchType: 'any' },
-            allowedFields: allFields.length > 0
-              ? { matchType: 'explicit', fields: allFields }
-              : { matchType: 'any' },
-            expiry: { type: 'never' },
-          };
-          const created = await createRule(apiKey, payload);
-          setRules(prev => [...prev, created]);
-        } else {
-          const updated = await updateRule(apiKey, serviceRule.id, { enabled });
-          setRules(prev => prev.map(r => r.id === updated.id ? updated : r));
-        }
+        const updated = await updateRule(apiKey, serviceRule.id, { label, action, enabled: true });
+        setRules(prev => prev.map(r => r.id === updated.id ? updated : r));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update.');

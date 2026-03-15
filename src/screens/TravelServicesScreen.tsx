@@ -61,6 +61,13 @@ function VerificationPill({ mode }: { mode: 'always' | 'never' | 'ask' }) {
   return <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full flex-shrink-0 bg-[#F2F2F7] text-[#8e8e93]">Ask</span>;
 }
 
+function ruleMode(rule: ConsentRule): 'always' | 'ask' | 'never' {
+  if (!rule.enabled) return 'ask';
+  if (rule.action === 'reject') return 'never';
+  if (rule.action === 'queue') return 'ask';
+  return 'always'; // auto_execute
+}
+
 function IssuancePill({ enabled }: { enabled: boolean }) {
   if (enabled) {
     return <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full flex-shrink-0 bg-green-50 text-green-700">Auto-accept</span>;
@@ -102,9 +109,27 @@ export default function TravelServicesScreen({ navigate }: Props) {
         (r.label ?? '').startsWith('Delegation —') && r.expiry.type === 'uses';
       const userRules = rules.filter(r => !isDelegation(r));
 
-      const verDid = userRules
+      const rawVerDid = userRules
         .filter(r => r.ruleType === 'verification' && r.party.matchType === 'did' && r.party.value)
         .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+
+      // Deduplicate by resolved service name — keep whichever has the human-readable label.
+      // This collapses e.g. x509_san_dns:airscout.id-node... and did:web:airscout.id-node...
+      // into a single entry when both resolve to the same display name.
+      const seenNames = new Map<string, ConsentRule>();
+      for (const rule of rawVerDid) {
+        const name = nameForRule(rule).toLowerCase();
+        const existing = seenNames.get(name);
+        if (!existing) {
+          seenNames.set(name, rule);
+        } else {
+          // Prefer the rule whose label yields a human-readable name over a raw identifier
+          const existingIsHuman = !!serviceNameFromRuleLabel(existing.label);
+          const newIsHuman = !!serviceNameFromRuleLabel(rule.label);
+          if (newIsHuman && !existingIsHuman) seenNames.set(name, rule);
+        }
+      }
+      const verDid = [...seenNames.values()];
 
       const verGlobal = userRules.filter(r =>
         r.ruleType === 'verification' && r.party.matchType === 'any'
@@ -115,12 +140,17 @@ export default function TravelServicesScreen({ navigate }: Props) {
         .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 
       const ruleDidSet = new Set(verDid.map(r => r.party.value!));
+      // Also index resolved names so audit-summary entries for the same service are suppressed
+      const ruleNameSet = new Set(verDid.map(r => nameForRule(r).toLowerCase()));
+
       const askList: Array<{ did: string; name: string; lastSeen: string }> = [];
       for (const entry of summary) {
         const vDid = entry.verifierDid;
         if (!vDid || ruleDidSet.has(vDid)) continue;
         const name = extractVerifierName(vDid);
         if (!name || name === 'Unknown service') continue;
+        // Suppress if a DID-specific rule already covers this service by name
+        if (ruleNameSet.has(name.toLowerCase())) continue;
         askList.push({ did: vDid, name, lastSeen: entry.lastSharedAt });
       }
 
@@ -267,7 +297,7 @@ export default function TravelServicesScreen({ navigate }: Props) {
                           <p className="text-[16px] font-semibold text-[#1c1c1e] leading-6 truncate">{name}</p>
                           <p className="text-[13px] text-[#8e8e93] leading-5">Updated {new Date(rule.updatedAt).toLocaleDateString([], { day: 'numeric', month: 'short' })}</p>
                         </div>
-                        <VerificationPill mode={rule.enabled ? 'always' : 'never'} />
+                        <VerificationPill mode={ruleMode(rule)} />
                         <Chevron />
                       </button>
                     );

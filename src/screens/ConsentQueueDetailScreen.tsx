@@ -120,13 +120,27 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
             };
           }
           const existing = await listRules(apiKey).catch(() => []);
-          const alreadyExists = existing.some(r =>
-            r.enabled &&
-            r.party.matchType === rulePayload.party.matchType &&
-            r.party.value === rulePayload.party.value &&
-            r.credentialType.matchType === rulePayload.credentialType.matchType &&
-            r.credentialType.value === rulePayload.credentialType.value
-          );
+          const resolvedName = rulePayload.party.value
+            ? extractServiceName(rulePayload.party.value).toLowerCase()
+            : null;
+          const alreadyExists = existing.some(r => {
+            if (!r.enabled) return false;
+            // Exact party match
+            if (
+              r.party.matchType === rulePayload.party.matchType &&
+              r.party.value === rulePayload.party.value &&
+              r.credentialType.matchType === rulePayload.credentialType.matchType &&
+              r.credentialType.value === rulePayload.credentialType.value
+            ) return true;
+            // Same resolved service name (catches x509 vs did:web identifier variants)
+            if (
+              resolvedName &&
+              r.party.matchType === 'did' &&
+              r.party.value &&
+              extractServiceName(r.party.value).toLowerCase() === resolvedName
+            ) return true;
+            return false;
+          });
           if (!alreadyExists) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await createRule(apiKey, rulePayload as any);
@@ -318,10 +332,132 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
         </button>
       </nav>
 
+      {isDelegation ? (
+        <>
+          <main className="flex-1 px-5 pt-4 pb-52 overflow-y-auto space-y-5">
+            {/* Status banners */}
+            {item.status === 'pending' && isExpired && (
+              <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-[12px] px-4 py-3">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="flex-shrink-0">
+                  <circle cx="12" cy="12" r="10" stroke="#aa281e" strokeWidth="1.7" />
+                  <path d="M12 7v5l3 2" stroke="#aa281e" strokeWidth="1.7" strokeLinecap="round" />
+                </svg>
+                <p className="text-[13px] font-semibold text-[#aa281e]">Request expired · Cannot be approved</p>
+              </div>
+            )}
+            {isResolved && (
+              <div className={`flex items-center gap-2 rounded-[12px] px-4 py-3 ${
+                item.resolvedAction === 'approved' ? 'bg-green-50 border border-green-200' : 'bg-[#F2F2F7] border border-[#f1f1f3]'
+              }`}>
+                <p className={`text-[13px] font-semibold ${item.resolvedAction === 'approved' ? 'text-[#198e41]' : 'text-[#8e8e93]'}`}>
+                  {item.resolvedAction === 'approved' ? 'Approved' : item.status === 'expired' ? 'Expired' : item.status === 'error' ? 'Failed' : 'Declined'}
+                </p>
+              </div>
+            )}
+
+            {/* Header */}
+            <div className="pb-1">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-[#EEF2FF] rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M17 8l4 4-4 4M7 16l-4-4 4-4" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M21 12H3" stroke="#5B4FE9" strokeWidth="1.7" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <p className="text-[12px] font-semibold uppercase tracking-wider text-[#8e8e93]">Data sharing request</p>
+              </div>
+              <h2 className="text-[24px] font-semibold text-[#1c1c1e] leading-[30px]">
+                <span className="text-[#5B4FE9]">{serviceName}</span>
+                {' is requesting you to share information with '}
+                <span className="font-bold">{item.preview.recipientService ?? 'another service'}</span>
+              </h2>
+            </div>
+
+            {/* Purpose */}
+            {item.preview.purpose && (
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8e8e93] px-1 mb-2">Reason</p>
+                <div className="bg-white rounded-[16px] px-4 py-4 border border-[#f1f1f3]">
+                  <p className="text-[15px] text-[#1c1c1e] leading-6">{item.preview.purpose}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Credential being shared */}
+            {credentialRows.length > 0 && (
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8e8e93] px-1 mb-2">Credential to share</p>
+                <div className="space-y-3">
+                  {credentialRows.map((row, i) => {
+                    const { backgroundColor } = getCardColorForTypes(row.types);
+                    const label = getCandidateLabel(row.types);
+                    return (
+                      <div key={i} className="bg-white rounded-[16px] flex items-center px-4 py-4 border border-[#f1f1f3] shadow-sm">
+                        <div className="mr-4 w-10 h-10 rounded-[10px] flex-shrink-0" style={{ backgroundColor }} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[16px] font-bold text-[#1c1c1e] truncate">{label}</p>
+                          <p className="text-[13px] text-[#8e8e93] truncate font-medium">Shared with {row.issuer || item.preview.recipientService}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Parties info */}
+            <div className="bg-[#F2F2F7] rounded-[16px] overflow-hidden">
+              <div className="px-4 py-3 border-b border-[#e5e5ea]">
+                <p className="text-[11px] text-[#8e8e93] font-medium uppercase tracking-wider mb-0.5">Requested by</p>
+                <p className="text-[15px] font-semibold text-[#1c1c1e]">{serviceName}</p>
+              </div>
+              <div className="px-4 py-3">
+                <p className="text-[11px] text-[#8e8e93] font-medium uppercase tracking-wider mb-0.5">Shared with</p>
+                <p className="text-[15px] font-semibold text-[#1c1c1e]">{item.preview.recipientService ?? 'Unknown service'}</p>
+              </div>
+            </div>
+
+            {actionError && (
+              <div className="bg-red-50 border border-red-200 rounded-[24px] px-4 py-3">
+                <p className="text-[14px] font-semibold text-[#aa281e]">{actionError}</p>
+              </div>
+            )}
+          </main>
+
+          {/* Action buttons */}
+          <div className="fixed bottom-0 left-0 right-0 max-w-[var(--max-width)] mx-auto px-5 pt-4 pb-10 bg-[var(--bg-ios)]/90 backdrop-blur-[4px] z-40 space-y-2 border-t border-[#f1f1f3]">
+            <button
+              onClick={() => handleShareClick(false)}
+              disabled={actionState === 'sharing' || isExpired || isResolved}
+              className="w-full bg-[#5B4FE9] text-white text-[16px] font-semibold rounded-[12px] py-4 active:opacity-80 transition-opacity disabled:opacity-40"
+            >
+              {actionState === 'sharing' ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Sharing…
+                </span>
+              ) : (isExpired || isResolved) ? 'Request expired' : 'Share credential'}
+            </button>
+
+            <button
+              onClick={handleReject}
+              disabled={actionState === 'sharing'}
+              className="w-full text-[#5B4FE9] text-[16px] font-medium py-3.5 rounded-[12px] border border-[#5B4FE9]/25 active:opacity-60 transition-opacity disabled:opacity-40"
+            >
+              Don't share credential
+            </button>
+
+            <p className="text-[11px] text-[#8e8e93] text-center leading-4">
+              Manage sharing preferences in{' '}
+              <span className="text-[#5B4FE9] font-medium">Consent Rules</span>
+            </p>
+          </div>
+        </>
+      ) : (
       <ConsentRequestView
         serviceName={serviceName}
         isVP={isVP}
-        purpose={isDelegation ? item.preview.purpose : item.preview.verifier?.purpose}
+        purpose={item.preview.verifier?.purpose}
         linkedDomains={item.preview.verifier?.linkedDomains}
         credentialRows={credentialRows}
         needsPin={needsPin}
@@ -360,6 +496,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
           </>
         }
       />
+      )}
 
       {/* Credential detail / picker sheet */}
       <AnimatePresence>

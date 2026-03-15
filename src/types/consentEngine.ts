@@ -44,6 +44,8 @@ export interface ConsentRule {
   nodeId: string;
   ruleType: RuleType;
   enabled: boolean;
+  /** What to do when this rule matches: auto-execute, queue for user approval, or reject. */
+  action?: 'auto_execute' | 'queue' | 'reject';
   label?: string;
   party: RuleParty;
   credentialType: CredentialTypeFilter;
