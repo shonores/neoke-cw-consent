@@ -50,14 +50,16 @@ export default function CeIntakeOverlay({ rawLink, apiKey, onDismiss, onFallback
           setPhase('success');
           setTimeout(() => { if (!cancelled) onDismiss(); }, 1800);
         } else {
-          // Distinguish: preview_failed means the link itself is expired/invalid
-          // (manual consent will also fail). Other rejections fall back to manual.
+          // For credential offers (receive), always fall back to wallet-direct receive —
+          // CE may fail to process external/EUDI issuers but the wallet can handle them.
+          // For presentation requests, preview_failed means the link is truly expired.
+          const linkType = detectLinkType(rawLink);
           const reason = (result as { reason?: string }).reason ?? '';
-          if (reason === 'preview_failed') {
+          if (reason === 'preview_failed' && linkType === 'present') {
             setErrorMsg('This QR code has expired or is no longer valid. Ask for a new one.');
             setPhase('error');
           } else {
-            onFallback(rawLink, detectLinkType(rawLink));
+            onFallback(rawLink, linkType);
           }
         }
       } catch {
