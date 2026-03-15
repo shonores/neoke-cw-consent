@@ -1,7 +1,9 @@
 import { AnimatePresence, motion } from 'framer-motion';
 
-const TERMS_URL = 'https://docs.google.com/document/u/1/d/e/2PACX-1vR3WT8LdUgwYcrOYHqz-LSxc1jOXJI3igzbTtmzcVEhPrFVluFyidroOQrfkkeRa88A2OXNiMd5CAj3/pub';
-const PRIVACY_URL = 'https://docs.google.com/document/u/1/d/e/2PACX-1vSYhg-Z6OyDEaEn-iVDNsEkahSLb8nId3-DLLa5wcn-ZRYHVaUB-Gm-eNwnjiHNctXCYyFU5wLovfdN/pub';
+// Proxy URLs — rendered by /api/doc with mobile-friendly CSS injected.
+// The Google Docs source links live in api/doc.ts; update them there when the documents change.
+const TERMS_URL = '/api/doc?type=terms';
+const PRIVACY_URL = '/api/doc?type=privacy';
 
 export { TERMS_URL, PRIVACY_URL };
 
@@ -53,9 +55,9 @@ function DocViewerSheetInner({ url, title, onClose }: Props) {
         </div>
       </div>
 
-      {/* Content — ?embedded=true strips Google's nav chrome */}
+      {/* Content rendered via /api/doc proxy with mobile-friendly CSS */}
       <iframe
-        src={`${url}?embedded=true`}
+        src={url}
         title={title}
         className="flex-1 w-full border-0"
       />
