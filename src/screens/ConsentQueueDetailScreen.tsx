@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useConsentEngine } from '../context/ConsentEngineContext';
-import { getQueueItem, approveQueueItem, rejectQueueItem, createRule, listRules } from '../api/consentEngineClient';
+import { getQueueItem, approveQueueItem, rejectQueueItem, createRule, updateRule, listRules } from '../api/consentEngineClient';
 import ConsentRequestView from '../components/ConsentRequestView';
 import CredentialCardFace from '../components/CredentialCardFace';
 import { getLocalCredentials } from '../store/localCredentials';
@@ -87,6 +87,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
             rulePayload = {
               nodeId: item.nodeId,
               ruleType: 'verification' as const,
+              action: 'auto_execute' as const,
               enabled: true,
               label: `Always: ${item.preview.verifier?.name ?? extractServiceName(item.preview.verifier?.clientId)}`,
               party: {
@@ -106,6 +107,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
             rulePayload = {
               nodeId: item.nodeId,
               ruleType: 'issuance' as const,
+              action: 'auto_execute' as const,
               enabled: true,
               label: `Always accept: ${extractServiceName(issuerDid)}`,
               party: {
@@ -124,8 +126,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
           const resolvedName = rulePayload.party.value
             ? extractServiceName(rulePayload.party.value).toLowerCase()
             : null;
-          const alreadyExists = existing.some(r => {
-            if (!r.enabled) return false;
+          const matchingRule = existing.find(r => {
             // Exact party match
             if (
               r.party.matchType === rulePayload.party.matchType &&
@@ -142,9 +143,12 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
             ) return true;
             return false;
           });
-          if (!alreadyExists) {
+          if (!matchingRule) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await createRule(apiKey, rulePayload as any);
+          } else if (matchingRule.action !== rulePayload.action || !matchingRule.enabled) {
+            // Rule exists but with wrong action (e.g. queue → auto_execute) — update it
+            await updateRule(apiKey, matchingRule.id, { action: rulePayload.action, enabled: true });
           }
         } catch { /* rule creation failure is non-fatal; still approve */ }
       }
