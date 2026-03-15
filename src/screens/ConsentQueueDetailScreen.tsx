@@ -127,6 +127,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
             ? extractServiceName(rulePayload.party.value).toLowerCase()
             : null;
           const matchingRule = existing.find(r => {
+            if (r.ruleType !== rulePayload.ruleType) return false;
             // Exact party match
             if (
               r.party.matchType === rulePayload.party.matchType &&
