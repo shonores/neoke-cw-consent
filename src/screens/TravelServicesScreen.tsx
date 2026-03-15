@@ -351,7 +351,7 @@ export default function TravelServicesScreen({ navigate }: Props) {
                     <button
                       key={rule.id}
                       className="w-full flex gap-3 items-center px-3 py-3 text-left active:bg-[#F2F2F7] transition-colors"
-                      onClick={() => navigate('consent_rule_editor', { editingRuleId: rule.id })}
+                      onClick={() => navigate('travel_service_detail', { selectedServiceDid: '__issuance__' + rule.id })}
                     >
                       <ServiceInitialsAvatar name={issuanceRuleName(rule)} issuance />
                       <div className="flex-1 min-w-0">

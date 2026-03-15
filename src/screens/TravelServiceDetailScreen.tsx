@@ -96,6 +96,8 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
 
   const isGlobalRule = verifierDid.startsWith('__global__');
   const globalRuleId = isGlobalRule ? verifierDid.slice('__global__'.length) : null;
+  const isIssuanceRule = verifierDid.startsWith('__issuance__');
+  const issuanceRuleId = isIssuanceRule ? verifierDid.slice('__issuance__'.length) : null;
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -106,11 +108,13 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
 
   const serviceRule = isGlobalRule
     ? (rules.find(r => r.id === globalRuleId) ?? null)
-    : (rules.find(
-        r => r.ruleType === 'verification' &&
-             r.party.matchType === 'did' &&
-             r.party.value === verifierDid
-      ) ?? null);
+    : isIssuanceRule
+      ? (rules.find(r => r.id === issuanceRuleId) ?? null)
+      : (rules.find(
+          r => r.ruleType === 'verification' &&
+               r.party.matchType === 'did' &&
+               r.party.value === verifierDid
+        ) ?? null);
 
   const serviceName = isGlobalRule
     ? 'All requesters'
@@ -125,7 +129,7 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
         const fromEventLabel = events.map(e => serviceNameFromRuleLabel(e.ruleLabel)).find(Boolean);
         if (fromEventLabel) return fromEventLabel;
         // 4. Parse the verifierDid (works for did:web / x509_san_dns; returns 'Unknown service' for x509_hash)
-        return extractVerifierName(verifierDid);
+        return extractVerifierName(isIssuanceRule ? (serviceRule?.party.value ?? verifierDid) : verifierDid);
       })();
 
   const mode: ShareMode = !serviceRule
@@ -153,10 +157,10 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
     setLoading(true);
     setError('');
     try {
-      const auditOpts = isGlobalRule
+      const auditOpts = isGlobalRule || isIssuanceRule
         ? { nodeId, order: 'desc' as const, limit: 50, offset: 0 }
         : { nodeId, verifierDid, order: 'desc' as const, limit: 50, offset: 0 };
-      const rulesOpts = isGlobalRule ? undefined : { partyDid: verifierDid };
+      const rulesOpts = (isGlobalRule || isIssuanceRule) ? undefined : { partyDid: verifierDid };
       const [filtered, fetchedRules] = await Promise.all([
         listAuditEvents(apiKey, auditOpts),
         listRules(apiKey, rulesOpts),
@@ -180,21 +184,30 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
     setShowModeSheet(false);
     try {
       const action = newMode === 'always' ? 'auto_execute' : newMode === 'never' ? 'reject' : 'queue';
-      const label = newMode === 'always'
-        ? `Always share with ${serviceName}`
-        : newMode === 'never'
-          ? `Block ${serviceName}`
-          : `Ask each time — ${serviceName}`;
+      let label: string;
+      if (isIssuanceRule) {
+        label = newMode === 'always'
+          ? `Always accept: ${serviceName}`
+          : newMode === 'never'
+            ? `Block ${serviceName}`
+            : `Ask each time — ${serviceName}`;
+      } else {
+        label = newMode === 'always'
+          ? `Always share with ${serviceName}`
+          : newMode === 'never'
+            ? `Block ${serviceName}`
+            : `Ask each time — ${serviceName}`;
+      }
 
       if (!serviceRule) {
         // No existing rule — create one (even for 'ask', so it overrides global delegation rules)
         const payload: CreateRulePayload = {
           nodeId,
           label,
-          ruleType: 'verification',
+          ruleType: isIssuanceRule ? 'issuance' : 'verification',
           enabled: true,
           action,
-          party: isGlobalRule ? { matchType: 'any' } : { matchType: 'did', value: verifierDid },
+          party: isGlobalRule ? { matchType: 'any' } : { matchType: 'did', value: isIssuanceRule ? undefined : verifierDid },
           credentialType: { matchType: 'any' },
           allowedFields: allFields.length > 0
             ? { matchType: 'explicit', fields: allFields }
@@ -238,17 +251,25 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
     mode === 'never'  ? 'bg-[#fbeae9] border-[#d9534f]/40' :
                         'bg-white border-[#f1f1f3]';
 
-  const bannerHeading =
-    mode === 'always' ? `Always sharing with ${serviceName}` :
-    mode === 'never'  ? `${serviceName} is blocked` :
-                        'Allow to share your info';
+  const bannerHeading = isIssuanceRule
+    ? (mode === 'always' ? `Always accepting from ${serviceName}` :
+       mode === 'never'  ? `${serviceName} is blocked` :
+                           'Allow to accept credentials')
+    : (mode === 'always' ? `Always sharing with ${serviceName}` :
+       mode === 'never'  ? `${serviceName} is blocked` :
+                           'Allow to share your info');
 
-  const bannerCaption =
-    mode === 'always'
-      ? `You'll always share your info and won't be asked for consent each time ${serviceName} wants to access your data.`
-    : mode === 'never'
-      ? `You've blocked ${serviceName}. They won't be able to request your data.`
-    : `Choose how ${serviceName} can access your information.`;
+  const bannerCaption = isIssuanceRule
+    ? (mode === 'always'
+        ? `Credentials from ${serviceName} will be automatically accepted.`
+      : mode === 'never'
+        ? `You've blocked ${serviceName}. They won't be able to issue credentials to you.`
+      : `Choose how to handle credentials from ${serviceName}.`)
+    : (mode === 'always'
+        ? `You'll always share your info and won't be asked for consent each time ${serviceName} wants to access your data.`
+      : mode === 'never'
+        ? `You've blocked ${serviceName}. They won't be able to request your data.`
+      : `Choose how ${serviceName} can access your information.`);
 
   const pillLabel = mode === 'always' ? 'Always' : mode === 'never' ? 'Never' : 'Ask';
   const pillStyle =
@@ -262,21 +283,27 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
     {
       mode: 'always' as ShareMode,
       label: 'Always',
-      description: `You'll always share your info and won't be asked for consent each time ${serviceName} wants to access your data.`,
+      description: isIssuanceRule
+        ? `Credentials from ${serviceName} will be automatically accepted without asking each time.`
+        : `You'll always share your info and won't be asked for consent each time ${serviceName} wants to access your data.`,
       icon: <IconAlways />,
       color: '#5B4FE9',
     },
     {
       mode: 'ask' as ShareMode,
       label: 'Ask',
-      description: `${serviceName} will ask you every time it needs personal information or travel preferences.`,
+      description: isIssuanceRule
+        ? `${serviceName} will ask you every time it wants to issue a credential to you.`
+        : `${serviceName} will ask you every time it needs personal information or travel preferences.`,
       icon: <IconAsk />,
       color: '#1c1c1e',
     },
     {
       mode: 'never' as ShareMode,
       label: 'Never allow',
-      description: `You'll never share your info and ${serviceName} won't be able to access your data.`,
+      description: isIssuanceRule
+        ? `You'll never accept credentials and ${serviceName} won't be able to issue credentials to you.`
+        : `You'll never share your info and ${serviceName} won't be able to access your data.`,
       icon: <IconNever />,
       color: '#aa281e',
     },
@@ -392,10 +419,11 @@ export default function TravelServiceDetailScreen({ navigate, verifierDid }: Pro
               <h2 className="text-[20px] font-semibold text-[#1c1c1e] px-1 pt-2">History log</h2>
               <div className="bg-white rounded-[12px] border border-[#f1f1f3] overflow-hidden divide-y divide-[#f1f1f3]">
                 {events.slice(0, 10).map(event => {
-                  const isSuccess = event.action === 'auto_presented' || event.action === 'manually_approved';
+                  const isSuccess = event.action === 'auto_presented' || event.action === 'auto_received' || event.action === 'manually_approved';
                   const isRejected = event.action === 'rejected' || event.action === 'manually_rejected';
-                  const label = isSuccess ? 'Info shared successfully'
-                    : isRejected ? 'Request declined'
+                  const label = isSuccess
+                    ? (isIssuanceRule ? 'Credential accepted' : 'Info shared successfully')
+                    : isRejected ? (isIssuanceRule ? 'Credential declined' : 'Request declined')
                     : event.action === 'expired' ? 'Request expired'
                     : event.action === 'queued' ? 'Awaiting approval'
                     : 'Activity';
