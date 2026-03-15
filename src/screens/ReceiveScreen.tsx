@@ -21,6 +21,10 @@ import type { Credential, ViewName } from '../types';
 
 type Stage = 'scan' | 'loading' | 'consent' | 'success' | 'error';
 
+// URIs that have already been sent to CE and received a fallback — skip CE re-routing.
+// Module-level so it survives component remounts (component remounts on navigation).
+const _ceFailedUris = new Set<string>();
+
 interface ReceiveScreenProps {
   navigate: (view: ViewName, extra?: { selectedCredential?: Credential; pendingUri?: string }) => void;
   onCredentialReceived: () => void;
@@ -95,7 +99,8 @@ export default function ReceiveScreen({ navigate, onCredentialReceived, initialU
 
     // Route through CE intake when configured — both presentation and credential offer requests
     if (uriType === 'present' || uriType === 'receive') {
-      if (onRouteToCe && isCeConfigured() && ceState.ceEnabled && ceState.ceApiKey) {
+      if (onRouteToCe && isCeConfigured() && ceState.ceEnabled && ceState.ceApiKey && !_ceFailedUris.has(trimmed)) {
+        _ceFailedUris.add(trimmed);
         onRouteToCe(trimmed);
         return;
       }
