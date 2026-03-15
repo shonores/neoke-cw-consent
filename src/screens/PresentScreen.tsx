@@ -424,7 +424,7 @@ if (stage === 'error') {
           <div className="fixed inset-0 z-[60]" onClick={() => setCredSheet(null)}>
             <div className="absolute inset-0 bg-black/40" />
             <div
-              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[512px] bg-white rounded-t-[24px] relative"
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[512px] bg-white rounded-t-[24px]"
               style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}
               onClick={e => e.stopPropagation()}
             >
