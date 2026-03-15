@@ -481,6 +481,16 @@ export function formatDate(dateStr: string): string {
  * all resolve to the same token.
  */
 function normalizeType(t: string): string {
+  // URL-based VCT identifiers (OID4VCI): compare only the last meaningful path segment
+  // so "https://host/credentials/sdjwt-epassport-copy" matches "sdjwt-epassport-copy"
+  if (t.startsWith('http://') || t.startsWith('https://')) {
+    try {
+      const url = new URL(t);
+      const segments = url.pathname.split('/').filter(s => s && /[a-zA-Z]{2,}/.test(s));
+      const last = segments[segments.length - 1];
+      if (last) t = last;
+    } catch { /* fall through to plain normalization */ }
+  }
   return t.toLowerCase().replace(/[-_.]/g, '');
 }
 
