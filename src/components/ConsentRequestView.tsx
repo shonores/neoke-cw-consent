@@ -7,6 +7,7 @@ import {
   getCandidateLabel,
   parseIssuerLabel,
   parseDisclosedClaim,
+  findLocalCredByTypes,
 } from '../utils/credentialHelpers';
 import CredentialThumbnail from './CredentialThumbnail';
 import type { Credential } from '../types';
@@ -63,8 +64,7 @@ function CredentialCardRow({
 }: ConsentCredentialRow & { localCreds: Credential[]; onClick?: () => void }) {
   const localCred =
     (credentialId ? localCreds.find(lc => lc.id === credentialId) : undefined) ??
-    localCreds.find(lc => types.some(t => lc.type?.includes(t)) && lc.issuer === issuer) ??
-    localCreds.find(lc => types.some(t => lc.type?.includes(t)));
+    findLocalCredByTypes(localCreds, types, issuer);
 
   const { backgroundColor, textColor } = localCred
     ? getCardColor(localCred)

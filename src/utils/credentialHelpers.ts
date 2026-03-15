@@ -469,6 +469,49 @@ export function formatDate(dateStr: string): string {
 }
 
 // ============================================================
+// Type matching helpers
+// ============================================================
+
+/**
+ * Normalise a credential type string for fuzzy matching.
+ * Strips hyphens, underscores, dots and lowercases so that
+ * "sdjwt-epassport-copy", "SdJwtEpassportCopy", and "sdjwt_epassport_copy"
+ * all resolve to the same token.
+ */
+function normalizeType(t: string): string {
+  return t.toLowerCase().replace(/[-_.]/g, '');
+}
+
+/**
+ * Returns true if any of `credTypes` matches `queryType` — first by exact
+ * string equality, then by normalised comparison (case + separators stripped).
+ */
+export function credTypeMatches(credTypes: string[] | undefined, queryType: string): boolean {
+  if (!credTypes) return false;
+  if (credTypes.includes(queryType)) return true;
+  const norm = normalizeType(queryType);
+  return credTypes.some(ct => normalizeType(ct) === norm);
+}
+
+/**
+ * Find the best local credential match for a list of type strings.
+ * Tries exact issuer match first, then type-only.
+ */
+export function findLocalCredByTypes(
+  localCreds: Credential[],
+  types: string[],
+  issuer?: string,
+): Credential | undefined {
+  if (issuer) {
+    const withIssuer = localCreds.find(
+      lc => types.some(t => credTypeMatches(lc.type, t)) && lc.issuer === issuer,
+    );
+    if (withIssuer) return withIssuer;
+  }
+  return localCreds.find(lc => types.some(t => credTypeMatches(lc.type, t)));
+}
+
+// ============================================================
 // VP candidate helpers
 // ============================================================
 

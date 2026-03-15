@@ -5,7 +5,7 @@ import { getQueueItem, approveQueueItem, rejectQueueItem, createRule, updateRule
 import ConsentRequestView from '../components/ConsentRequestView';
 import CredentialCardFace from '../components/CredentialCardFace';
 import { getLocalCredentials } from '../store/localCredentials';
-import { getCardColor, getCardColorForTypes, getCredentialLabel, getCredentialDescription, getCandidateLabel, parseDisclosedClaim, extractVerifierName, getRequestedFields, extractFields } from '../utils/credentialHelpers';
+import { getCardColor, getCardColorForTypes, getCredentialLabel, getCredentialDescription, getCandidateLabel, parseDisclosedClaim, extractVerifierName, getRequestedFields, extractFields, findLocalCredByTypes } from '../utils/credentialHelpers';
 import type { Credential } from '../types';
 import type { PendingRequest } from '../types/consentEngine';
 import type { ViewName } from '../types';
@@ -359,9 +359,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
             const selCand = g.candidates[selIdx] ?? g.candidates[0];
             // Resolve local cred: try exact ID first, then type+issuer, then type-only
             const selLocalCred = selCand
-              ? (localCreds.find(lc => lc.id === selCand.id) ??
-                 localCreds.find(lc => g.types.some(t => lc.type?.includes(t)) && lc.issuer === selCand.issuer) ??
-                 localCreds.find(lc => g.types.some(t => lc.type?.includes(t))))
+              ? (localCreds.find(lc => lc.id === selCand.id) ?? findLocalCredByTypes(localCreds, g.types, selCand.issuer))
               : null;
             return {
               types: g.types,
@@ -383,9 +381,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
   const sheetSelIdx = credSheet ? (credSelections[credSheet.typeKey] ?? 0) : 0;
   const sheetCand = sheetGroup ? (sheetGroup.candidates[sheetSelIdx] ?? sheetGroup.candidates[0]) : null;
   const sheetLocalCred = sheetCand
-    ? (localCreds.find(lc => lc.id === sheetCand.id) ??
-       localCreds.find(lc => sheetGroup?.types.some(t => lc.type?.includes(t)) && lc.issuer === sheetCand.issuer) ??
-       localCreds.find(lc => sheetGroup?.types.some(t => lc.type?.includes(t))))
+    ? (localCreds.find(lc => lc.id === sheetCand.id) ?? findLocalCredByTypes(localCreds, sheetGroup?.types ?? [], sheetCand.issuer))
     : null;
 
   return (
@@ -446,7 +442,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8e8e93] px-1 mb-2">Credential to share</p>
                 <div className="space-y-3">
                   {credentialRows.map((row, i) => {
-                    const localMatch = localCreds.find(lc => row.types.some(t => lc.type?.includes(t)));
+                    const localMatch = findLocalCredByTypes(localCreds, row.types);
                     const { backgroundColor } = localMatch ? getCardColor(localMatch) : getCardColorForTypes(row.types);
                     const label = localMatch ? getCredentialLabel(localMatch) : getCandidateLabel(row.types);
                     return (
@@ -543,7 +539,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
             // Issuance: show credential detail with available fields
             const row = credentialRows[idx];
             if (row) {
-              const localCred = localCreds.find(lc => row.types.some(t => lc.type?.includes(t)));
+              const localCred = findLocalCredByTypes(localCreds, row.types);
               setDetailSheet({ localCred: localCred ?? null, types: row.types });
             }
           }
