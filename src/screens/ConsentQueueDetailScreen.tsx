@@ -116,6 +116,7 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
                 matchType: (credType ? 'exact' : 'any') as 'exact' | 'any',
                 value: credType,
               },
+              allowedFields: { matchType: 'any' as const },
               expiry: { type: 'never' as const },
             };
           }

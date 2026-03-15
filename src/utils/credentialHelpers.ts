@@ -323,6 +323,9 @@ export function serviceNameFromRuleLabel(label?: string | null): string | null {
   const stripped = label
     .replace(/^Always\s+share\s+with\s+/i, '')
     .replace(/^Always:\s+/i, '')
+    .replace(/^Always\s+accept:\s+/i, '')
+    .replace(/^Ask\s+each\s+time\s+[—–-]+\s+/i, '')
+    .replace(/^Ask\s+each\s+time:\s+/i, '')
     .replace(/^Block\s+/i, '')
     .trim();
   if (stripped.startsWith('did:') || stripped.startsWith('x509_')) return null;

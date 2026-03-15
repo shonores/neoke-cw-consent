@@ -140,8 +140,12 @@ export default function TravelServicesScreen({ navigate }: Props) {
         .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 
       const ruleDidSet = new Set(verDid.map(r => r.party.value!));
-      // Also index resolved names so audit-summary entries for the same service are suppressed
-      const ruleNameSet = new Set(verDid.map(r => nameForRule(r).toLowerCase()));
+      // Index by human name AND hostname so audit-summary entries for the same service
+      // are suppressed even when identifiers differ (e.g. did:web: vs https:// vs x509_san_dns:)
+      const ruleNameSet = new Set(verDid.flatMap(r => [
+        nameForRule(r).toLowerCase(),
+        extractVerifierName(r.party.value ?? undefined).toLowerCase(),
+      ]));
 
       const askList: Array<{ did: string; name: string; lastSeen: string }> = [];
       for (const entry of summary) {
@@ -149,7 +153,7 @@ export default function TravelServicesScreen({ navigate }: Props) {
         if (!vDid || ruleDidSet.has(vDid)) continue;
         const name = extractVerifierName(vDid);
         if (!name || name === 'Unknown service') continue;
-        // Suppress if a DID-specific rule already covers this service by name
+        // Suppress if a DID-specific rule already covers this service by name or hostname
         if (ruleNameSet.has(name.toLowerCase())) continue;
         askList.push({ did: vDid, name, lastSeen: entry.lastSharedAt });
       }
