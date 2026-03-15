@@ -143,7 +143,11 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
       limit: 200,
       order: 'desc',
     })
-      .then(data => { setEvents(data); setActivityError(''); })
+      .then(data => {
+        // Exclude delegation events — they belong to the delegation flow, not a credential's own history.
+        setEvents(data.filter(e => e.linkType !== 'delegation_approval'));
+        setActivityError('');
+      })
       .catch(() => setActivityError('Could not load activity. Tap to retry.'))
       .finally(() => setLoadingActivity(false));
   }, [tab, ceState.ceEnabled, ceState.ceApiKey, credentialTypeParam, state.nodeIdentifier]);
@@ -300,7 +304,7 @@ export default function CredentialDetailScreen({ credential, onBack, onCredentia
                   setActivityError('');
                   setLoadingActivity(true);
                   listAuditEvents(ceState.ceApiKey!, { nodeId: state.nodeIdentifier ?? undefined, credentialType: credentialTypeParam, limit: 200, order: 'desc' })
-                    .then(data => { setEvents(data); setActivityError(''); })
+                    .then(data => { setEvents(data.filter(e => e.linkType !== 'delegation_approval')); setActivityError(''); })
                     .catch(() => setActivityError('Could not load activity. Tap to retry.'))
                     .finally(() => setLoadingActivity(false));
                 }}
