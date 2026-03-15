@@ -206,7 +206,7 @@ export function ConsentEngineProvider({ children }: { children: ReactNode }) {
     const connect = async () => {
       let shouldReconnect = true;
       try {
-        const response = await fetch(`${ceUrl}/sse/${encodeURIComponent(nodeId)}`, {
+        const response = await fetch(`${ceUrl}/events`, {
           headers: { Authorization: `ApiKey ${ceApiKey}` },
           signal: controller.signal,
         });
