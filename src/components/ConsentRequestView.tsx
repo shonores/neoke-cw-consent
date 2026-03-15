@@ -19,6 +19,8 @@ export interface ConsentCredentialRow {
   fields?: string[];
   /** Number of available candidates for this query — enables "Change credential" */
   candidateCount?: number;
+  /** Exact local credential ID — when provided, used for priority lookup over type matching */
+  credentialId?: string;
 }
 
 export interface ConsentRequestViewProps {
@@ -53,10 +55,12 @@ function CredentialCardRow({
   types,
   issuer,
   fields,
+  credentialId,
   localCreds,
   onClick,
 }: ConsentCredentialRow & { localCreds: Credential[]; onClick?: () => void }) {
   const localCred =
+    (credentialId ? localCreds.find(lc => lc.id === credentialId) : undefined) ??
     localCreds.find(lc => types.some(t => lc.type?.includes(t)) && lc.issuer === issuer) ??
     localCreds.find(lc => types.some(t => lc.type?.includes(t)));
 

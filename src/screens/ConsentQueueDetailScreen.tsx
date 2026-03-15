@@ -345,14 +345,20 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
     : isVP
       ? matchedGroups.length > 0
         ? matchedGroups.map(g => {
-            // Show the currently selected candidate's issuer if we can resolve it
             const selIdx = credSelections[g.typeKey] ?? 0;
             const selCand = g.candidates[selIdx] ?? g.candidates[0];
+            // Resolve local cred: try exact ID first, then type+issuer, then type-only
+            const selLocalCred = selCand
+              ? (localCreds.find(lc => lc.id === selCand.id) ??
+                 localCreds.find(lc => g.types.some(t => lc.type?.includes(t)) && lc.issuer === selCand.issuer) ??
+                 localCreds.find(lc => g.types.some(t => lc.type?.includes(t))))
+              : null;
             return {
               types: g.types,
-              issuer: selCand?.issuer ?? '',
+              issuer: selLocalCred?.issuer ?? selCand?.issuer ?? '',
               fields: item.preview.requestedFields,
               candidateCount: g.candidates.length,
+              credentialId: selLocalCred?.id,
             };
           })
         : item.preview.credentialType
@@ -366,7 +372,11 @@ export default function ConsentQueueDetailScreen({ navigate, queueItemId }: Prop
   const sheetGroup = credSheet ? matchedGroups.find(g => g.typeKey === credSheet.typeKey) : null;
   const sheetSelIdx = credSheet ? (credSelections[credSheet.typeKey] ?? 0) : 0;
   const sheetCand = sheetGroup ? (sheetGroup.candidates[sheetSelIdx] ?? sheetGroup.candidates[0]) : null;
-  const sheetLocalCred = sheetCand ? localCreds.find(lc => lc.id === sheetCand.id) : null;
+  const sheetLocalCred = sheetCand
+    ? (localCreds.find(lc => lc.id === sheetCand.id) ??
+       localCreds.find(lc => sheetGroup?.types.some(t => lc.type?.includes(t)) && lc.issuer === sheetCand.issuer) ??
+       localCreds.find(lc => sheetGroup?.types.some(t => lc.type?.includes(t))))
+    : null;
 
   return (
     <motion.div variants={variants} initial="initial" animate="animate" exit="exit"
